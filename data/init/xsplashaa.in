@@ -1,0 +1,48 @@
+#! /bin/sh
+#
+### BEGIN INIT INFO
+# Provides:          xsplashaa
+# Should-Start:      console-screen acpid dbus hal network-manager
+# Required-Start:    $local_fs $remote_fs dbus hal
+# Required-Stop:     $local_fs $remote_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Xorg graphical boot
+# Description:       Debian init script for the Xorg graphical boot
+### END INIT INFO
+#
+
+if [ -r "@initdir@/xsplashaa-functions" ]; then
+    . "@initdir@/xsplashaa-functions"
+else
+    echo "Could not read file @initdir@/xsplashaa-functions."
+    exit 1
+fi
+
+NAME=xsplashaa
+DESC="Xorg graphical boot"
+
+set -e
+
+case "$1" in
+  start)
+   	if xsplashaa_is_started; then
+	    xsplashaa_jail_mounts
+	    xsplashaa_start
+	fi
+	;;
+  stop)
+    if xsplashaa_is_started; then
+        xsplashaa_stop
+	fi
+	;;
+  *)
+	N=/etc/init.d/$NAME
+	# echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+	echo "Usage: $N {start|stop}" >&2
+	exit 1
+	;;
+esac
+
+exit 0
+

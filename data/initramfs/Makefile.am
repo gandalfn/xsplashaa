@@ -1,0 +1,1 @@
+SUBDIRS = hooks modules scripts

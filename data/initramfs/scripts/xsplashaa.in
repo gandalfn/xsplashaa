@@ -1,0 +1,62 @@
+#!/bin/sh
+
+PREREQ=""
+
+prereqs()
+{
+	echo "$PREREQ"
+}
+
+case $1 in
+prereqs)
+	prereqs
+	exit 0
+	;;
+esac
+
+SPLASH=false
+VERBOSE=true
+JAIL="@chrootdir@"
+
+for x in $(cat /proc/cmdline); do
+	case $x in
+	splash*)
+		SPLASH=true
+		;;
+	quiet*)
+		VERBOSE=false
+		;;
+	esac
+done
+
+if [ $SPLASH = "true" ]; then
+	mkdir -p $JAIL
+	cp -a /etc $JAIL
+	cp -a /bin $JAIL
+	cp -a /sbin $JAIL
+	cp -a /lib $JAIL
+	cp -a /lib64 $JAIL
+	cp -a /usr $JAIL
+	mkdir -p $JAIL/dev
+	mount /dev $JAIL/dev -o bind
+	mkdir -p $JAIL/sys
+	mount -t sysfs none $JAIL/sys
+	mkdir -p $JAIL/proc
+	mount -t proc none $JAIL/proc
+	mkdir -p $JAIL/tmp
+	mkdir -p $JAIL/var/lib/xkb
+	cp -a /var/lib/defoma $JAIL/var/lib/defoma
+
+cat > $JAIL/bin/launch-xsplashaa << EOF
+#!/bin/sh
+
+mknod -m 640 /dev/mem c 1 1
+mknod -m 666 /dev/zero c 1 5
+for i in 0 1 2 3 4 5 6 7 8; do
+    [ -c /dev/tty\$i ] || mknod /dev/tty\$i c 4 \$i
+done
+@prefix@/bin/xsplashaa > /tmp/xsplashaa.log 2>&1
+EOF
+	chmod +x $JAIL/bin/launch-xsplashaa
+	chroot $JAIL launch-xsplashaa &
+fi

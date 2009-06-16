@@ -1,0 +1,39 @@
+#! /bin/sh
+#
+### BEGIN INIT INFO
+# Provides:          xsplashaa-phase2
+# Required-Start:    mountkernfs
+# Required-Stop:
+# Default-Start:     S
+# Default-Stop:
+# Short-Description: Set Xsplashaa Phase 2
+### END INIT INFO
+
+if [ -r "@initdir@/xsplashaa-functions" ]; then
+    . "@initdir@/xsplashaa-functions"
+else
+    echo "Could not read file @initdir@/xsplashaa-functions."
+    exit 1
+fi
+
+NAME=xsplashaa-phase2
+DESC="Xorg graphical boot Phase2"
+
+set -e
+
+case "$1" in
+  start)
+	$XSPLASHAA_CLIENT --phase=2 --socket $XSPLASHAA_SOCKET
+	;;
+  stop)
+	;;
+  *)
+	N=/etc/init.d/$NAME
+	# echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+	echo "Usage: $N {start|stop}" >&2
+	exit 1
+	;;
+esac
+
+exit 0
+

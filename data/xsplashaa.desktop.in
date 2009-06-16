@@ -1,0 +1,7 @@
+[Desktop Entry]
+Exec=@prefix@/bin/xsplashaa-client --session --socket @chrootdir@/tmp/xsplashaa-socket
+Type=Application
+Name=XSplashaa Session
+X-GNOME-Autostart-enabled=true
+Encoding=UTF-8
+

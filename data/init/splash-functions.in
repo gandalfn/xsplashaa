@@ -1,0 +1,53 @@
+# xsplashaa hooks for /lib/init/splash-functions-base
+
+# Internal function, do not use in external scripts
+xsplashaa_pidfound()
+{
+	pidof xsplashaa > /dev/null 2>&1 || return 1
+	return 0
+}
+
+splash_running()
+{
+	if [ -x @prefix@/bin/xsplashaa ] && xsplashaa_pidfound; then
+		return 0
+	fi
+	return 1
+}
+
+splash_stop()
+{
+	return 0
+}
+
+splash_start()
+{
+	return 0
+}
+
+custom_splash_progress()
+{
+	splash_running || return 0
+	@prefix@/bin/xsplashaa-client --progress="$1" --socket @chrootdir@/tmp/xsplashaa-socket &
+	return 0
+}
+
+splash_start_indefinite()
+{
+	splash_running || return 0
+	@prefix@/bin/xsplashaa-client --pulse --socket @chrootdir@/tmp/xsplashaa-socket &
+	return 0
+}
+
+splash_stop_indefinite()
+{
+	splash_running || return 0
+	@prefix@/bin/xsplashaa-client --progress=0 --socket @chrootdir@/tmp/xsplashaa-socket &
+	return 0
+}
+
+splash_user_input()
+{
+	splash_running || return 1
+	return 0
+}

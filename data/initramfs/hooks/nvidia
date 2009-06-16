@@ -1,0 +1,32 @@
+#!/bin/sh -e
+# initramfs hook for nvidia
+
+MINKVER="2.6.17"
+PREREQ=""
+
+# Output pre-requisites
+prereqs()
+{
+	echo "$PREREQ"
+}
+
+case "$1" in
+    prereqs)
+	prereqs
+	exit 0
+	;;
+esac
+
+
+. /usr/share/initramfs-tools/hook-functions
+
+if [ -e /usr/lib/xorg/modules/drivers/nvidia_drv.so ]; then
+    mkdir -p ${DESTDIR}/usr/lib/xorg/modules/drivers
+    mkdir -p ${DESTDIR}/usr/lib/tls
+    mkdir -p ${DESTDIR}/usr/share/xserver-xorg/pci
+
+    # Copy needed files
+    copy_exec /usr/lib/xorg/modules/drivers/nvidia_drv.so /usr/lib/xorg/modules/drivers
+    copy_exec /usr/lib/tls/libnvidia-tls.so.1 /usr/lib/tls
+    copy_exec /usr/share/xserver-xorg/pci/nv.ids /usr/share/xserver-xorg/pci
+fi

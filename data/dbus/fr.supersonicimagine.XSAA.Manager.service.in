@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=fr.supersonicimagine.XSAA.Manager
+Exec=@prefix@/bin/xsplashaa-session-daemon
+User=root

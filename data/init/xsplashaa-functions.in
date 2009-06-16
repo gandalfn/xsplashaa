@@ -1,0 +1,50 @@
+#! /bin/sh
+#
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+XSPLASHAA_CLIENT=@prefix@/bin/xsplashaa-client
+XSPLASHAA_SESSION_DAEMON=@prefix@/bin/xsplashaa-session-daemon
+XSPLASHAA_SOCKET=@chrootdir@/tmp/xsplashaa-socket
+
+xsplashaa_is_started() {
+     $XSPLASHAA_CLIENT --ping --socket $XSPLASHAA_SOCKET
+}
+
+xsplashaa_jail_mount() {
+    mountbind=$1
+    if [ ! -e @chrootdir@/$mountbind ]
+    then
+        mkdir -p @chrootdir@/$mountbind
+    fi
+    mount -n $mountbind @chrootdir@/$mountbind -o bind
+}
+
+xsplashaa_jail_mounts() {
+    for conf in @sysconfdir@/xsplashaa/jail-mount.d/*
+    do
+        for m in $(cat $conf)
+        do
+            xsplashaa_jail_mount $m
+        done
+    done
+}
+
+xsplashaa_x11_common() {
+    ln -s @chrootdir@/tmp/.X11-unix/* /tmp/.X11-unix
+}
+
+xsplashaa_start () {
+    $XSPLASHAA_SESSION_DAEMON
+    $XSPLASHAA_CLIENT --dbus --socket $XSPLASHAA_SOCKET
+    xsplashaa_x11_common
+}
+
+xsplashaa_stop () {
+    pidof xsplashaa >> /var/run/sendsigs.omit
+	pidof Xorg >> /var/run/sendsigs.omit
+	$XSPLASHAA_CLIENT --close-session --socket $XSPLASHAA_SOCKET
+}
+
+xsplashaaa_set_phase() {
+    $XSPLASHAA_CLIENT --phase="$1" --socket $XSPLASHAA_SOCKET
+}

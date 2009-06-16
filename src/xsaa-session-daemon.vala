@@ -1,0 +1,183 @@
+/* xsaa-session-daemon.vala
+ *
+ * Copyright (C) 2009  Nicolas Bruguier
+ *
+ * This library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Author:
+ * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
+ */
+
+using GLib;
+using Gee;
+using Posix;
+
+public const string PACKAGE_XAUTH_DIR = "/tmp/xsplashaa-xauth";
+
+[DBus (name = "org.freedesktop.ConsoleKit.Session")] 
+public interface ConsoleKit.Session : DBus.Object 
+{
+    public abstract void
+    activate();
+}
+
+[DBus (name = "org.freedesktop.ConsoleKit.Manager")] 
+public interface ConsoleKit.Manager : DBus.Object 
+{ 
+    public abstract string 
+    open_session_with_parameters (ConsoleKit.SessionParameter[] parameters); 
+
+    public abstract int
+    close_session(string cookie);
+
+    public abstract DBus.ObjectPath?
+    get_session_for_cookie(string cookie);
+    
+    public abstract void
+    restart();
+
+    public abstract void
+    stop();
+}
+
+[DBus (name = "org.gnome.SettingsDaemon")] 
+public interface SettingsDaemon.Manager : DBus.Object 
+{
+}
+
+namespace XSAA
+{
+    static MainLoop loop;
+
+    [DBus (name = "fr.supersonicimagine.XSAA.Manager")]
+    public class SessionManager : GLib.Object
+    {
+        private DBus.Connection connection;
+        public Map <string, Session> sessions;
+        private ConsoleKit.Manager manager;
+        
+        public SessionManager(DBus.Connection conn)
+        {
+            connection = conn;
+
+            manager = (ConsoleKit.Manager)conn.get_object ("org.freedesktop.ConsoleKit", 
+                                                           "/org/freedesktop/ConsoleKit/Manager",
+                                                           "/org/freedesktop/ConsoleKit/Manager");
+
+            sessions = new HashMap <string, Session> (GLib.str_hash, GLib.str_equal);
+        }
+
+        public bool
+        open_session(string user, int display, string device, bool autologin, out DBus.ObjectPath? path)
+        {
+            path =  new DBus.ObjectPath ("/fr/supersonicimagine/XSAA/Manager/Session/" +
+                                         user + "/" + display.to_string());
+            try
+            {
+                string service = "xsplashaa";
+                if (autologin) service = "xsplashaa-autologin";
+                    
+                var session = new Session(connection, manager, service, user, display, device);
+                stderr.printf("Open session %s\n", path);
+                connection.register_object(path, session);
+                sessions.set(path, session);
+            }
+            catch (GLib.Error err)
+            {
+                stderr.printf("Error on create session : %s", err.message);
+                return false;
+            }
+
+            return true;
+        }
+
+        public void
+        close_session(DBus.ObjectPath? path)
+        {
+            stderr.printf("Close session %s\n", path);
+            sessions.remove(path);
+        }
+
+        public void
+        reboot()
+        {
+            manager.restart();
+        }
+
+        public void
+        halt()
+        {
+            manager.stop();
+        }
+    }
+
+    const OptionEntry[] option_entries = 
+    {
+        { "no-daemonize", 'd', 0, OptionArg.NONE, ref no_daemon, "Do not run xsplashaa-session-daemon as a daemonn", null },
+        { null }
+    };
+
+    static bool no_daemon = false;
+    
+    static int 
+    main (string[] args) 
+    {
+        try 
+        {
+            var opt_context = new OptionContext("- Xsplashaa session daemon");
+            opt_context.set_help_enabled(true);
+            opt_context.add_main_entries(option_entries, "xsplasaa-session-daemon");
+            opt_context.parse(ref args);
+        } 
+        catch (OptionError err) 
+        {
+            stderr.printf("Option parsing failed: %s\n", err.message);
+            return -1;
+        }
+
+        if (!no_daemon) daemon (0, 0);
+        
+		try 
+        {
+            loop = new MainLoop(null, false);
+            
+            var conn = DBus.Bus.get (DBus.BusType.SYSTEM);
+            
+		    dynamic DBus.Object bus = conn.get_object ("org.freedesktop.DBus",
+                                                       "/org/freedesktop/DBus",
+                                                       "org.freedesktop.DBus");
+
+            uint r1 = bus.request_name ("fr.supersonicimagine.XSAA.Manager.Session", (uint) 0);
+            uint r2 = bus.request_name ("fr.supersonicimagine.XSAA.Manager", (uint) 0);
+
+            if (r1 == DBus.RequestNameReply.PRIMARY_OWNER &&
+                r2 == DBus.RequestNameReply.PRIMARY_OWNER) 
+            {
+                var service = new SessionManager (conn);
+
+                conn.register_object ("/fr/supersonicimagine/XSAA/Manager", 
+                                      service);
+
+                loop.run();
+            }
+        }
+        catch (GLib.Error err)
+        {
+            message("%s\n", err.message);
+            return -1;
+        }
+        
+		return 0;
+	}
+}
