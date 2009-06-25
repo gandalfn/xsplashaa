@@ -7,6 +7,14 @@ prereqs()
 	echo "$PREREQ"
 }
 
+copy_exec_if_exist ()
+{
+    if [ -e $1 ]
+    then
+        copy_exec $*
+    fi
+}
+
 case $1 in
 prereqs)
 	prereqs
@@ -41,70 +49,70 @@ mkdir -p ${DESTDIR}/etc/init.d
 mkdir -p ${DESTDIR}/etc/rc2.d
 mkdir -p ${DESTDIR}/etc/X11/xkb
 
-copy_exec /sbin/shutdown /sbin
-copy_exec /usr/bin/Xorg /usr/bin
-copy_exec /usr/bin/xrdb /usr/bin
-copy_exec /usr/bin/xkbcomp /usr/bin
-copy_exec /usr/bin/setxkbmap /usr/bin
-copy_exec @prefix@/bin/xsplashaa /usr/bin
-copy_exec /etc/passwd /etc
-copy_exec /etc/shadow /etc
-copy_exec /etc/group /etc
+copy_exec_if_exist /sbin/shutdown /sbin
+copy_exec_if_exist /usr/bin/Xorg /usr/bin
+copy_exec_if_exist /usr/bin/xrdb /usr/bin
+copy_exec_if_exist /usr/bin/xkbcomp /usr/bin
+copy_exec_if_exist /usr/bin/setxkbmap /usr/bin
+copy_exec_if_exist @prefix@/bin/xsplashaa /usr/bin
+copy_exec_if_exist /etc/passwd /etc
+copy_exec_if_exist /etc/shadow /etc
+copy_exec_if_exist /etc/group /etc
 if [ -e /etc/X11/xorg.conf ]
 then
-    copy_exec /etc/X11/xorg.conf /etc/X11
+    copy_exec_if_exist /etc/X11/xorg.conf /etc/X11
 fi
-copy_exec /etc/X11/xkb/base.xml /etc/X11/xkb
-copy_exec @sysconfdir@/xsplashaa/xsplashaa.conf /etc/xsplashaa
-copy_exec @prefix@/share/xsplashaa/chicken-curie/logo.png /usr/share/xsplashaa/chicken-curie
-copy_exec @prefix@/share/xsplashaa/chicken-curie/distrib-logo.png /usr/share/xsplashaa/chicken-curie
-copy_exec @prefix@/share/xsplashaa/chicken-curie/throbber-initial.png /usr/share/xsplashaa/chicken-curie
-copy_exec @prefix@/share/xsplashaa/chicken-curie/throbber-spinner.png /usr/share/xsplashaa/chicken-curie
-copy_exec @prefix@/share/xsplashaa/chicken-curie/throbber-finish.png /usr/share/xsplashaa/chicken-curie
-copy_exec /usr/lib/libGL.so /usr/lib
-copy_exec /usr/lib/xorg/protocol.txt /usr/lib/xorg
-copy_exec /usr/lib/xorg/modules/drivers/fbdev_drv.so /usr/lib/xorg/modules/drivers
-copy_exec /usr/lib/xorg/modules/drivers/vesa_drv.so /usr/lib/xorg/modules/drivers
-copy_exec /usr/lib/xorg/modules/linux/libfbdevhw.so /usr/lib/xorg/modules/linux
-copy_exec /usr/lib/xorg/modules/extensions/libextmod.so /usr/lib/xorg/modules/extensions
-copy_exec /usr/lib/xorg/modules/extensions/libdbe.so /usr/lib/xorg/modules/extensions
-copy_exec /usr/lib/xorg/modules/extensions/libdri2.so /usr/lib/xorg/modules/extensions
-copy_exec /usr/lib/xorg/modules/extensions/libdri.so /usr/lib/xorg/modules/extensions
-copy_exec /usr/lib/xorg/modules/extensions/libglx.so /usr/lib/xorg/modules/extensions
-copy_exec /usr/lib/xorg/modules/extensions/librecord.so /usr/lib/xorg/modules/extensions
-copy_exec /usr/lib/xorg/modules/libexa.so /usr/lib/xorg/modules
-copy_exec /usr/lib/xorg/modules/libexa.so /usr/lib/xorg/modules
-copy_exec /usr/lib/xorg/modules/libfb.so /usr/lib/xorg/modules
-copy_exec /usr/lib/xorg/modules/libint10.so /usr/lib/xorg/modules
-copy_exec /usr/lib/xorg/modules/libshadowfb.so /usr/lib/xorg/modules
-copy_exec /usr/lib/xorg/modules/libshadow.so /usr/lib/xorg/modules
-copy_exec /usr/lib/xorg/modules/libvbe.so /usr/lib/xorg/modules
-copy_exec /usr/lib/xorg/modules/libvgahw.so /usr/lib/xorg/modules
-copy_exec /usr/lib/xorg/modules/libwfb.so /usr/lib/xorg/modules
-copy_exec /usr/lib/xorg/modules/libxaa.so /usr/lib/xorg/modules
-copy_exec /usr/lib/xorg/modules/libxf8_16bpp.so /usr/lib/xorg/modules
-copy_exec /usr/lib/pango/1.6.0/modules/pango-basic-x.so /usr/lib/pango/1.6.0/modules
-copy_exec /usr/lib/pango/1.6.0/modules/pango-basic-fc.so /usr/lib/pango/1.6.0/modules
-copy_exec /usr/lib/pango/1.6.0/module-files.d/libpango1.0-0.modules /usr/lib/pango/1.6.0/module-files.d
-copy_exec /usr/lib/gtk-2.0/2.10.0/loaders/libpixbufloader-png.so /usr/lib/gtk-2.0/2.10.0/loaders
-copy_exec /usr/lib/gtk-2.0/2.10.0/loader-files.d/libgtk2.0-0.loaders /usr/lib/gtk-2.0/2.10.0/loader-files.d
-copy_exec /usr/share/fonts/X11/misc/6x13-ISO8859-1.pcf.gz /usr/share/fonts/X11/misc
-copy_exec /usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf /usr/share/fonts/truetype/ttf-dejavu
-copy_exec /usr/share/fonts/truetype/ttf-dejavu/DejaVuSans-Bold.ttf /usr/share/fonts/truetype/ttf-dejavu
-copy_exec /usr/share/fonts/truetype/ttf-dejavu/DejaVuSansMono.ttf /usr/share/fonts/truetype/ttf-dejavu
-copy_exec /usr/share/fonts/truetype/ttf-dejavu/DejaVuSansMono-Bold.ttf /usr/share/fonts/truetype/ttf-dejavu
-copy_exec /usr/share/fonts/truetype/ttf-dejavu/DejaVuSerif.ttf /usr/share/fonts/truetype/ttf-dejavu
-copy_exec /usr/share/fonts/truetype/ttf-dejavu/DejaVuSerif-Bold.ttf /usr/share/fonts/truetype/ttf-dejavu
-copy_exec /usr/share/fonts/X11/misc/cursor.pcf.gz /usr/share/fonts/X11/misc
-copy_exec /usr/share/fonts/X11/misc/fonts.alias /usr/share/fonts/X11/misc
-copy_exec /usr/share/fonts/X11/misc/fonts.dir /usr/share/fonts/X11/misc
-copy_exec /usr/share/fonts/X11/75dpi/fonts.alias /usr/share/fonts/X11/75dpi
-copy_exec /usr/share/fonts/X11/75dpi/fonts.dir /usr/share/fonts/X11/75dpi
-copy_exec /usr/share/fonts/X11/100dpi/fonts.alias /usr/share/fonts/X11/100dpi
-copy_exec /usr/share/fonts/X11/100dpi/fonts.dir /usr/share/fonts/X11/100dpi
-copy_exec /usr/share/fonts/X11/Type1/fonts.alias /usr/share/fonts/X11/Type1
-copy_exec /usr/share/fonts/X11/Type1/fonts.dir /usr/share/fonts/X11/Type1
-copy_exec /var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType/fonts.alias /var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType
-copy_exec /var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType/fonts.dir /var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType
-copy_exec /usr/lib/ConsoleKit/ck-get-x11-display-device /usr/lib/ConsoleKit
-copy_exec /usr/lib/ConsoleKit/ck-get-x11-server-pid /usr/lib/ConsoleKit
+copy_exec_if_exist /etc/X11/xkb/base.xml /etc/X11/xkb
+copy_exec_if_exist @sysconfdir@/xsplashaa/xsplashaa.conf /etc/xsplashaa
+copy_exec_if_exist @prefix@/share/xsplashaa/chicken-curie/logo.png /usr/share/xsplashaa/chicken-curie
+copy_exec_if_exist @prefix@/share/xsplashaa/chicken-curie/distrib-logo.png /usr/share/xsplashaa/chicken-curie
+copy_exec_if_exist @prefix@/share/xsplashaa/chicken-curie/throbber-initial.png /usr/share/xsplashaa/chicken-curie
+copy_exec_if_exist @prefix@/share/xsplashaa/chicken-curie/throbber-spinner.png /usr/share/xsplashaa/chicken-curie
+copy_exec_if_exist @prefix@/share/xsplashaa/chicken-curie/throbber-finish.png /usr/share/xsplashaa/chicken-curie
+copy_exec_if_exist /usr/lib/libGL.so /usr/lib
+copy_exec_if_exist /usr/lib/xorg/protocol.txt /usr/lib/xorg
+copy_exec_if_exist /usr/lib/xorg/modules/drivers/fbdev_drv.so /usr/lib/xorg/modules/drivers
+copy_exec_if_exist /usr/lib/xorg/modules/drivers/vesa_drv.so /usr/lib/xorg/modules/drivers
+copy_exec_if_exist /usr/lib/xorg/modules/linux/libfbdevhw.so /usr/lib/xorg/modules/linux
+copy_exec_if_exist /usr/lib/xorg/modules/extensions/libextmod.so /usr/lib/xorg/modules/extensions
+copy_exec_if_exist /usr/lib/xorg/modules/extensions/libdbe.so /usr/lib/xorg/modules/extensions
+copy_exec_if_exist /usr/lib/xorg/modules/extensions/libdri2.so /usr/lib/xorg/modules/extensions
+copy_exec_if_exist /usr/lib/xorg/modules/extensions/libdri.so /usr/lib/xorg/modules/extensions
+copy_exec_if_exist /usr/lib/xorg/modules/extensions/libglx.so /usr/lib/xorg/modules/extensions
+copy_exec_if_exist /usr/lib/xorg/modules/extensions/librecord.so /usr/lib/xorg/modules/extensions
+copy_exec_if_exist /usr/lib/xorg/modules/libexa.so /usr/lib/xorg/modules
+copy_exec_if_exist /usr/lib/xorg/modules/libexa.so /usr/lib/xorg/modules
+copy_exec_if_exist /usr/lib/xorg/modules/libfb.so /usr/lib/xorg/modules
+copy_exec_if_exist /usr/lib/xorg/modules/libint10.so /usr/lib/xorg/modules
+copy_exec_if_exist /usr/lib/xorg/modules/libshadowfb.so /usr/lib/xorg/modules
+copy_exec_if_exist /usr/lib/xorg/modules/libshadow.so /usr/lib/xorg/modules
+copy_exec_if_exist /usr/lib/xorg/modules/libvbe.so /usr/lib/xorg/modules
+copy_exec_if_exist /usr/lib/xorg/modules/libvgahw.so /usr/lib/xorg/modules
+copy_exec_if_exist /usr/lib/xorg/modules/libwfb.so /usr/lib/xorg/modules
+copy_exec_if_exist /usr/lib/xorg/modules/libxaa.so /usr/lib/xorg/modules
+copy_exec_if_exist /usr/lib/xorg/modules/libxf8_16bpp.so /usr/lib/xorg/modules
+copy_exec_if_exist /usr/lib/pango/1.6.0/modules/pango-basic-x.so /usr/lib/pango/1.6.0/modules
+copy_exec_if_exist /usr/lib/pango/1.6.0/modules/pango-basic-fc.so /usr/lib/pango/1.6.0/modules
+copy_exec_if_exist /usr/lib/pango/1.6.0/module-files.d/libpango1.0-0.modules /usr/lib/pango/1.6.0/module-files.d
+copy_exec_if_exist /usr/lib/gtk-2.0/2.10.0/loaders/libpixbufloader-png.so /usr/lib/gtk-2.0/2.10.0/loaders
+copy_exec_if_exist /usr/lib/gtk-2.0/2.10.0/loader-files.d/libgtk2.0-0.loaders /usr/lib/gtk-2.0/2.10.0/loader-files.d
+copy_exec_if_exist /usr/share/fonts/X11/misc/6x13-ISO8859-1.pcf.gz /usr/share/fonts/X11/misc
+copy_exec_if_exist /usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf /usr/share/fonts/truetype/ttf-dejavu
+copy_exec_if_exist /usr/share/fonts/truetype/ttf-dejavu/DejaVuSans-Bold.ttf /usr/share/fonts/truetype/ttf-dejavu
+copy_exec_if_exist /usr/share/fonts/truetype/ttf-dejavu/DejaVuSansMono.ttf /usr/share/fonts/truetype/ttf-dejavu
+copy_exec_if_exist /usr/share/fonts/truetype/ttf-dejavu/DejaVuSansMono-Bold.ttf /usr/share/fonts/truetype/ttf-dejavu
+copy_exec_if_exist /usr/share/fonts/truetype/ttf-dejavu/DejaVuSerif.ttf /usr/share/fonts/truetype/ttf-dejavu
+copy_exec_if_exist /usr/share/fonts/truetype/ttf-dejavu/DejaVuSerif-Bold.ttf /usr/share/fonts/truetype/ttf-dejavu
+copy_exec_if_exist /usr/share/fonts/X11/misc/cursor.pcf.gz /usr/share/fonts/X11/misc
+copy_exec_if_exist /usr/share/fonts/X11/misc/fonts.alias /usr/share/fonts/X11/misc
+copy_exec_if_exist /usr/share/fonts/X11/misc/fonts.dir /usr/share/fonts/X11/misc
+copy_exec_if_exist /usr/share/fonts/X11/75dpi/fonts.alias /usr/share/fonts/X11/75dpi
+copy_exec_if_exist /usr/share/fonts/X11/75dpi/fonts.dir /usr/share/fonts/X11/75dpi
+copy_exec_if_exist /usr/share/fonts/X11/100dpi/fonts.alias /usr/share/fonts/X11/100dpi
+copy_exec_if_exist /usr/share/fonts/X11/100dpi/fonts.dir /usr/share/fonts/X11/100dpi
+copy_exec_if_exist /usr/share/fonts/X11/Type1/fonts.alias /usr/share/fonts/X11/Type1
+copy_exec_if_exist /usr/share/fonts/X11/Type1/fonts.dir /usr/share/fonts/X11/Type1
+copy_exec_if_exist /var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType/fonts.alias /var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType
+copy_exec_if_exist /var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType/fonts.dir /var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType
+copy_exec_if_exist /usr/lib/ConsoleKit/ck-get-x11-display-device /usr/lib/ConsoleKit
+copy_exec_if_exist /usr/lib/ConsoleKit/ck-get-x11-server-pid /usr/lib/ConsoleKit
