@@ -37,11 +37,11 @@ namespace XSAA
     }
 
     static int
-    on_pam_conversation(int num_msg, [CCode (array_length = false)]Message[] messages, [CCode (array_length = false)]out Response* resp, void* appdata_ptr)
+    on_pam_conversation(int num_msg, [CCode (array_length = false)]Message[] messages, out Response* resp, void* appdata_ptr)
     {
         unowned PamSession pam = (PamSession)appdata_ptr;
-        resp = (Response[])malloc(sizeof(Response) * num_msg);
-            
+        resp = new Response[num_msg];
+        
         for (int i = 0; i < num_msg; i++)
         {
             unowned Message msg = messages[i];

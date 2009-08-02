@@ -65,6 +65,9 @@ struct _XSAADisplayPrivate {
 };
 
 
+static gboolean xsaa_display_is_ready;
+static gboolean xsaa_display_is_ready = FALSE;
+static gpointer xsaa_display_parent_class = NULL;
 
 GQuark xsaa_display_error_quark (void);
 GType xsaa_display_get_type (void);
@@ -72,8 +75,6 @@ GType xsaa_display_get_type (void);
 enum  {
 	XSAA_DISPLAY_DUMMY_PROPERTY
 };
-static gboolean xsaa_display_is_ready;
-static gboolean xsaa_display_is_ready = FALSE;
 static gboolean xsaa_display_get_running_pid (XSAADisplay* self);
 static gboolean xsaa_display_on_wait_is_ready (XSAADisplay* self);
 static gboolean _xsaa_display_on_wait_is_ready_gsource_func (gpointer self);
@@ -85,9 +86,7 @@ static void xsaa_display_on_child_watch (XSAADisplay* self, GPid pid, gint statu
 static void _xsaa_display_on_child_watch_gchild_watch_func (GPid pid, gint status, gpointer self);
 XSAADisplay* xsaa_display_new (const char* cmd, gint number, GError** error);
 XSAADisplay* xsaa_display_construct (GType object_type, const char* cmd, gint number, GError** error);
-XSAADisplay* xsaa_display_new (const char* cmd, gint number, GError** error);
 char* xsaa_display_get_device (XSAADisplay* self);
-static gpointer xsaa_display_parent_class = NULL;
 static void xsaa_display_finalize (GObject* obj);
 static void _vala_array_destroy (gpointer array, gint array_length, GDestroyNotify destroy_func);
 static void _vala_array_free (gpointer array, gint array_length, GDestroyNotify destroy_func);
@@ -136,13 +135,13 @@ XSAADisplay* xsaa_display_construct (GType object_type, const char* cmd, gint nu
 				g_shell_parse_argv (cmd, &argvp_length1, &argvp, &_inner_error_);
 				if (_inner_error_ != NULL) {
 					if (_inner_error_->domain == G_SHELL_ERROR) {
-						goto __catch3_g_shell_error;
+						goto __catch2_g_shell_error;
 					}
-					goto __finally3;
+					goto __finally2;
 				}
 			}
-			goto __finally3;
-			__catch3_g_shell_error:
+			goto __finally2;
+			__catch2_g_shell_error:
 			{
 				GError * err;
 				err = _inner_error_;
@@ -150,23 +149,14 @@ XSAADisplay* xsaa_display_construct (GType object_type, const char* cmd, gint nu
 				{
 					_inner_error_ = g_error_new (XSAA_DISPLAY_ERROR, XSAA_DISPLAY_ERROR_COMMAND, "Invalid %s command !!", cmd);
 					if (_inner_error_ != NULL) {
-						if (_inner_error_->domain == XSAA_DISPLAY_ERROR) {
-							g_propagate_error (error, _inner_error_);
-							(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
-							argvp = (_vala_array_free (argvp, argvp_length1, (GDestroyNotify) g_free), NULL);
-							return;
-						} else {
-							(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
-							argvp = (_vala_array_free (argvp, argvp_length1, (GDestroyNotify) g_free), NULL);
-							g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
-							g_clear_error (&_inner_error_);
-							return NULL;
-						}
+						(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
+						argvp = (_vala_array_free (argvp, argvp_length1, (GDestroyNotify) g_free), NULL);
+						goto __finally2;
 					}
 					(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 				}
 			}
-			__finally3:
+			__finally2:
 			if (_inner_error_ != NULL) {
 				if (_inner_error_->domain == XSAA_DISPLAY_ERROR) {
 					g_propagate_error (error, _inner_error_);
@@ -185,14 +175,14 @@ XSAADisplay* xsaa_display_construct (GType object_type, const char* cmd, gint nu
 				g_spawn_async (NULL, argvp, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD, _xsaa_display_on_child_setup_gspawn_child_setup_func, self, &self->priv->pid, &_inner_error_);
 				if (_inner_error_ != NULL) {
 					if (_inner_error_->domain == G_SPAWN_ERROR) {
-						goto __catch4_g_spawn_error;
+						goto __catch3_g_spawn_error;
 					}
-					goto __finally4;
+					goto __finally3;
 				}
-				g_child_watch_add (self->priv->pid, _xsaa_display_on_child_watch_gchild_watch_func, self);
+				g_child_watch_add ((GPid) self->priv->pid, _xsaa_display_on_child_watch_gchild_watch_func, self);
 			}
-			goto __finally4;
-			__catch4_g_spawn_error:
+			goto __finally3;
+			__catch3_g_spawn_error:
 			{
 				GError * err;
 				err = _inner_error_;
@@ -203,23 +193,14 @@ XSAADisplay* xsaa_display_construct (GType object_type, const char* cmd, gint nu
 					signal (SIGUSR1, SIG_IGN);
 					_inner_error_ = g_error_new_literal (XSAA_DISPLAY_ERROR, XSAA_DISPLAY_ERROR_LAUNCH, err->message);
 					if (_inner_error_ != NULL) {
-						if (_inner_error_->domain == XSAA_DISPLAY_ERROR) {
-							g_propagate_error (error, _inner_error_);
-							(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
-							argvp = (_vala_array_free (argvp, argvp_length1, (GDestroyNotify) g_free), NULL);
-							return;
-						} else {
-							(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
-							argvp = (_vala_array_free (argvp, argvp_length1, (GDestroyNotify) g_free), NULL);
-							g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
-							g_clear_error (&_inner_error_);
-							return NULL;
-						}
+						(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
+						argvp = (_vala_array_free (argvp, argvp_length1, (GDestroyNotify) g_free), NULL);
+						goto __finally3;
 					}
 					(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 				}
 			}
-			__finally4:
+			__finally3:
 			if (_inner_error_ != NULL) {
 				if (_inner_error_->domain == XSAA_DISPLAY_ERROR) {
 					g_propagate_error (error, _inner_error_);
@@ -274,12 +255,14 @@ static void xsaa_display_on_child_watch (XSAADisplay* self, GPid pid, gint statu
 
 
 static gboolean xsaa_display_on_wait_is_ready (XSAADisplay* self) {
+	gboolean result;
 	g_return_val_if_fail (self != NULL, FALSE);
 	if (xsaa_display_is_ready) {
 		g_signal_emit_by_name (self, "ready");
 	}
 	self->priv->sig_handled = (guint) 0;
-	return !xsaa_display_is_ready;
+	result = !xsaa_display_is_ready;
+	return result;
 }
 
 
@@ -291,9 +274,9 @@ static void xsaa_display_on_sig_usr1 (gint signum) {
 
 
 static gboolean xsaa_display_get_running_pid (XSAADisplay* self) {
+	gboolean result;
 	GError * _inner_error_;
 	char* spid;
-	gboolean _tmp6_;
 	g_return_val_if_fail (self != NULL, FALSE);
 	_inner_error_ = NULL;
 	spid = NULL;
@@ -314,19 +297,20 @@ static gboolean xsaa_display_get_running_pid (XSAADisplay* self) {
 		spid = (_tmp4_ = _tmp2_, spid = (g_free (spid), NULL), _tmp4_);
 		_tmp3_;
 		if (_inner_error_ != NULL) {
-			goto __catch5_g_error;
-			goto __finally5;
+			goto __catch4_g_error;
+			goto __finally4;
 		}
 		g_strstrip (spid);
 		fprintf (stderr, "Found X server at pid %s\n", spid);
 		if (spid != NULL) {
-			gboolean _tmp5_;
 			self->priv->pid = (GPid) atoi (spid);
-			return (_tmp5_ = ((gint) self->priv->pid) > 0, spid = (g_free (spid), NULL), _tmp5_);
+			result = ((gint) self->priv->pid) > 0;
+			spid = (g_free (spid), NULL);
+			return result;
 		}
 	}
-	goto __finally5;
-	__catch5_g_error:
+	goto __finally4;
+	__catch4_g_error:
 	{
 		GError * err;
 		err = _inner_error_;
@@ -336,18 +320,21 @@ static gboolean xsaa_display_get_running_pid (XSAADisplay* self) {
 			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 		}
 	}
-	__finally5:
+	__finally4:
 	if (_inner_error_ != NULL) {
 		spid = (g_free (spid), NULL);
 		g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
 		g_clear_error (&_inner_error_);
 		return FALSE;
 	}
-	return (_tmp6_ = FALSE, spid = (g_free (spid), NULL), _tmp6_);
+	result = FALSE;
+	spid = (g_free (spid), NULL);
+	return result;
 }
 
 
 char* xsaa_display_get_device (XSAADisplay* self) {
+	char* result;
 	GError * _inner_error_;
 	char* device;
 	g_return_val_if_fail (self != NULL, NULL);
@@ -368,8 +355,8 @@ char* xsaa_display_get_device (XSAADisplay* self) {
 		device = (_tmp4_ = _tmp2_, device = (g_free (device), NULL), _tmp4_);
 		_tmp3_;
 		if (_inner_error_ != NULL) {
-			goto __catch6_g_error;
-			goto __finally6;
+			goto __catch5_g_error;
+			goto __finally5;
 		}
 		_tmp1_ = (g_free (_tmp1_), NULL);
 		_tmp0_ = (g_free (_tmp0_), NULL);
@@ -396,8 +383,8 @@ char* xsaa_display_get_device (XSAADisplay* self) {
 			close (fd);
 		}
 	}
-	goto __finally6;
-	__catch6_g_error:
+	goto __finally5;
+	__catch5_g_error:
 	{
 		GError * err;
 		err = _inner_error_;
@@ -407,14 +394,15 @@ char* xsaa_display_get_device (XSAADisplay* self) {
 			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 		}
 	}
-	__finally6:
+	__finally5:
 	if (_inner_error_ != NULL) {
 		device = (g_free (device), NULL);
 		g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
 		g_clear_error (&_inner_error_);
 		return NULL;
 	}
-	return device;
+	result = device;
+	return result;
 }
 
 

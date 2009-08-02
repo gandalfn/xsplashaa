@@ -17,7 +17,6 @@ namespace Pam
         [CCode (cname = "pam_open_session")]
         public int close_session(int flags);
         [CCode (cname = "pam_getenvlist", array_length = false, array_null_terminated = true)]
-        [NoArrayLength]
         public string[] getenvlist();
         [CCode (cname = "pam_end")]
         public int end(int status);

@@ -35,7 +35,7 @@ namespace XSAA
     {
         uint sig_handled = 0;
         static bool is_ready = false;
-        Pid pid = 0;
+        Pid pid = (Pid)0;
         int number;
         
         signal void ready();
@@ -71,7 +71,7 @@ namespace XSAA
                                             SpawnFlags.SEARCH_PATH |
                                             SpawnFlags.DO_NOT_REAP_CHILD, 
                                             on_child_setup, out pid);
-                        ChildWatch.add(pid, on_child_watch);        
+                        ChildWatch.add((Pid)pid, on_child_watch);        
                     }
                     catch (SpawnError err)
                     {

@@ -392,8 +392,11 @@ namespace XSAA
     static int 
     main (string[] args) 
     {
+        pid_t pid;
 	    pid_t ppgid;
-	    ppgid = getpgid();
+	    
+	    pid = getpid();
+	    ppgid = getpgid(pid);
 	    setsid();
     	setpgid(0, ppgid);
 

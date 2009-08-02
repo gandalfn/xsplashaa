@@ -1,12 +1,1 @@
 [encoding: UTF-8]
-# List of source files which contain translatable strings.
-src/test-slide-notebook.vala
-src/xsaa-client.vala
-src/xsaa-display.vala
-src/xsaa-main.vala
-src/xsaa-pam.vala
-src/xsaa-server.vala
-src/xsaa-session-daemon.vala
-src/xsaa-slide-notebook.vala
-src/xsaa-socket.vala
-src/xsaa-splash.vala

@@ -25,7 +25,7 @@ namespace Posix
     [CCode (cheader_filename = "sys/un.h", cname = "struct sockaddr_un", free_function="g_free")]
 	public class sockaddr_un : sockaddr {
 	    public int sun_family;
-	    public char[108] sun_path;
+	    public char sun_path[108];
 	}
 
     [CCode (cheader_filename = "sys/socket.h", sentinel = "")]
@@ -48,9 +48,6 @@ namespace Posix
     
     [CCode (cheader_filename = "pwd.h")]
 	public unowned Passwd? getpwnam (string user);
-
-    [CCode (cheader_filename = "unistd.h,sys/types.h")]
-	public int setsid ();
 
     [CCode (cheader_filename = "unistd.h,sys/types.h")]
 	public int setegid (gid_t rgid);

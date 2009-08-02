@@ -54,7 +54,7 @@ namespace XSAA
         private string display_num;
         private string device_num;
 
-        private Pid pid = 0;
+        private Pid pid = (Pid)0;
         unowned Passwd passwd;
         private string pass = null;
         private PamSession pam;
@@ -309,7 +309,7 @@ namespace XSAA
                                     SpawnFlags.SEARCH_PATH |
                                     SpawnFlags.DO_NOT_REAP_CHILD, 
                                     on_child_setup, out pid);
-                ChildWatch.add(pid, on_child_watch);        
+                ChildWatch.add((Pid)pid, on_child_watch);        
             }
             catch (GLib.Error err)
             {

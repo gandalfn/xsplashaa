@@ -34,7 +34,7 @@ datadir = @datadir@
 datarootdir = @datarootdir@
 libdir = @libdir@
 DATADIRNAME = @DATADIRNAME@
-itlocaledir = $(prefix)/$(DATADIRNAME)/locale
+itlocaledir = @localedir@
 subdir = po
 install_sh = @install_sh@
 # Automake >= 1.8 provides @mkdir_p@.
@@ -63,7 +63,7 @@ USE_LINGUAS=$(shell if test -n "$(USER_LINGUAS)" -o -n "$(LINGUAS)"; then LLINGU
 POFILES=$(shell LINGUAS="$(PO_LINGUAS)"; for lang in $$LINGUAS; do printf "$$lang.po "; done)
 
 DISTFILES = Makefile.in.in POTFILES.in $(POFILES)
-EXTRA_DISTFILES = ChangeLog POTFILES.skip Makevars LINGUAS
+EXTRA_DISTFILES =  POTFILES.skip Makevars LINGUAS
 
 POTFILES = \
 # This comment gets stripped out

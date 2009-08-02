@@ -22,6 +22,7 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
+#include <vala-widgets/ssi-vala-widgets.h>
 #include <stdlib.h>
 #include <string.h>
 #include <float.h>
@@ -74,16 +75,6 @@ typedef struct _XSAAServerClass XSAAServerClass;
 typedef struct _XSAAThrobber XSAAThrobber;
 typedef struct _XSAAThrobberClass XSAAThrobberClass;
 
-#define XSAA_TYPE_SLIDE_NOTEBOOK (xsaa_slide_notebook_get_type ())
-#define XSAA_SLIDE_NOTEBOOK(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XSAA_TYPE_SLIDE_NOTEBOOK, XSAASlideNotebook))
-#define XSAA_SLIDE_NOTEBOOK_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), XSAA_TYPE_SLIDE_NOTEBOOK, XSAASlideNotebookClass))
-#define XSAA_IS_SLIDE_NOTEBOOK(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XSAA_TYPE_SLIDE_NOTEBOOK))
-#define XSAA_IS_SLIDE_NOTEBOOK_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), XSAA_TYPE_SLIDE_NOTEBOOK))
-#define XSAA_SLIDE_NOTEBOOK_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), XSAA_TYPE_SLIDE_NOTEBOOK, XSAASlideNotebookClass))
-
-typedef struct _XSAASlideNotebook XSAASlideNotebook;
-typedef struct _XSAASlideNotebookClass XSAASlideNotebookClass;
-
 struct _XSAASplash {
 	GtkWindow parent_instance;
 	XSAASplashPrivate * priv;
@@ -102,7 +93,7 @@ struct _XSAASplashPrivate {
 	XSAAThrobber* throbber_shutdown;
 	gint current_phase;
 	GtkProgressBar* progress;
-	XSAASlideNotebook* notebook;
+	SSISlideNotebook* notebook;
 	GtkLabel* label_prompt;
 	GtkEntry* entry_prompt;
 	char* username;
@@ -115,12 +106,12 @@ struct _XSAASplashPrivate {
 };
 
 
+static gpointer xsaa_splash_parent_class = NULL;
 
 GType xsaa_splash_get_type (void);
 GType xsaa_socket_get_type (void);
 GType xsaa_server_get_type (void);
 GType xsaa_throbber_get_type (void);
-GType xsaa_slide_notebook_get_type (void);
 #define XSAA_SPLASH_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), XSAA_TYPE_SPLASH, XSAASplashPrivate))
 enum  {
 	XSAA_SPLASH_DUMMY_PROPERTY
@@ -135,9 +126,7 @@ static void xsaa_splash_on_progress_orientation (XSAASplash* self, GtkProgressBa
 static void _xsaa_splash_on_progress_orientation_xsaa_server_progress_orientation (XSAAServer* _sender, GtkProgressBarOrientation orientation, gpointer self);
 XSAASplash* xsaa_splash_new (XSAAServer* server);
 XSAASplash* xsaa_splash_construct (GType object_type, XSAAServer* server);
-XSAASplash* xsaa_splash_new (XSAAServer* server);
 static void xsaa_splash_load_config (XSAASplash* self);
-gint xsaa_slide_notebook_append_page (XSAASlideNotebook* self, GtkWidget* widget, GtkWidget* label);
 XSAAThrobber* xsaa_throbber_new (const char* name, guint interval, GError** error);
 XSAAThrobber* xsaa_throbber_construct (GType object_type, const char* name, guint interval, GError** error);
 void xsaa_throbber_start (XSAAThrobber* self);
@@ -162,10 +151,7 @@ void xsaa_splash_show_shutdown (XSAASplash* self);
 void xsaa_splash_ask_for_login (XSAASplash* self);
 void xsaa_splash_login_message (XSAASplash* self, const char* msg);
 static void _gtk_main_quit_gtk_object_destroy (XSAASplash* _sender, gpointer self);
-XSAASlideNotebook* xsaa_slide_notebook_new (void);
-XSAASlideNotebook* xsaa_slide_notebook_construct (GType object_type);
 static GObject * xsaa_splash_constructor (GType type, guint n_construct_properties, GObjectConstructParam * construct_properties);
-static gpointer xsaa_splash_parent_class = NULL;
 static void xsaa_splash_finalize (GObject* obj);
 static void _vala_array_destroy (gpointer array, gint array_length, GDestroyNotify destroy_func);
 static void _vala_array_free (gpointer array, gint array_length, GDestroyNotify destroy_func);
@@ -233,44 +219,44 @@ static void xsaa_splash_load_config (XSAASplash* self) {
 			g_key_file_load_from_file (config, PACKAGE_CONFIG_FILE, G_KEY_FILE_NONE, &_inner_error_);
 			if (_inner_error_ != NULL) {
 				(config == NULL) ? NULL : (config = (g_key_file_free (config), NULL));
-				goto __catch7_g_error;
-				goto __finally7;
+				goto __catch6_g_error;
+				goto __finally6;
 			}
 			_tmp0_ = g_key_file_get_string (config, "splash", "theme", &_inner_error_);
 			if (_inner_error_ != NULL) {
 				(config == NULL) ? NULL : (config = (g_key_file_free (config), NULL));
-				goto __catch7_g_error;
-				goto __finally7;
+				goto __catch6_g_error;
+				goto __finally6;
 			}
 			_tmp1_ = NULL;
 			self->priv->theme = (_tmp1_ = _tmp0_, self->priv->theme = (g_free (self->priv->theme), NULL), _tmp1_);
 			_tmp2_ = g_key_file_get_string (config, "splash", "background", &_inner_error_);
 			if (_inner_error_ != NULL) {
 				(config == NULL) ? NULL : (config = (g_key_file_free (config), NULL));
-				goto __catch7_g_error;
-				goto __finally7;
+				goto __catch6_g_error;
+				goto __finally6;
 			}
 			_tmp3_ = NULL;
 			self->priv->bg = (_tmp3_ = _tmp2_, self->priv->bg = (g_free (self->priv->bg), NULL), _tmp3_);
 			_tmp4_ = g_key_file_get_string (config, "splash", "text", &_inner_error_);
 			if (_inner_error_ != NULL) {
 				(config == NULL) ? NULL : (config = (g_key_file_free (config), NULL));
-				goto __catch7_g_error;
-				goto __finally7;
+				goto __catch6_g_error;
+				goto __finally6;
 			}
 			_tmp5_ = NULL;
 			self->priv->text = (_tmp5_ = _tmp4_, self->priv->text = (g_free (self->priv->text), NULL), _tmp5_);
 			_tmp6_ = g_key_file_get_double (config, "splash", "yposition", &_inner_error_);
 			if (_inner_error_ != NULL) {
 				(config == NULL) ? NULL : (config = (g_key_file_free (config), NULL));
-				goto __catch7_g_error;
-				goto __finally7;
+				goto __catch6_g_error;
+				goto __finally6;
 			}
 			self->priv->yposition = (float) _tmp6_;
 			(config == NULL) ? NULL : (config = (g_key_file_free (config), NULL));
 		}
-		goto __finally7;
-		__catch7_g_error:
+		goto __finally6;
+		__catch6_g_error:
 		{
 			GError * err;
 			err = _inner_error_;
@@ -280,7 +266,7 @@ static void xsaa_splash_load_config (XSAASplash* self) {
 				(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 			}
 		}
-		__finally7:
+		__finally6:
 		if (_inner_error_ != NULL) {
 			g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
 			g_clear_error (&_inner_error_);
@@ -297,17 +283,17 @@ static void xsaa_splash_construct_loading_page (XSAASplash* self) {
 	char* _tmp0_;
 	GtkLabel* _tmp2_;
 	GtkLabel* label;
-	GtkLabel* _tmp6_;
+	GtkLabel* _tmp7_;
+	char* _tmp6_;
 	char* _tmp5_;
-	char* _tmp4_;
-	GtkLabel* _tmp10_;
-	char* _tmp9_;
-	char* _tmp8_;
+	GtkLabel* _tmp12_;
+	char* _tmp11_;
+	char* _tmp10_;
 	g_return_if_fail (self != NULL);
 	_inner_error_ = NULL;
 	table = g_object_ref_sink ((GtkTable*) gtk_table_new ((guint) 3, (guint) 2, FALSE));
 	gtk_widget_show ((GtkWidget*) table);
-	xsaa_slide_notebook_append_page (self->priv->notebook, (GtkWidget*) table, NULL);
+	ssi_slide_notebook_append_page (self->priv->notebook, (GtkWidget*) table, NULL);
 	gtk_container_set_border_width ((GtkContainer*) table, (guint) 12);
 	gtk_table_set_col_spacings (table, (guint) 12);
 	gtk_table_set_row_spacings (table, (guint) 12);
@@ -321,15 +307,59 @@ static void xsaa_splash_construct_loading_page (XSAASplash* self) {
 	gtk_table_attach_defaults (table, (GtkWidget*) label, (guint) 0, (guint) 1, (guint) 0, (guint) 1);
 	{
 		XSAAThrobber* _tmp3_;
-		_tmp3_ = NULL;
-		self->priv->phase[0] = (_tmp3_ = g_object_ref_sink (xsaa_throbber_new (self->priv->theme, (guint) 83, &_inner_error_)), (self->priv->phase[0] == NULL) ? NULL : (self->priv->phase[0] = (g_object_unref (self->priv->phase[0]), NULL)), _tmp3_);
+		XSAAThrobber* _tmp4_;
+		_tmp3_ = g_object_ref_sink (xsaa_throbber_new (self->priv->theme, (guint) 83, &_inner_error_));
+		if (_inner_error_ != NULL) {
+			goto __catch7_g_error;
+			goto __finally7;
+		}
+		_tmp4_ = NULL;
+		self->priv->phase[0] = (_tmp4_ = g_object_ref_sink (_tmp3_), (self->priv->phase[0] == NULL) ? NULL : (self->priv->phase[0] = (g_object_unref (self->priv->phase[0]), NULL)), _tmp4_);
+		gtk_widget_show ((GtkWidget*) self->priv->phase[0]);
+		xsaa_throbber_start (self->priv->phase[0]);
+		gtk_table_attach_defaults (table, (GtkWidget*) self->priv->phase[0], (guint) 1, (guint) 2, (guint) 0, (guint) 1);
+	}
+	goto __finally7;
+	__catch7_g_error:
+	{
+		GError * err;
+		err = _inner_error_;
+		_inner_error_ = NULL;
+		{
+			fprintf (stderr, "Error on loading throbber %s", err->message);
+			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
+		}
+	}
+	__finally7:
+	if (_inner_error_ != NULL) {
+		(table == NULL) ? NULL : (table = (g_object_unref (table), NULL));
+		(label == NULL) ? NULL : (label = (g_object_unref (label), NULL));
+		g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
+		g_clear_error (&_inner_error_);
+		return;
+	}
+	_tmp7_ = NULL;
+	_tmp6_ = NULL;
+	_tmp5_ = NULL;
+	label = (_tmp7_ = g_object_ref_sink ((GtkLabel*) gtk_label_new (_tmp6_ = g_strconcat (_tmp5_ = g_strconcat ("<span size='xx-large' color='", self->priv->text, NULL), "'>Check filesystem ...</span>", NULL))), (label == NULL) ? NULL : (label = (g_object_unref (label), NULL)), _tmp7_);
+	_tmp6_ = (g_free (_tmp6_), NULL);
+	_tmp5_ = (g_free (_tmp5_), NULL);
+	gtk_label_set_use_markup (label, TRUE);
+	gtk_misc_set_alignment ((GtkMisc*) label, 0.0f, 0.5f);
+	gtk_widget_show ((GtkWidget*) label);
+	gtk_table_attach_defaults (table, (GtkWidget*) label, (guint) 0, (guint) 1, (guint) 1, (guint) 2);
+	{
+		XSAAThrobber* _tmp8_;
+		XSAAThrobber* _tmp9_;
+		_tmp8_ = g_object_ref_sink (xsaa_throbber_new (self->priv->theme, (guint) 83, &_inner_error_));
 		if (_inner_error_ != NULL) {
 			goto __catch8_g_error;
 			goto __finally8;
 		}
-		gtk_widget_show ((GtkWidget*) self->priv->phase[0]);
-		xsaa_throbber_start (self->priv->phase[0]);
-		gtk_table_attach_defaults (table, (GtkWidget*) self->priv->phase[0], (guint) 1, (guint) 2, (guint) 0, (guint) 1);
+		_tmp9_ = NULL;
+		self->priv->phase[1] = (_tmp9_ = g_object_ref_sink (_tmp8_), (self->priv->phase[1] == NULL) ? NULL : (self->priv->phase[1] = (g_object_unref (self->priv->phase[1]), NULL)), _tmp9_);
+		gtk_widget_show ((GtkWidget*) self->priv->phase[1]);
+		gtk_table_attach_defaults (table, (GtkWidget*) self->priv->phase[1], (guint) 1, (guint) 2, (guint) 1, (guint) 2);
 	}
 	goto __finally8;
 	__catch8_g_error:
@@ -350,26 +380,28 @@ static void xsaa_splash_construct_loading_page (XSAASplash* self) {
 		g_clear_error (&_inner_error_);
 		return;
 	}
-	_tmp6_ = NULL;
-	_tmp5_ = NULL;
-	_tmp4_ = NULL;
-	label = (_tmp6_ = g_object_ref_sink ((GtkLabel*) gtk_label_new (_tmp5_ = g_strconcat (_tmp4_ = g_strconcat ("<span size='xx-large' color='", self->priv->text, NULL), "'>Check filesystem ...</span>", NULL))), (label == NULL) ? NULL : (label = (g_object_unref (label), NULL)), _tmp6_);
-	_tmp5_ = (g_free (_tmp5_), NULL);
-	_tmp4_ = (g_free (_tmp4_), NULL);
+	_tmp12_ = NULL;
+	_tmp11_ = NULL;
+	_tmp10_ = NULL;
+	label = (_tmp12_ = g_object_ref_sink ((GtkLabel*) gtk_label_new (_tmp11_ = g_strconcat (_tmp10_ = g_strconcat ("<span size='xx-large' color='", self->priv->text, NULL), "'>Start System ...</span>", NULL))), (label == NULL) ? NULL : (label = (g_object_unref (label), NULL)), _tmp12_);
+	_tmp11_ = (g_free (_tmp11_), NULL);
+	_tmp10_ = (g_free (_tmp10_), NULL);
 	gtk_label_set_use_markup (label, TRUE);
 	gtk_misc_set_alignment ((GtkMisc*) label, 0.0f, 0.5f);
 	gtk_widget_show ((GtkWidget*) label);
-	gtk_table_attach_defaults (table, (GtkWidget*) label, (guint) 0, (guint) 1, (guint) 1, (guint) 2);
+	gtk_table_attach_defaults (table, (GtkWidget*) label, (guint) 0, (guint) 1, (guint) 2, (guint) 3);
 	{
-		XSAAThrobber* _tmp7_;
-		_tmp7_ = NULL;
-		self->priv->phase[1] = (_tmp7_ = g_object_ref_sink (xsaa_throbber_new (self->priv->theme, (guint) 83, &_inner_error_)), (self->priv->phase[1] == NULL) ? NULL : (self->priv->phase[1] = (g_object_unref (self->priv->phase[1]), NULL)), _tmp7_);
+		XSAAThrobber* _tmp13_;
+		XSAAThrobber* _tmp14_;
+		_tmp13_ = g_object_ref_sink (xsaa_throbber_new (self->priv->theme, (guint) 83, &_inner_error_));
 		if (_inner_error_ != NULL) {
 			goto __catch9_g_error;
 			goto __finally9;
 		}
-		gtk_widget_show ((GtkWidget*) self->priv->phase[1]);
-		gtk_table_attach_defaults (table, (GtkWidget*) self->priv->phase[1], (guint) 1, (guint) 2, (guint) 1, (guint) 2);
+		_tmp14_ = NULL;
+		self->priv->phase[2] = (_tmp14_ = g_object_ref_sink (_tmp13_), (self->priv->phase[2] == NULL) ? NULL : (self->priv->phase[2] = (g_object_unref (self->priv->phase[2]), NULL)), _tmp14_);
+		gtk_widget_show ((GtkWidget*) self->priv->phase[2]);
+		gtk_table_attach_defaults (table, (GtkWidget*) self->priv->phase[2], (guint) 1, (guint) 2, (guint) 2, (guint) 3);
 	}
 	goto __finally9;
 	__catch9_g_error:
@@ -383,46 +415,6 @@ static void xsaa_splash_construct_loading_page (XSAASplash* self) {
 		}
 	}
 	__finally9:
-	if (_inner_error_ != NULL) {
-		(table == NULL) ? NULL : (table = (g_object_unref (table), NULL));
-		(label == NULL) ? NULL : (label = (g_object_unref (label), NULL));
-		g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
-		g_clear_error (&_inner_error_);
-		return;
-	}
-	_tmp10_ = NULL;
-	_tmp9_ = NULL;
-	_tmp8_ = NULL;
-	label = (_tmp10_ = g_object_ref_sink ((GtkLabel*) gtk_label_new (_tmp9_ = g_strconcat (_tmp8_ = g_strconcat ("<span size='xx-large' color='", self->priv->text, NULL), "'>Start System ...</span>", NULL))), (label == NULL) ? NULL : (label = (g_object_unref (label), NULL)), _tmp10_);
-	_tmp9_ = (g_free (_tmp9_), NULL);
-	_tmp8_ = (g_free (_tmp8_), NULL);
-	gtk_label_set_use_markup (label, TRUE);
-	gtk_misc_set_alignment ((GtkMisc*) label, 0.0f, 0.5f);
-	gtk_widget_show ((GtkWidget*) label);
-	gtk_table_attach_defaults (table, (GtkWidget*) label, (guint) 0, (guint) 1, (guint) 2, (guint) 3);
-	{
-		XSAAThrobber* _tmp11_;
-		_tmp11_ = NULL;
-		self->priv->phase[2] = (_tmp11_ = g_object_ref_sink (xsaa_throbber_new (self->priv->theme, (guint) 83, &_inner_error_)), (self->priv->phase[2] == NULL) ? NULL : (self->priv->phase[2] = (g_object_unref (self->priv->phase[2]), NULL)), _tmp11_);
-		if (_inner_error_ != NULL) {
-			goto __catch10_g_error;
-			goto __finally10;
-		}
-		gtk_widget_show ((GtkWidget*) self->priv->phase[2]);
-		gtk_table_attach_defaults (table, (GtkWidget*) self->priv->phase[2], (guint) 1, (guint) 2, (guint) 2, (guint) 3);
-	}
-	goto __finally10;
-	__catch10_g_error:
-	{
-		GError * err;
-		err = _inner_error_;
-		_inner_error_ = NULL;
-		{
-			fprintf (stderr, "Error on loading throbber %s", err->message);
-			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
-		}
-	}
-	__finally10:
 	if (_inner_error_ != NULL) {
 		(table == NULL) ? NULL : (table = (g_object_unref (table), NULL));
 		(label == NULL) ? NULL : (label = (g_object_unref (label), NULL));
@@ -460,7 +452,7 @@ static void xsaa_splash_construct_login_page (XSAASplash* self) {
 	g_return_if_fail (self != NULL);
 	alignment = g_object_ref_sink ((GtkAlignment*) gtk_alignment_new (0.5f, 1.0f, (float) 0, (float) 0));
 	gtk_widget_show ((GtkWidget*) alignment);
-	xsaa_slide_notebook_append_page (self->priv->notebook, (GtkWidget*) alignment, NULL);
+	ssi_slide_notebook_append_page (self->priv->notebook, (GtkWidget*) alignment, NULL);
 	box = g_object_ref_sink ((GtkVBox*) gtk_vbox_new (FALSE, 12));
 	gtk_widget_show ((GtkWidget*) box);
 	gtk_container_add ((GtkContainer*) alignment, (GtkWidget*) box);
@@ -523,7 +515,7 @@ static void xsaa_splash_construct_launch_session_page (XSAASplash* self) {
 	_inner_error_ = NULL;
 	table = g_object_ref_sink ((GtkTable*) gtk_table_new ((guint) 1, (guint) 2, FALSE));
 	gtk_widget_show ((GtkWidget*) table);
-	xsaa_slide_notebook_append_page (self->priv->notebook, (GtkWidget*) table, NULL);
+	ssi_slide_notebook_append_page (self->priv->notebook, (GtkWidget*) table, NULL);
 	gtk_container_set_border_width ((GtkContainer*) table, (guint) 12);
 	gtk_table_set_col_spacings (table, (guint) 12);
 	gtk_table_set_row_spacings (table, (guint) 12);
@@ -537,17 +529,19 @@ static void xsaa_splash_construct_launch_session_page (XSAASplash* self) {
 	gtk_table_attach_defaults (table, (GtkWidget*) label, (guint) 0, (guint) 1, (guint) 0, (guint) 1);
 	{
 		XSAAThrobber* _tmp3_;
-		_tmp3_ = NULL;
-		self->priv->throbber_session = (_tmp3_ = g_object_ref_sink (xsaa_throbber_new (self->priv->theme, (guint) 83, &_inner_error_)), (self->priv->throbber_session == NULL) ? NULL : (self->priv->throbber_session = (g_object_unref (self->priv->throbber_session), NULL)), _tmp3_);
+		XSAAThrobber* _tmp4_;
+		_tmp3_ = g_object_ref_sink (xsaa_throbber_new (self->priv->theme, (guint) 83, &_inner_error_));
 		if (_inner_error_ != NULL) {
-			goto __catch11_g_error;
-			goto __finally11;
+			goto __catch10_g_error;
+			goto __finally10;
 		}
+		_tmp4_ = NULL;
+		self->priv->throbber_session = (_tmp4_ = g_object_ref_sink (_tmp3_), (self->priv->throbber_session == NULL) ? NULL : (self->priv->throbber_session = (g_object_unref (self->priv->throbber_session), NULL)), _tmp4_);
 		gtk_widget_show ((GtkWidget*) self->priv->throbber_session);
 		gtk_table_attach_defaults (table, (GtkWidget*) self->priv->throbber_session, (guint) 1, (guint) 2, (guint) 0, (guint) 1);
 	}
-	goto __finally11;
-	__catch11_g_error:
+	goto __finally10;
+	__catch10_g_error:
 	{
 		GError * err;
 		err = _inner_error_;
@@ -557,7 +551,7 @@ static void xsaa_splash_construct_launch_session_page (XSAASplash* self) {
 			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 		}
 	}
-	__finally11:
+	__finally10:
 	if (_inner_error_ != NULL) {
 		(table == NULL) ? NULL : (table = (g_object_unref (table), NULL));
 		(label == NULL) ? NULL : (label = (g_object_unref (label), NULL));
@@ -581,7 +575,7 @@ static void xsaa_splash_construct_shutdown_page (XSAASplash* self) {
 	_inner_error_ = NULL;
 	table = g_object_ref_sink ((GtkTable*) gtk_table_new ((guint) 1, (guint) 2, FALSE));
 	gtk_widget_show ((GtkWidget*) table);
-	xsaa_slide_notebook_append_page (self->priv->notebook, (GtkWidget*) table, NULL);
+	ssi_slide_notebook_append_page (self->priv->notebook, (GtkWidget*) table, NULL);
 	gtk_container_set_border_width ((GtkContainer*) table, (guint) 12);
 	gtk_table_set_col_spacings (table, (guint) 12);
 	gtk_table_set_row_spacings (table, (guint) 12);
@@ -595,17 +589,19 @@ static void xsaa_splash_construct_shutdown_page (XSAASplash* self) {
 	gtk_table_attach_defaults (table, (GtkWidget*) label, (guint) 0, (guint) 1, (guint) 0, (guint) 1);
 	{
 		XSAAThrobber* _tmp3_;
-		_tmp3_ = NULL;
-		self->priv->throbber_shutdown = (_tmp3_ = g_object_ref_sink (xsaa_throbber_new (self->priv->theme, (guint) 83, &_inner_error_)), (self->priv->throbber_shutdown == NULL) ? NULL : (self->priv->throbber_shutdown = (g_object_unref (self->priv->throbber_shutdown), NULL)), _tmp3_);
+		XSAAThrobber* _tmp4_;
+		_tmp3_ = g_object_ref_sink (xsaa_throbber_new (self->priv->theme, (guint) 83, &_inner_error_));
 		if (_inner_error_ != NULL) {
-			goto __catch12_g_error;
-			goto __finally12;
+			goto __catch11_g_error;
+			goto __finally11;
 		}
+		_tmp4_ = NULL;
+		self->priv->throbber_shutdown = (_tmp4_ = g_object_ref_sink (_tmp3_), (self->priv->throbber_shutdown == NULL) ? NULL : (self->priv->throbber_shutdown = (g_object_unref (self->priv->throbber_shutdown), NULL)), _tmp4_);
 		gtk_widget_show ((GtkWidget*) self->priv->throbber_shutdown);
 		gtk_table_attach_defaults (table, (GtkWidget*) self->priv->throbber_shutdown, (guint) 1, (guint) 2, (guint) 0, (guint) 1);
 	}
-	goto __finally12;
-	__catch12_g_error:
+	goto __finally11;
+	__catch11_g_error:
 	{
 		GError * err;
 		err = _inner_error_;
@@ -615,7 +611,7 @@ static void xsaa_splash_construct_shutdown_page (XSAASplash* self) {
 			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 		}
 	}
-	__finally12:
+	__finally11:
 	if (_inner_error_ != NULL) {
 		(table == NULL) ? NULL : (table = (g_object_unref (table), NULL));
 		(label == NULL) ? NULL : (label = (g_object_unref (label), NULL));
@@ -657,9 +653,11 @@ static void xsaa_splash_on_phase_changed (XSAASplash* self, gint new_phase) {
 
 
 static gboolean xsaa_splash_on_pulse (XSAASplash* self) {
+	gboolean result;
 	g_return_val_if_fail (self != NULL, FALSE);
 	gtk_progress_bar_pulse (self->priv->progress);
-	return TRUE;
+	result = TRUE;
+	return result;
 }
 
 
@@ -844,7 +842,7 @@ static GObject * xsaa_splash_constructor (GType type, guint n_construct_properti
 		GtkHBox* hbox;
 		GtkVBox* vbox_right;
 		GtkAlignment* _tmp17_;
-		XSAASlideNotebook* _tmp18_;
+		SSISlideNotebook* _tmp18_;
 		GtkTable* table_progress;
 		GtkProgressBar* _tmp19_;
 		xsaa_splash_load_config (self);
@@ -881,8 +879,8 @@ static GObject * xsaa_splash_constructor (GType type, guint n_construct_properti
 			_tmp3_ = NULL;
 			pixbuf = (_tmp3_ = gdk_pixbuf_new_from_file (_tmp2_ = g_strconcat (_tmp1_ = g_strconcat (PACKAGE_DATA_DIR "/", self->priv->theme, NULL), "/distrib-logo.png", NULL), &_inner_error_), _tmp2_ = (g_free (_tmp2_), NULL), _tmp1_ = (g_free (_tmp1_), NULL), _tmp3_);
 			if (_inner_error_ != NULL) {
-				goto __catch13_g_error;
-				goto __finally13;
+				goto __catch12_g_error;
+				goto __finally12;
 			}
 			_tmp4_ = 0;
 			if ((geometry.width / 3) > gdk_pixbuf_get_width (pixbuf)) {
@@ -900,8 +898,8 @@ static GObject * xsaa_splash_constructor (GType type, guint n_construct_properti
 			(pixbuf == NULL) ? NULL : (pixbuf = (g_object_unref (pixbuf), NULL));
 			(image == NULL) ? NULL : (image = (g_object_unref (image), NULL));
 		}
-		goto __finally13;
-		__catch13_g_error:
+		goto __finally12;
+		__catch12_g_error:
 		{
 			GError * err;
 			err = _inner_error_;
@@ -917,7 +915,7 @@ static GObject * xsaa_splash_constructor (GType type, guint n_construct_properti
 				(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 			}
 		}
-		__finally13:
+		__finally12:
 		if (_inner_error_ != NULL) {
 			(screen == NULL) ? NULL : (screen = (g_object_unref (screen), NULL));
 			(alignment == NULL) ? NULL : (alignment = (g_object_unref (alignment), NULL));
@@ -945,8 +943,8 @@ static GObject * xsaa_splash_constructor (GType type, guint n_construct_properti
 			_tmp11_ = NULL;
 			pixbuf = (_tmp11_ = gdk_pixbuf_new_from_file (_tmp10_ = g_strconcat (_tmp9_ = g_strconcat (PACKAGE_DATA_DIR "/", self->priv->theme, NULL), "/logo.png", NULL), &_inner_error_), _tmp10_ = (g_free (_tmp10_), NULL), _tmp9_ = (g_free (_tmp9_), NULL), _tmp11_);
 			if (_inner_error_ != NULL) {
-				goto __catch14_g_error;
-				goto __finally14;
+				goto __catch13_g_error;
+				goto __finally13;
 			}
 			_tmp12_ = 0;
 			if ((geometry.width / 3) > gdk_pixbuf_get_width (pixbuf)) {
@@ -964,8 +962,8 @@ static GObject * xsaa_splash_constructor (GType type, guint n_construct_properti
 			(pixbuf == NULL) ? NULL : (pixbuf = (g_object_unref (pixbuf), NULL));
 			(image == NULL) ? NULL : (image = (g_object_unref (image), NULL));
 		}
-		goto __finally14;
-		__catch14_g_error:
+		goto __finally13;
+		__catch13_g_error:
 		{
 			GError * err;
 			err = _inner_error_;
@@ -981,7 +979,7 @@ static GObject * xsaa_splash_constructor (GType type, guint n_construct_properti
 				(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 			}
 		}
-		__finally14:
+		__finally13:
 		if (_inner_error_ != NULL) {
 			(screen == NULL) ? NULL : (screen = (g_object_unref (screen), NULL));
 			(alignment == NULL) ? NULL : (alignment = (g_object_unref (alignment), NULL));
@@ -996,7 +994,7 @@ static GObject * xsaa_splash_constructor (GType type, guint n_construct_properti
 		gtk_widget_show ((GtkWidget*) alignment);
 		gtk_box_pack_start ((GtkBox*) vbox_right, (GtkWidget*) alignment, TRUE, TRUE, (guint) 0);
 		_tmp18_ = NULL;
-		self->priv->notebook = (_tmp18_ = g_object_ref_sink (xsaa_slide_notebook_new ()), (self->priv->notebook == NULL) ? NULL : (self->priv->notebook = (g_object_unref (self->priv->notebook), NULL)), _tmp18_);
+		self->priv->notebook = (_tmp18_ = g_object_ref_sink (ssi_slide_notebook_new ()), (self->priv->notebook == NULL) ? NULL : (self->priv->notebook = (g_object_unref (self->priv->notebook), NULL)), _tmp18_);
 		gtk_widget_show ((GtkWidget*) self->priv->notebook);
 		gtk_container_add ((GtkContainer*) alignment, (GtkWidget*) self->priv->notebook);
 		gtk_notebook_set_show_tabs ((GtkNotebook*) self->priv->notebook, FALSE);

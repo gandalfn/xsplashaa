@@ -61,6 +61,7 @@ struct _XSAAThrobberPrivate {
 };
 
 
+static gpointer xsaa_throbber_parent_class = NULL;
 
 GType xsaa_throbber_get_type (void);
 #define XSAA_THROBBER_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), XSAA_TYPE_THROBBER, XSAAThrobberPrivate))
@@ -69,13 +70,11 @@ enum  {
 };
 XSAAThrobber* xsaa_throbber_new (const char* name, guint interval, GError** error);
 XSAAThrobber* xsaa_throbber_construct (GType object_type, const char* name, guint interval, GError** error);
-XSAAThrobber* xsaa_throbber_new (const char* name, guint interval, GError** error);
 static gboolean xsaa_throbber_on_timer (XSAAThrobber* self);
 static gboolean _xsaa_throbber_on_timer_gsource_func (gpointer self);
 void xsaa_throbber_start (XSAAThrobber* self);
 void xsaa_throbber_stop (XSAAThrobber* self);
 void xsaa_throbber_finished (XSAAThrobber* self);
-static gpointer xsaa_throbber_parent_class = NULL;
 static void xsaa_throbber_finalize (GObject* obj);
 static void _vala_array_destroy (gpointer array, gint array_length, GDestroyNotify destroy_func);
 static void _vala_array_free (gpointer array, gint array_length, GDestroyNotify destroy_func);
@@ -89,16 +88,20 @@ XSAAThrobber* xsaa_throbber_construct (GType object_type, const char* name, guin
 	char* _tmp0_;
 	GdkPixbuf* _tmp2_;
 	GdkPixbuf* spinner;
-	GdkPixbuf* _tmp5_;
 	char* _tmp4_;
 	char* _tmp3_;
-	GdkPixbuf* _tmp8_;
-	char* _tmp7_;
-	char* _tmp6_;
-	gint _tmp9_;
+	GdkPixbuf* _tmp5_;
+	GdkPixbuf* _tmp6_;
+	GdkPixbuf* _tmp7_;
+	char* _tmp9_;
+	char* _tmp8_;
+	GdkPixbuf* _tmp10_;
+	GdkPixbuf* _tmp11_;
+	GdkPixbuf* _tmp12_;
+	gint _tmp13_;
 	guint size;
 	gint nb_steps;
-	GdkPixbuf** _tmp10_;
+	GdkPixbuf** _tmp14_;
 	g_return_val_if_fail (name != NULL, NULL);
 	_inner_error_ = NULL;
 	self = g_object_newv (object_type, 0, NULL);
@@ -110,49 +113,72 @@ XSAAThrobber* xsaa_throbber_construct (GType object_type, const char* name, guin
 		g_propagate_error (error, _inner_error_);
 		return;
 	}
-	_tmp5_ = NULL;
 	_tmp4_ = NULL;
 	_tmp3_ = NULL;
-	self->priv->initial = (_tmp5_ = gdk_pixbuf_new_from_file (_tmp4_ = g_strconcat (_tmp3_ = g_strconcat (PACKAGE_DATA_DIR "/", name, NULL), "/throbber-initial.png", NULL), &_inner_error_), (self->priv->initial == NULL) ? NULL : (self->priv->initial = (g_object_unref (self->priv->initial), NULL)), _tmp5_);
+	_tmp5_ = NULL;
+	_tmp6_ = (_tmp5_ = gdk_pixbuf_new_from_file (_tmp4_ = g_strconcat (_tmp3_ = g_strconcat (PACKAGE_DATA_DIR "/", name, NULL), "/throbber-initial.png", NULL), &_inner_error_), _tmp4_ = (g_free (_tmp4_), NULL), _tmp3_ = (g_free (_tmp3_), NULL), _tmp5_);
 	if (_inner_error_ != NULL) {
 		g_propagate_error (error, _inner_error_);
 		(spinner == NULL) ? NULL : (spinner = (g_object_unref (spinner), NULL));
 		return;
 	}
-	_tmp4_ = (g_free (_tmp4_), NULL);
-	_tmp3_ = (g_free (_tmp3_), NULL);
-	_tmp8_ = NULL;
 	_tmp7_ = NULL;
-	_tmp6_ = NULL;
-	self->priv->finish = (_tmp8_ = gdk_pixbuf_new_from_file (_tmp7_ = g_strconcat (_tmp6_ = g_strconcat (PACKAGE_DATA_DIR "/", name, NULL), "/throbber-finish.png", NULL), &_inner_error_), (self->priv->finish == NULL) ? NULL : (self->priv->finish = (g_object_unref (self->priv->finish), NULL)), _tmp8_);
+	self->priv->initial = (_tmp7_ = _tmp6_, (self->priv->initial == NULL) ? NULL : (self->priv->initial = (g_object_unref (self->priv->initial), NULL)), _tmp7_);
+	_tmp9_ = NULL;
+	_tmp8_ = NULL;
+	_tmp10_ = NULL;
+	_tmp11_ = (_tmp10_ = gdk_pixbuf_new_from_file (_tmp9_ = g_strconcat (_tmp8_ = g_strconcat (PACKAGE_DATA_DIR "/", name, NULL), "/throbber-finish.png", NULL), &_inner_error_), _tmp9_ = (g_free (_tmp9_), NULL), _tmp8_ = (g_free (_tmp8_), NULL), _tmp10_);
 	if (_inner_error_ != NULL) {
 		g_propagate_error (error, _inner_error_);
 		(spinner == NULL) ? NULL : (spinner = (g_object_unref (spinner), NULL));
 		return;
 	}
-	_tmp7_ = (g_free (_tmp7_), NULL);
-	_tmp6_ = (g_free (_tmp6_), NULL);
-	_tmp9_ = 0;
+	_tmp12_ = NULL;
+	self->priv->finish = (_tmp12_ = _tmp11_, (self->priv->finish == NULL) ? NULL : (self->priv->finish = (g_object_unref (self->priv->finish), NULL)), _tmp12_);
+	_tmp13_ = 0;
 	if (gdk_pixbuf_get_width (self->priv->initial) > gdk_pixbuf_get_height (self->priv->initial)) {
-		_tmp9_ = gdk_pixbuf_get_width (self->priv->initial);
+		_tmp13_ = gdk_pixbuf_get_width (self->priv->initial);
 	} else {
-		_tmp9_ = gdk_pixbuf_get_height (self->priv->initial);
+		_tmp13_ = gdk_pixbuf_get_height (self->priv->initial);
 	}
-	size = (guint) _tmp9_;
+	size = (guint) _tmp13_;
 	nb_steps = (gdk_pixbuf_get_height (spinner) * gdk_pixbuf_get_width (spinner)) / ((gint) size);
-	_tmp10_ = NULL;
-	self->priv->pixbufs = (_tmp10_ = g_new0 (GdkPixbuf*, nb_steps + 1), self->priv->pixbufs = (_vala_array_free (self->priv->pixbufs, self->priv->pixbufs_length1, (GDestroyNotify) g_object_unref), NULL), self->priv->pixbufs_length1 = nb_steps, self->priv->pixbufs_size = self->priv->pixbufs_length1, _tmp10_);
+	_tmp14_ = NULL;
+	self->priv->pixbufs = (_tmp14_ = g_new0 (GdkPixbuf*, nb_steps + 1), self->priv->pixbufs = (_vala_array_free (self->priv->pixbufs, self->priv->pixbufs_length1, (GDestroyNotify) g_object_unref), NULL), self->priv->pixbufs_length1 = nb_steps, self->priv->pixbufs_size = self->priv->pixbufs_length1, _tmp14_);
 	{
 		guint i;
 		i = (guint) 0;
-		for (; i < gdk_pixbuf_get_height (spinner); i = i + size) {
-			{
-				guint j;
-				j = (guint) 0;
-				for (; j < gdk_pixbuf_get_width (spinner); j = j + size, self->priv->steps++) {
-					GdkPixbuf* _tmp11_;
-					_tmp11_ = NULL;
-					self->priv->pixbufs[self->priv->steps] = (_tmp11_ = gdk_pixbuf_new_subpixbuf (spinner, (gint) j, (gint) i, (gint) size, (gint) size), (self->priv->pixbufs[self->priv->steps] == NULL) ? NULL : (self->priv->pixbufs[self->priv->steps] = (g_object_unref (self->priv->pixbufs[self->priv->steps]), NULL)), _tmp11_);
+		{
+			gboolean _tmp15_;
+			_tmp15_ = TRUE;
+			while (TRUE) {
+				if (!_tmp15_) {
+					i = i + size;
+				}
+				_tmp15_ = FALSE;
+				if (!(i < gdk_pixbuf_get_height (spinner))) {
+					break;
+				}
+				{
+					guint j;
+					j = (guint) 0;
+					{
+						gboolean _tmp16_;
+						_tmp16_ = TRUE;
+						while (TRUE) {
+							GdkPixbuf* _tmp17_;
+							if (!_tmp16_) {
+								j = j + size;
+								self->priv->steps++;
+							}
+							_tmp16_ = FALSE;
+							if (!(j < gdk_pixbuf_get_width (spinner))) {
+								break;
+							}
+							_tmp17_ = NULL;
+							self->priv->pixbufs[self->priv->steps] = (_tmp17_ = gdk_pixbuf_new_subpixbuf (spinner, (gint) j, (gint) i, (gint) size, (gint) size), (self->priv->pixbufs[self->priv->steps] == NULL) ? NULL : (self->priv->pixbufs[self->priv->steps] = (g_object_unref (self->priv->pixbufs[self->priv->steps]), NULL)), _tmp17_);
+						}
+					}
 				}
 			}
 		}
@@ -199,12 +225,14 @@ void xsaa_throbber_finished (XSAAThrobber* self) {
 
 
 static gboolean xsaa_throbber_on_timer (XSAAThrobber* self) {
+	gboolean result;
 	g_return_val_if_fail (self != NULL, FALSE);
 	if ((self->priv->current = self->priv->current + 1) == self->priv->steps) {
 		self->priv->current = 1;
 	}
 	gtk_image_set_from_pixbuf ((GtkImage*) self, self->priv->pixbufs[self->priv->current]);
-	return TRUE;
+	result = TRUE;
+	return result;
 }
 
 

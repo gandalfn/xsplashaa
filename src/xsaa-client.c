@@ -79,18 +79,6 @@ typedef enum  {
 } XSAASocketError;
 #define XSAA_SOCKET_ERROR xsaa_socket_error_quark ()
 
-
-GType xsaa_socket_get_type (void);
-GType xsaa_client_get_type (void);
-enum  {
-	XSAA_CLIENT_DUMMY_PROPERTY
-};
-GQuark xsaa_socket_error_quark (void);
-XSAASocket* xsaa_socket_new (const char* socket_name, GError** error);
-XSAASocket* xsaa_socket_construct (GType object_type, const char* socket_name, GError** error);
-XSAAClient* xsaa_client_new (const char* socket_name, GError** error);
-XSAAClient* xsaa_client_construct (GType object_type, const char* socket_name, GError** error);
-XSAAClient* xsaa_client_new (const char* socket_name, GError** error);
 static gpointer xsaa_client_parent_class = NULL;
 extern gboolean xsaa_ping;
 extern gboolean xsaa_pulse;
@@ -116,6 +104,17 @@ gboolean xsaa_left_to_right = FALSE;
 char* xsaa_socket_name = NULL;
 extern XSAAClient* xsaa_client;
 XSAAClient* xsaa_client = NULL;
+
+GType xsaa_socket_get_type (void);
+GType xsaa_client_get_type (void);
+enum  {
+	XSAA_CLIENT_DUMMY_PROPERTY
+};
+GQuark xsaa_socket_error_quark (void);
+XSAASocket* xsaa_socket_new (const char* socket_name, GError** error);
+XSAASocket* xsaa_socket_construct (GType object_type, const char* socket_name, GError** error);
+XSAAClient* xsaa_client_new (const char* socket_name, GError** error);
+XSAAClient* xsaa_client_construct (GType object_type, const char* socket_name, GError** error);
 gboolean xsaa_socket_send (XSAASocket* self, const char* message);
 gint xsaa_handle_quit (void);
 gboolean xsaa_socket_recv (XSAASocket* self, char** message);
@@ -185,8 +184,10 @@ GType xsaa_client_get_type (void) {
 
 
 gint xsaa_handle_quit (void) {
+	gint result;
 	xsaa_socket_send ((XSAASocket*) xsaa_client, "quit");
-	return 0;
+	result = 0;
+	return result;
 }
 
 
@@ -206,14 +207,18 @@ void xsaa_on_pong (void) {
 
 
 gint xsaa_handle_dbus (void) {
+	gint result;
 	xsaa_socket_send ((XSAASocket*) xsaa_client, "dbus");
-	return 0;
+	result = 0;
+	return result;
 }
 
 
 gint xsaa_handle_session (void) {
+	gint result;
 	xsaa_socket_send ((XSAASocket*) xsaa_client, "session");
-	return 0;
+	result = 0;
+	return result;
 }
 
 
@@ -223,17 +228,20 @@ static void _xsaa_on_pong_xsaa_socket_in (XSAAClient* _sender, gpointer self) {
 
 
 gint xsaa_handle_ping (void) {
+	gint result;
 	GMainLoop* loop;
-	gint _tmp0_;
 	loop = g_main_loop_new (NULL, FALSE);
 	g_signal_connect ((XSAASocket*) xsaa_client, "in", (GCallback) _xsaa_on_pong_xsaa_socket_in, NULL);
 	xsaa_socket_send ((XSAASocket*) xsaa_client, "ping");
 	g_main_loop_run (loop);
-	return (_tmp0_ = 0, (loop == NULL) ? NULL : (loop = (g_main_loop_unref (loop), NULL)), _tmp0_);
+	result = 0;
+	(loop == NULL) ? NULL : (loop = (g_main_loop_unref (loop), NULL));
+	return result;
 }
 
 
 gint xsaa_handle_phase (void) {
+	gint result;
 	char* _tmp1_;
 	char* _tmp0_;
 	_tmp1_ = NULL;
@@ -241,11 +249,13 @@ gint xsaa_handle_phase (void) {
 	xsaa_socket_send ((XSAASocket*) xsaa_client, _tmp1_ = g_strconcat ("phase=", _tmp0_ = g_strdup_printf ("%i", xsaa_phase - 1), NULL));
 	_tmp1_ = (g_free (_tmp1_), NULL);
 	_tmp0_ = (g_free (_tmp0_), NULL);
-	return 0;
+	result = 0;
+	return result;
 }
 
 
 gint xsaa_handle_progress (void) {
+	gint result;
 	char* _tmp1_;
 	char* _tmp0_;
 	_tmp1_ = NULL;
@@ -253,35 +263,45 @@ gint xsaa_handle_progress (void) {
 	xsaa_socket_send ((XSAASocket*) xsaa_client, _tmp1_ = g_strconcat ("progress=", _tmp0_ = g_strdup_printf ("%i", xsaa_progress), NULL));
 	_tmp1_ = (g_free (_tmp1_), NULL);
 	_tmp0_ = (g_free (_tmp0_), NULL);
-	return 0;
+	result = 0;
+	return result;
 }
 
 
 gint xsaa_handle_right_to_left (void) {
+	gint result;
 	xsaa_socket_send ((XSAASocket*) xsaa_client, "right-to-left");
-	return 0;
+	result = 0;
+	return result;
 }
 
 
 gint xsaa_handle_left_to_right (void) {
+	gint result;
 	xsaa_socket_send ((XSAASocket*) xsaa_client, "left-to-right");
-	return 0;
+	result = 0;
+	return result;
 }
 
 
 gint xsaa_handle_pulse (void) {
+	gint result;
 	xsaa_socket_send ((XSAASocket*) xsaa_client, "pulse");
-	return 0;
+	result = 0;
+	return result;
 }
 
 
 gint xsaa_handle_close_session (void) {
+	gint result;
 	xsaa_socket_send ((XSAASocket*) xsaa_client, "close-session");
-	return 0;
+	result = 0;
+	return result;
 }
 
 
 gint xsaa_main (char** args, int args_length1) {
+	gint result;
 	GError * _inner_error_;
 	char* _tmp0_;
 	_inner_error_ = NULL;
@@ -309,9 +329,10 @@ gint xsaa_main (char** args, int args_length1) {
 		err = _inner_error_;
 		_inner_error_ = NULL;
 		{
-			gint _tmp1_;
 			fprintf (stderr, "Option parsing failed: %s\n", err->message);
-			return (_tmp1_ = -1, (err == NULL) ? NULL : (err = (g_error_free (err), NULL)), _tmp1_);
+			result = -1;
+			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
+			return result;
 		}
 	}
 	__finally1:
@@ -321,15 +342,17 @@ gint xsaa_main (char** args, int args_length1) {
 		return 0;
 	}
 	{
+		XSAAClient* _tmp1_;
 		XSAAClient* _tmp2_;
-		_tmp2_ = NULL;
-		xsaa_client = (_tmp2_ = xsaa_client_new (xsaa_socket_name, &_inner_error_), (xsaa_client == NULL) ? NULL : (xsaa_client = (g_object_unref (xsaa_client), NULL)), _tmp2_);
+		_tmp1_ = xsaa_client_new (xsaa_socket_name, &_inner_error_);
 		if (_inner_error_ != NULL) {
 			if (_inner_error_->domain == XSAA_SOCKET_ERROR) {
 				goto __catch2_xsaa_socket_error;
 			}
 			goto __finally2;
 		}
+		_tmp2_ = NULL;
+		xsaa_client = (_tmp2_ = _tmp1_, (xsaa_client == NULL) ? NULL : (xsaa_client = (g_object_unref (xsaa_client), NULL)), _tmp2_);
 	}
 	goto __finally2;
 	__catch2_xsaa_socket_error:
@@ -338,8 +361,9 @@ gint xsaa_main (char** args, int args_length1) {
 		err = _inner_error_;
 		_inner_error_ = NULL;
 		{
-			gint _tmp3_;
-			return (_tmp3_ = -1, (err == NULL) ? NULL : (err = (g_error_free (err), NULL)), _tmp3_);
+			result = -1;
+			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
+			return result;
 		}
 	}
 	__finally2:
@@ -349,34 +373,44 @@ gint xsaa_main (char** args, int args_length1) {
 		return 0;
 	}
 	if (xsaa_quit) {
-		return xsaa_handle_quit ();
+		result = xsaa_handle_quit ();
+		return result;
 	} else {
 		if (xsaa_ping) {
-			return xsaa_handle_ping ();
+			result = xsaa_handle_ping ();
+			return result;
 		} else {
 			if (xsaa_dbus) {
-				return xsaa_handle_dbus ();
+				result = xsaa_handle_dbus ();
+				return result;
 			} else {
 				if (xsaa_session) {
-					return xsaa_handle_session ();
+					result = xsaa_handle_session ();
+					return result;
 				} else {
 					if (xsaa_phase > 0) {
-						return xsaa_handle_phase ();
+						result = xsaa_handle_phase ();
+						return result;
 					} else {
 						if (xsaa_pulse) {
-							return xsaa_handle_pulse ();
+							result = xsaa_handle_pulse ();
+							return result;
 						} else {
 							if (xsaa_progress > 0) {
-								return xsaa_handle_progress ();
+								result = xsaa_handle_progress ();
+								return result;
 							} else {
 								if (xsaa_right_to_left) {
-									return xsaa_handle_right_to_left ();
+									result = xsaa_handle_right_to_left ();
+									return result;
 								} else {
 									if (xsaa_left_to_right) {
-										return xsaa_handle_left_to_right ();
+										result = xsaa_handle_left_to_right ();
+										return result;
 									} else {
 										if (xsaa_close_session) {
-											return xsaa_handle_close_session ();
+											result = xsaa_handle_close_session ();
+											return result;
 										}
 									}
 								}
@@ -387,7 +421,8 @@ gint xsaa_main (char** args, int args_length1) {
 			}
 		}
 	}
-	return -1;
+	result = -1;
+	return result;
 }
 
 

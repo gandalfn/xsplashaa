@@ -125,6 +125,7 @@ struct _DBusObjectVTable {
 };
 
 
+static gpointer xsaa_session_parent_class = NULL;
 
 GType console_kit_session_parameter_get_type (void);
 ConsoleKitSessionParameter* console_kit_session_parameter_dup (const ConsoleKitSessionParameter* self);
@@ -153,9 +154,9 @@ static void xsaa_session_on_error_msg (XSAASession* self, const char* text);
 static void _xsaa_session_on_error_msg_xsaa_pam_session_error_msg (XSAAPamSession* _sender, const char* text, gpointer self);
 XSAASession* xsaa_session_new (DBusGConnection* conn, ConsoleKitManager* manager, const char* service, const char* user, gint display, const char* device, GError** error);
 XSAASession* xsaa_session_construct (GType object_type, DBusGConnection* conn, ConsoleKitManager* manager, const char* service, const char* user, gint display, const char* device, GError** error);
-XSAASession* xsaa_session_new (DBusGConnection* conn, ConsoleKitManager* manager, const char* service, const char* user, gint display, const char* device, GError** error);
 #define PACKAGE_XAUTH_DIR "/tmp/xsplashaa-xauth"
 char* console_kit_manager_open_session_with_parameters (ConsoleKitManager* self, ConsoleKitSessionParameter* parameters, int parameters_length1);
+static void _vala_ConsoleKitSessionParameter_array_free (ConsoleKitSessionParameter* array, gint array_length);
 static void xsaa_session_register (XSAASession* self);
 void xsaa_pam_session_open_session (XSAAPamSession* self, GError** error);
 void xsaa_pam_session_set_env (XSAAPamSession* self);
@@ -167,7 +168,6 @@ static void _xsaa_session_on_child_setup_gspawn_child_setup_func (gpointer self)
 static void _xsaa_session_on_child_watch_gchild_watch_func (GPid pid, gint status, gpointer self);
 void xsaa_session_launch (XSAASession* self, const char* cmd, GError** error);
 gint console_kit_manager_close_session (ConsoleKitManager* self, const char* cookie);
-static gpointer xsaa_session_parent_class = NULL;
 void xsaa_session_dbus_register_object (DBusConnection* connection, const char* path, void* object);
 void _xsaa_session_dbus_unregister (DBusConnection* connection, void* user_data);
 DBusHandlerResult xsaa_session_dbus_message (DBusConnection* connection, DBusMessage* message, void* object);
@@ -276,10 +276,10 @@ XSAASession* xsaa_session_construct (GType object_type, DBusGConnection* conn, C
 	XSAASession * self;
 	ConsoleKitManager* _tmp1_;
 	ConsoleKitManager* _tmp0_;
+	char* _tmp5_;
 	char* _tmp4_;
-	char* _tmp3_;
-	char* _tmp6_;
-	const char* _tmp5_;
+	char* _tmp7_;
+	const char* _tmp6_;
 	g_return_val_if_fail (conn != NULL, NULL);
 	g_return_val_if_fail (manager != NULL, NULL);
 	g_return_val_if_fail (service != NULL, NULL);
@@ -318,14 +318,16 @@ XSAASession* xsaa_session_construct (GType object_type, DBusGConnection* conn, C
 	}
 	{
 		XSAAPamSession* _tmp2_;
-		_tmp2_ = NULL;
-		self->priv->pam = (_tmp2_ = xsaa_pam_session_new (service, user, display, self->priv->xauth_file, device, &_inner_error_), (self->priv->pam == NULL) ? NULL : (self->priv->pam = (g_object_unref (self->priv->pam), NULL)), _tmp2_);
+		XSAAPamSession* _tmp3_;
+		_tmp2_ = xsaa_pam_session_new (service, user, display, self->priv->xauth_file, device, &_inner_error_);
 		if (_inner_error_ != NULL) {
 			if (_inner_error_->domain == XSAA_PAM_ERROR) {
 				goto __catch0_xsaa_pam_error;
 			}
 			goto __finally0;
 		}
+		_tmp3_ = NULL;
+		self->priv->pam = (_tmp3_ = _tmp2_, (self->priv->pam == NULL) ? NULL : (self->priv->pam = (g_object_unref (self->priv->pam), NULL)), _tmp3_);
 		g_signal_connect_object (self->priv->pam, "passwd", (GCallback) _xsaa_session_on_ask_passwd_xsaa_pam_session_passwd, self, 0);
 		g_signal_connect_object (self->priv->pam, "info", (GCallback) _xsaa_session_on_info_xsaa_pam_session_info, self, 0);
 		g_signal_connect_object (self->priv->pam, "error-msg", (GCallback) _xsaa_session_on_error_msg_xsaa_pam_session_error_msg, self, 0);
@@ -340,16 +342,8 @@ XSAASession* xsaa_session_construct (GType object_type, DBusGConnection* conn, C
 			g_object_unref ((GObject*) self);
 			_inner_error_ = g_error_new_literal (XSAA_SESSION_ERROR, XSAA_SESSION_ERROR_USER, "Error on create pam session");
 			if (_inner_error_ != NULL) {
-				if (_inner_error_->domain == XSAA_SESSION_ERROR) {
-					g_propagate_error (error, _inner_error_);
-					(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
-					return;
-				} else {
-					(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
-					g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
-					g_clear_error (&_inner_error_);
-					return NULL;
-				}
+				(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
+				goto __finally0;
 			}
 			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 		}
@@ -365,13 +359,13 @@ XSAASession* xsaa_session_construct (GType object_type, DBusGConnection* conn, C
 			return NULL;
 		}
 	}
-	_tmp4_ = NULL;
-	_tmp3_ = NULL;
-	self->priv->display_num = (_tmp4_ = g_strconcat (":", _tmp3_ = g_strdup_printf ("%i", display), NULL), self->priv->display_num = (g_free (self->priv->display_num), NULL), _tmp4_);
-	_tmp3_ = (g_free (_tmp3_), NULL);
-	_tmp6_ = NULL;
 	_tmp5_ = NULL;
-	self->priv->device_num = (_tmp6_ = (_tmp5_ = device, (_tmp5_ == NULL) ? NULL : g_strdup (_tmp5_)), self->priv->device_num = (g_free (self->priv->device_num), NULL), _tmp6_);
+	_tmp4_ = NULL;
+	self->priv->display_num = (_tmp5_ = g_strconcat (":", _tmp4_ = g_strdup_printf ("%i", display), NULL), self->priv->display_num = (g_free (self->priv->display_num), NULL), _tmp5_);
+	_tmp4_ = (g_free (_tmp4_), NULL);
+	_tmp7_ = NULL;
+	_tmp6_ = NULL;
+	self->priv->device_num = (_tmp7_ = (_tmp6_ = device, (_tmp6_ == NULL) ? NULL : g_strdup (_tmp6_)), self->priv->device_num = (g_free (self->priv->device_num), NULL), _tmp7_);
 	return self;
 }
 
@@ -398,7 +392,7 @@ static void xsaa_session_generate_xauth (XSAASession* self, const char* user, gi
 	gint data_size;
 	gint data_length1;
 	gchar* data;
-	char* _tmp10_;
+	char* _tmp11_;
 	g_return_if_fail (self != NULL);
 	g_return_if_fail (user != NULL);
 	_inner_error_ = NULL;
@@ -438,22 +432,33 @@ static void xsaa_session_generate_xauth (XSAASession* self, const char* user, gi
 	{
 		gint i;
 		i = 0;
-		for (; i < 16; i++) {
-			data[i] = (gchar) g_random_int_range ((gint32) 0, (gint32) 256);
+		{
+			gboolean _tmp10_;
+			_tmp10_ = TRUE;
+			while (TRUE) {
+				if (!_tmp10_) {
+					i++;
+				}
+				_tmp10_ = FALSE;
+				if (!(i < 16)) {
+					break;
+				}
+				data[i] = (gchar) g_random_int_range ((gint32) 0, (gint32) 256);
+			}
 		}
 	}
-	_tmp10_ = NULL;
-	auth->data = (_tmp10_ = g_strnfill ((gulong) 16, ' '), auth->data = (g_free (auth->data), NULL), _tmp10_);
+	_tmp11_ = NULL;
+	auth->data = (_tmp11_ = g_strnfill ((gsize) 16, ' '), auth->data = (g_free (auth->data), NULL), _tmp11_);
 	memcpy (auth->data, data, (gsize) 16);
 	auth->data_length = (gushort) 16;
 	XauWriteAuth (f, auth);
 	fflush (f);
 	if (chown (self->priv->xauth_file, self->priv->passwd->pw_uid, self->priv->passwd->pw_gid) < 0) {
-		char* _tmp11_;
-		GError* _tmp12_;
-		_tmp11_ = NULL;
+		char* _tmp12_;
+		GError* _tmp13_;
 		_tmp12_ = NULL;
-		_inner_error_ = (_tmp12_ = g_error_new_literal (XSAA_SESSION_ERROR, XSAA_SESSION_ERROR_XAUTH, _tmp11_ = g_strconcat ("Error on generate ", self->priv->xauth_file, NULL)), _tmp11_ = (g_free (_tmp11_), NULL), _tmp12_);
+		_tmp13_ = NULL;
+		_inner_error_ = (_tmp13_ = g_error_new_literal (XSAA_SESSION_ERROR, XSAA_SESSION_ERROR_XAUTH, _tmp12_ = g_strconcat ("Error on generate ", self->priv->xauth_file, NULL)), _tmp12_ = (g_free (_tmp12_), NULL), _tmp13_);
 		if (_inner_error_ != NULL) {
 			if (_inner_error_->domain == XSAA_SESSION_ERROR) {
 				g_propagate_error (error, _inner_error_);
@@ -474,6 +479,17 @@ static void xsaa_session_generate_xauth (XSAASession* self, const char* user, gi
 	(f == NULL) ? NULL : (f = (fclose (f), NULL));
 	(auth == NULL) ? NULL : (auth = (XauDisposeAuth (auth), NULL));
 	data = (g_free (data), NULL);
+}
+
+
+static void _vala_ConsoleKitSessionParameter_array_free (ConsoleKitSessionParameter* array, gint array_length) {
+	if (array != NULL) {
+		int i;
+		for (i = 0; i < array_length; i = i + 1) {
+			console_kit_session_parameter_destroy (&array[i]);
+		}
+	}
+	g_free (array);
 }
 
 
@@ -530,7 +546,7 @@ static void xsaa_session_register (XSAASession* self) {
 	console_kit_session_parameter_destroy (&x11displaydev);
 	G_IS_VALUE (&is_local_val) ? (g_value_unset (&is_local_val), NULL) : NULL;
 	console_kit_session_parameter_destroy (&islocal);
-	parameters = (g_free (parameters), NULL);
+	parameters = (_vala_ConsoleKitSessionParameter_array_free (parameters, parameters_length1), NULL);
 }
 
 
@@ -633,10 +649,12 @@ static void xsaa_session_on_child_watch (XSAASession* self, GPid pid, gint statu
 
 
 static char* xsaa_session_on_ask_passwd (XSAASession* self) {
+	char* result;
 	const char* _tmp0_;
 	g_return_val_if_fail (self != NULL, NULL);
 	_tmp0_ = NULL;
-	return (_tmp0_ = self->priv->pass, (_tmp0_ == NULL) ? NULL : g_strdup (_tmp0_));
+	result = (_tmp0_ = self->priv->pass, (_tmp0_ == NULL) ? NULL : g_strdup (_tmp0_));
+	return result;
 }
 
 
@@ -698,6 +716,24 @@ void xsaa_session_launch (XSAASession* self, const char* cmd, GError** error) {
 			goto __catch3_g_error;
 			goto __finally3;
 		}
+		{
+			char** argv_collection;
+			int argv_collection_length1;
+			int argv_it;
+			argv_collection = argvp;
+			argv_collection_length1 = argvp_length1;
+			for (argv_it = 0; argv_it < argvp_length1; argv_it = argv_it + 1) {
+				const char* _tmp0_;
+				char* argv;
+				_tmp0_ = NULL;
+				argv = (_tmp0_ = argv_collection[argv_it], (_tmp0_ == NULL) ? NULL : g_strdup (_tmp0_));
+				{
+					g_print ("%s ", argv);
+					argv = (g_free (argv), NULL);
+				}
+			}
+		}
+		g_print ("\n");
 	}
 	goto __finally3;
 	__catch3_g_error:
@@ -708,18 +744,9 @@ void xsaa_session_launch (XSAASession* self, const char* cmd, GError** error) {
 		{
 			_inner_error_ = g_error_new (XSAA_SESSION_ERROR, XSAA_SESSION_ERROR_COMMAND, "Invalid %s command !!", cmd);
 			if (_inner_error_ != NULL) {
-				if (_inner_error_->domain == XSAA_SESSION_ERROR) {
-					g_propagate_error (error, _inner_error_);
-					(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
-					argvp = (_vala_array_free (argvp, argvp_length1, (GDestroyNotify) g_free), NULL);
-					return;
-				} else {
-					(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
-					argvp = (_vala_array_free (argvp, argvp_length1, (GDestroyNotify) g_free), NULL);
-					g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
-					g_clear_error (&_inner_error_);
-					return;
-				}
+				(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
+				argvp = (_vala_array_free (argvp, argvp_length1, (GDestroyNotify) g_free), NULL);
+				goto __finally3;
 			}
 			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 		}
@@ -743,7 +770,7 @@ void xsaa_session_launch (XSAASession* self, const char* cmd, GError** error) {
 			goto __catch4_g_error;
 			goto __finally4;
 		}
-		g_child_watch_add (self->priv->pid, _xsaa_session_on_child_watch_gchild_watch_func, self);
+		g_child_watch_add ((GPid) self->priv->pid, _xsaa_session_on_child_watch_gchild_watch_func, self);
 	}
 	goto __finally4;
 	__catch4_g_error:
@@ -754,18 +781,9 @@ void xsaa_session_launch (XSAASession* self, const char* cmd, GError** error) {
 		{
 			_inner_error_ = g_error_new_literal (XSAA_SESSION_ERROR, XSAA_SESSION_ERROR_LAUNCH, err->message);
 			if (_inner_error_ != NULL) {
-				if (_inner_error_->domain == XSAA_SESSION_ERROR) {
-					g_propagate_error (error, _inner_error_);
-					(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
-					argvp = (_vala_array_free (argvp, argvp_length1, (GDestroyNotify) g_free), NULL);
-					return;
-				} else {
-					(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
-					argvp = (_vala_array_free (argvp, argvp_length1, (GDestroyNotify) g_free), NULL);
-					g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
-					g_clear_error (&_inner_error_);
-					return;
-				}
+				(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
+				argvp = (_vala_array_free (argvp, argvp_length1, (GDestroyNotify) g_free), NULL);
+				goto __finally4;
 			}
 			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 		}
@@ -831,8 +849,10 @@ static DBusMessage* _dbus_xsaa_session_property_get_all (XSAASession* self, DBus
 		dbus_message_iter_open_container (&reply_iter, DBUS_TYPE_ARRAY, "{sv}", &subiter);
 		dbus_message_iter_close_container (&reply_iter, &subiter);
 	} else {
-		return NULL;
+		dbus_message_unref (reply);
+		reply = NULL;
 	}
+	g_free (interface_name);
 	return reply;
 }
 
@@ -840,7 +860,7 @@ static DBusMessage* _dbus_xsaa_session_property_get_all (XSAASession* self, DBus
 static DBusMessage* _dbus_xsaa_session_set_passwd (XSAASession* self, DBusConnection* connection, DBusMessage* message) {
 	DBusMessageIter iter;
 	GError* error;
-	const char* pass;
+	char* pass;
 	const char* _tmp3_;
 	DBusMessage* reply;
 	error = NULL;
@@ -855,6 +875,7 @@ static DBusMessage* _dbus_xsaa_session_set_passwd (XSAASession* self, DBusConnec
 	xsaa_session_set_passwd (self, pass);
 	reply = dbus_message_new_method_return (message);
 	dbus_message_iter_init_append (reply, &iter);
+	pass = (g_free (pass), NULL);
 	return reply;
 }
 
@@ -878,7 +899,7 @@ static DBusMessage* _dbus_xsaa_session_authenticate (XSAASession* self, DBusConn
 static DBusMessage* _dbus_xsaa_session_launch (XSAASession* self, DBusConnection* connection, DBusMessage* message) {
 	DBusMessageIter iter;
 	GError* error;
-	const char* cmd;
+	char* cmd;
 	const char* _tmp4_;
 	DBusMessage* reply;
 	error = NULL;
@@ -897,6 +918,7 @@ static DBusMessage* _dbus_xsaa_session_launch (XSAASession* self, DBusConnection
 	}
 	reply = dbus_message_new_method_return (message);
 	dbus_message_iter_init_append (reply, &iter);
+	cmd = (g_free (cmd), NULL);
 	return reply;
 }
 

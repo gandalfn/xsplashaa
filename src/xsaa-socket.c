@@ -59,22 +59,21 @@ struct _XSAASocketClass {
 };
 
 
+static gint xsaa_socket_BUFFER_LENGTH;
+static gint xsaa_socket_BUFFER_LENGTH = 200;
+static gpointer xsaa_socket_parent_class = NULL;
 
 GQuark xsaa_socket_error_quark (void);
 GType xsaa_socket_get_type (void);
 enum  {
 	XSAA_SOCKET_DUMMY_PROPERTY
 };
-static gint xsaa_socket_BUFFER_LENGTH;
-static gint xsaa_socket_BUFFER_LENGTH = 200;
 static gboolean xsaa_socket_on_in_data (XSAASocket* self, GIOChannel* client, GIOCondition condition);
 static gboolean _xsaa_socket_on_in_data_gio_func (GIOChannel* source, GIOCondition condition, gpointer self);
 XSAASocket* xsaa_socket_new (const char* socket_name, GError** error);
 XSAASocket* xsaa_socket_construct (GType object_type, const char* socket_name, GError** error);
-XSAASocket* xsaa_socket_new (const char* socket_name, GError** error);
 gboolean xsaa_socket_send (XSAASocket* self, const char* message);
 gboolean xsaa_socket_recv (XSAASocket* self, char** message);
-static gpointer xsaa_socket_parent_class = NULL;
 static void xsaa_socket_finalize (GObject* obj);
 
 
@@ -176,28 +175,32 @@ XSAASocket* xsaa_socket_new (const char* socket_name, GError** error) {
 
 
 static gboolean xsaa_socket_on_in_data (XSAASocket* self, GIOChannel* client, GIOCondition condition) {
+	gboolean result;
 	g_return_val_if_fail (self != NULL, FALSE);
 	g_return_val_if_fail (client != NULL, FALSE);
 	g_signal_emit_by_name (self, "in");
-	return TRUE;
+	result = TRUE;
+	return result;
 }
 
 
 gboolean xsaa_socket_send (XSAASocket* self, const char* message) {
+	gboolean result;
 	g_return_val_if_fail (self != NULL, FALSE);
 	g_return_val_if_fail (message != NULL, FALSE);
-	return write (self->fd, message, (gsize) (g_utf8_strlen (message, -1) + 1)) > 0;
+	result = write (self->fd, message, (gsize) (g_utf8_strlen (message, -1) + 1)) > 0;
+	return result;
 }
 
 
 gboolean xsaa_socket_recv (XSAASocket* self, char** message) {
+	gboolean result;
 	GError * _inner_error_;
 	gchar* _tmp0_;
 	gint buffer_size;
 	gint buffer_length1;
 	gchar* buffer;
 	gsize bytes_read;
-	gboolean _tmp5_;
 	g_return_val_if_fail (self != NULL, FALSE);
 	if (message != NULL) {
 		*message = NULL;
@@ -222,12 +225,13 @@ gboolean xsaa_socket_recv (XSAASocket* self, char** message) {
 		if (_tmp1_) {
 			char* _tmp3_;
 			const char* _tmp2_;
-			gboolean _tmp4_;
 			buffer[bytes_read] = (gchar) 0;
 			_tmp3_ = NULL;
 			_tmp2_ = NULL;
 			(*message) = (_tmp3_ = (_tmp2_ = (const char*) buffer, (_tmp2_ == NULL) ? NULL : g_strdup (_tmp2_)), (*message) = (g_free ((*message)), NULL), _tmp3_);
-			return (_tmp4_ = TRUE, buffer = (g_free (buffer), NULL), _tmp4_);
+			result = TRUE;
+			buffer = (g_free (buffer), NULL);
+			return result;
 		}
 	}
 	goto __finally0;
@@ -248,7 +252,9 @@ gboolean xsaa_socket_recv (XSAASocket* self, char** message) {
 		g_clear_error (&_inner_error_);
 		return FALSE;
 	}
-	return (_tmp5_ = FALSE, buffer = (g_free (buffer), NULL), _tmp5_);
+	result = FALSE;
+	buffer = (g_free (buffer), NULL);
+	return result;
 }
 
 

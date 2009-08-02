@@ -38,7 +38,7 @@
 
 typedef struct _ConsoleKitSession ConsoleKitSession;
 typedef struct _ConsoleKitSessionIface ConsoleKitSessionIface;
-typedef DBusGProxy ConsoleKitSessionDBusProxy;
+typedef struct _ConsoleKitSessionDBusProxy ConsoleKitSessionDBusProxy;
 typedef DBusGProxyClass ConsoleKitSessionDBusProxyClass;
 
 #define CONSOLE_KIT_TYPE_MANAGER (console_kit_manager_get_type ())
@@ -51,7 +51,7 @@ typedef struct _ConsoleKitManagerIface ConsoleKitManagerIface;
 
 #define CONSOLE_KIT_TYPE_SESSION_PARAMETER (console_kit_session_parameter_get_type ())
 typedef struct _ConsoleKitSessionParameter ConsoleKitSessionParameter;
-typedef DBusGProxy ConsoleKitManagerDBusProxy;
+typedef struct _ConsoleKitManagerDBusProxy ConsoleKitManagerDBusProxy;
 typedef DBusGProxyClass ConsoleKitManagerDBusProxyClass;
 
 #define SETTINGS_DAEMON_TYPE_MANAGER (settings_daemon_manager_get_type ())
@@ -61,7 +61,7 @@ typedef DBusGProxyClass ConsoleKitManagerDBusProxyClass;
 
 typedef struct _SettingsDaemonManager SettingsDaemonManager;
 typedef struct _SettingsDaemonManagerIface SettingsDaemonManagerIface;
-typedef DBusGProxy SettingsDaemonManagerDBusProxy;
+typedef struct _SettingsDaemonManagerDBusProxy SettingsDaemonManagerDBusProxy;
 typedef DBusGProxyClass SettingsDaemonManagerDBusProxyClass;
 
 #define XSAA_TYPE_SESSION_MANAGER (xsaa_session_manager_get_type ())
@@ -91,6 +91,11 @@ struct _ConsoleKitSessionIface {
 	void (*activate) (ConsoleKitSession* self);
 };
 
+struct _ConsoleKitSessionDBusProxy {
+	DBusGProxy parent_instance;
+	gboolean disposed;
+};
+
 struct _ConsoleKitSessionParameter {
 	char* key;
 	GValue* value;
@@ -105,8 +110,18 @@ struct _ConsoleKitManagerIface {
 	void (*stop) (ConsoleKitManager* self);
 };
 
+struct _ConsoleKitManagerDBusProxy {
+	DBusGProxy parent_instance;
+	gboolean disposed;
+};
+
 struct _SettingsDaemonManagerIface {
 	GTypeInterface parent_iface;
+};
+
+struct _SettingsDaemonManagerDBusProxy {
+	DBusGProxy parent_instance;
+	gboolean disposed;
 };
 
 struct _XSAASessionManager {
@@ -136,6 +151,11 @@ struct _DBusObjectVTable {
 };
 
 
+extern GMainLoop* xsaa_loop;
+GMainLoop* xsaa_loop = NULL;
+static gpointer xsaa_session_manager_parent_class = NULL;
+extern gboolean xsaa_no_daemon;
+gboolean xsaa_no_daemon = FALSE;
 
 #define PACKAGE_XAUTH_DIR "/tmp/xsplashaa-xauth"
 GType console_kit_session_get_type (void);
@@ -146,10 +166,16 @@ DBusHandlerResult console_kit_session_dbus_message (DBusConnection* connection, 
 static DBusMessage* _dbus_console_kit_session_introspect (ConsoleKitSession* self, DBusConnection* connection, DBusMessage* message);
 static DBusMessage* _dbus_console_kit_session_property_get_all (ConsoleKitSession* self, DBusConnection* connection, DBusMessage* message);
 static DBusMessage* _dbus_console_kit_session_activate (ConsoleKitSession* self, DBusConnection* connection, DBusMessage* message);
+GType console_kit_session_dbus_proxy_get_type (void);
 ConsoleKitSession* console_kit_session_dbus_proxy_new (DBusGConnection* connection, const char* name, const char* path);
 DBusHandlerResult console_kit_session_dbus_proxy_filter (DBusConnection* connection, DBusMessage* message, void* user_data);
+enum  {
+	CONSOLE_KIT_SESSION_DBUS_PROXY_DUMMY_PROPERTY
+};
 static void console_kit_session_dbus_proxy_activate (ConsoleKitSession* self);
 static void console_kit_session_dbus_proxy_interface_init (ConsoleKitSessionIface* iface);
+static void console_kit_session_dbus_proxy_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec);
+static void console_kit_session_dbus_proxy_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec);
 GType console_kit_session_parameter_get_type (void);
 ConsoleKitSessionParameter* console_kit_session_parameter_dup (const ConsoleKitSessionParameter* self);
 void console_kit_session_parameter_free (ConsoleKitSessionParameter* self);
@@ -166,30 +192,41 @@ void _console_kit_manager_dbus_unregister (DBusConnection* connection, void* use
 DBusHandlerResult console_kit_manager_dbus_message (DBusConnection* connection, DBusMessage* message, void* object);
 static DBusMessage* _dbus_console_kit_manager_introspect (ConsoleKitManager* self, DBusConnection* connection, DBusMessage* message);
 static DBusMessage* _dbus_console_kit_manager_property_get_all (ConsoleKitManager* self, DBusConnection* connection, DBusMessage* message);
+static void _vala_ConsoleKitSessionParameter_array_free (ConsoleKitSessionParameter* array, gint array_length);
 static DBusMessage* _dbus_console_kit_manager_open_session_with_parameters (ConsoleKitManager* self, DBusConnection* connection, DBusMessage* message);
 static DBusMessage* _dbus_console_kit_manager_close_session (ConsoleKitManager* self, DBusConnection* connection, DBusMessage* message);
 static DBusMessage* _dbus_console_kit_manager_get_session_for_cookie (ConsoleKitManager* self, DBusConnection* connection, DBusMessage* message);
 static DBusMessage* _dbus_console_kit_manager_restart (ConsoleKitManager* self, DBusConnection* connection, DBusMessage* message);
 static DBusMessage* _dbus_console_kit_manager_stop (ConsoleKitManager* self, DBusConnection* connection, DBusMessage* message);
+GType console_kit_manager_dbus_proxy_get_type (void);
 ConsoleKitManager* console_kit_manager_dbus_proxy_new (DBusGConnection* connection, const char* name, const char* path);
 DBusHandlerResult console_kit_manager_dbus_proxy_filter (DBusConnection* connection, DBusMessage* message, void* user_data);
+enum  {
+	CONSOLE_KIT_MANAGER_DBUS_PROXY_DUMMY_PROPERTY
+};
 static char* console_kit_manager_dbus_proxy_open_session_with_parameters (ConsoleKitManager* self, ConsoleKitSessionParameter* parameters, int parameters_length1);
 static gint console_kit_manager_dbus_proxy_close_session (ConsoleKitManager* self, const char* cookie);
 static char* console_kit_manager_dbus_proxy_get_session_for_cookie (ConsoleKitManager* self, const char* cookie);
 static void console_kit_manager_dbus_proxy_restart (ConsoleKitManager* self);
 static void console_kit_manager_dbus_proxy_stop (ConsoleKitManager* self);
 static void console_kit_manager_dbus_proxy_interface_init (ConsoleKitManagerIface* iface);
+static void console_kit_manager_dbus_proxy_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec);
+static void console_kit_manager_dbus_proxy_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec);
 GType settings_daemon_manager_get_type (void);
 void settings_daemon_manager_dbus_register_object (DBusConnection* connection, const char* path, void* object);
 void _settings_daemon_manager_dbus_unregister (DBusConnection* connection, void* user_data);
 DBusHandlerResult settings_daemon_manager_dbus_message (DBusConnection* connection, DBusMessage* message, void* object);
 static DBusMessage* _dbus_settings_daemon_manager_introspect (SettingsDaemonManager* self, DBusConnection* connection, DBusMessage* message);
 static DBusMessage* _dbus_settings_daemon_manager_property_get_all (SettingsDaemonManager* self, DBusConnection* connection, DBusMessage* message);
+GType settings_daemon_manager_dbus_proxy_get_type (void);
 SettingsDaemonManager* settings_daemon_manager_dbus_proxy_new (DBusGConnection* connection, const char* name, const char* path);
 DBusHandlerResult settings_daemon_manager_dbus_proxy_filter (DBusConnection* connection, DBusMessage* message, void* user_data);
+enum  {
+	SETTINGS_DAEMON_MANAGER_DBUS_PROXY_DUMMY_PROPERTY
+};
 static void settings_daemon_manager_dbus_proxy_interface_init (SettingsDaemonManagerIface* iface);
-extern GMainLoop* xsaa_loop;
-GMainLoop* xsaa_loop = NULL;
+static void settings_daemon_manager_dbus_proxy_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec);
+static void settings_daemon_manager_dbus_proxy_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec);
 GType xsaa_session_manager_get_type (void);
 GType xsaa_session_get_type (void);
 #define XSAA_SESSION_MANAGER_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), XSAA_TYPE_SESSION_MANAGER, XSAASessionManagerPrivate))
@@ -198,7 +235,6 @@ enum  {
 };
 XSAASessionManager* xsaa_session_manager_new (DBusGConnection* conn);
 XSAASessionManager* xsaa_session_manager_construct (GType object_type, DBusGConnection* conn);
-XSAASessionManager* xsaa_session_manager_new (DBusGConnection* conn);
 GQuark xsaa_session_error_quark (void);
 XSAASession* xsaa_session_new (DBusGConnection* conn, ConsoleKitManager* manager, const char* service, const char* user, gint display, const char* device, GError** error);
 XSAASession* xsaa_session_construct (GType object_type, DBusGConnection* conn, ConsoleKitManager* manager, const char* service, const char* user, gint display, const char* device, GError** error);
@@ -206,7 +242,6 @@ gboolean xsaa_session_manager_open_session (XSAASessionManager* self, const char
 void xsaa_session_manager_close_session (XSAASessionManager* self, const char* path);
 void xsaa_session_manager_reboot (XSAASessionManager* self);
 void xsaa_session_manager_halt (XSAASessionManager* self);
-static gpointer xsaa_session_manager_parent_class = NULL;
 void xsaa_session_manager_dbus_register_object (DBusConnection* connection, const char* path, void* object);
 void _xsaa_session_manager_dbus_unregister (DBusConnection* connection, void* user_data);
 DBusHandlerResult xsaa_session_manager_dbus_message (DBusConnection* connection, DBusMessage* message, void* object);
@@ -217,8 +252,6 @@ static DBusMessage* _dbus_xsaa_session_manager_close_session (XSAASessionManager
 static DBusMessage* _dbus_xsaa_session_manager_reboot (XSAASessionManager* self, DBusConnection* connection, DBusMessage* message);
 static DBusMessage* _dbus_xsaa_session_manager_halt (XSAASessionManager* self, DBusConnection* connection, DBusMessage* message);
 static void xsaa_session_manager_finalize (GObject* obj);
-extern gboolean xsaa_no_daemon;
-gboolean xsaa_no_daemon = FALSE;
 guint _dynamic_request_name0 (DBusGProxy* self, const char* param1, guint param2, GError** error);
 guint _dynamic_request_name1 (DBusGProxy* self, const char* param1, guint param2, GError** error);
 gint xsaa_main (char** args, int args_length1);
@@ -285,8 +318,10 @@ static DBusMessage* _dbus_console_kit_session_property_get_all (ConsoleKitSessio
 		dbus_message_iter_open_container (&reply_iter, DBUS_TYPE_ARRAY, "{sv}", &subiter);
 		dbus_message_iter_close_container (&reply_iter, &subiter);
 	} else {
-		return NULL;
+		dbus_message_unref (reply);
+		reply = NULL;
 	}
+	g_free (interface_name);
 	return reply;
 }
 
@@ -351,6 +386,7 @@ GType console_kit_session_get_type (void) {
 		static const GTypeInfo g_define_type_info = { sizeof (ConsoleKitSessionIface), (GBaseInitFunc) console_kit_session_base_init, (GBaseFinalizeFunc) NULL, (GClassInitFunc) NULL, (GClassFinalizeFunc) NULL, NULL, 0, 0, (GInstanceInitFunc) NULL, NULL };
 		console_kit_session_type_id = g_type_register_static (G_TYPE_INTERFACE, "ConsoleKitSession", &g_define_type_info, 0);
 		g_type_interface_add_prerequisite (console_kit_session_type_id, DBUS_TYPE_G_PROXY);
+		g_type_set_qdata (console_kit_session_type_id, g_quark_from_string ("ValaDBusInterfaceProxyType"), &console_kit_session_dbus_proxy_get_type);
 	}
 	return console_kit_session_type_id;
 }
@@ -359,11 +395,24 @@ GType console_kit_session_get_type (void) {
 G_DEFINE_TYPE_EXTENDED (ConsoleKitSessionDBusProxy, console_kit_session_dbus_proxy, DBUS_TYPE_G_PROXY, 0, G_IMPLEMENT_INTERFACE (CONSOLE_KIT_TYPE_SESSION, console_kit_session_dbus_proxy_interface_init));
 ConsoleKitSession* console_kit_session_dbus_proxy_new (DBusGConnection* connection, const char* name, const char* path) {
 	ConsoleKitSession* self;
-	char* filter;
 	self = g_object_new (console_kit_session_dbus_proxy_get_type (), "connection", connection, "name", name, "path", path, "interface", "org.freedesktop.ConsoleKit.Session", NULL);
+	return self;
+}
+
+
+static GObject* console_kit_session_dbus_proxy_construct (GType gtype, guint n_properties, GObjectConstructParam* properties) {
+	GObject* self;
+	DBusGConnection *connection;
+	char* path;
+	char* filter;
+	self = G_OBJECT_CLASS (console_kit_session_dbus_proxy_parent_class)->constructor (gtype, n_properties, properties);
+	g_object_get (self, "connection", &connection, NULL);
+	g_object_get (self, "path", &path, NULL);
 	dbus_connection_add_filter (dbus_g_connection_get_connection (connection), console_kit_session_dbus_proxy_filter, self, NULL);
 	filter = g_strdup_printf ("type='signal',path='%s'", path);
 	dbus_bus_add_match (dbus_g_connection_get_connection (connection), filter, NULL);
+	dbus_g_connection_unref (connection);
+	g_free (path);
 	g_free (filter);
 	return self;
 }
@@ -378,6 +427,10 @@ DBusHandlerResult console_kit_session_dbus_proxy_filter (DBusConnection* connect
 
 static void console_kit_session_dbus_proxy_dispose (GObject* self) {
 	DBusGConnection *connection;
+	if (((ConsoleKitSessionDBusProxy*) self)->disposed) {
+		return;
+	}
+	((ConsoleKitSessionDBusProxy*) self)->disposed = TRUE;
 	g_object_get (self, "connection", &connection, NULL);
 	dbus_connection_remove_filter (dbus_g_connection_get_connection (connection), console_kit_session_dbus_proxy_filter, self);
 	G_OBJECT_CLASS (console_kit_session_dbus_proxy_parent_class)->dispose (self);
@@ -385,7 +438,10 @@ static void console_kit_session_dbus_proxy_dispose (GObject* self) {
 
 
 static void console_kit_session_dbus_proxy_class_init (ConsoleKitSessionDBusProxyClass* klass) {
+	G_OBJECT_CLASS (klass)->constructor = console_kit_session_dbus_proxy_construct;
 	G_OBJECT_CLASS (klass)->dispose = console_kit_session_dbus_proxy_dispose;
+	G_OBJECT_CLASS (klass)->get_property = console_kit_session_dbus_proxy_get_property;
+	G_OBJECT_CLASS (klass)->set_property = console_kit_session_dbus_proxy_set_property;
 }
 
 
@@ -397,6 +453,9 @@ static void console_kit_session_dbus_proxy_activate (ConsoleKitSession* self) {
 	DBusGConnection *_connection;
 	DBusMessage *_message, *_reply;
 	DBusMessageIter _iter;
+	if (((ConsoleKitSessionDBusProxy*) self)->disposed) {
+		return;
+	}
 	_message = dbus_message_new_method_call (dbus_g_proxy_get_bus_name ((DBusGProxy*) self), dbus_g_proxy_get_path ((DBusGProxy*) self), "org.freedesktop.ConsoleKit.Session", "Activate");
 	dbus_message_iter_init_append (_message, &_iter);
 	g_object_get (self, "connection", &_connection, NULL);
@@ -410,6 +469,14 @@ static void console_kit_session_dbus_proxy_activate (ConsoleKitSession* self) {
 
 static void console_kit_session_dbus_proxy_interface_init (ConsoleKitSessionIface* iface) {
 	iface->activate = console_kit_session_dbus_proxy_activate;
+}
+
+
+static void console_kit_session_dbus_proxy_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec) {
+}
+
+
+static void console_kit_session_dbus_proxy_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec) {
 }
 
 
@@ -482,9 +549,22 @@ static DBusMessage* _dbus_console_kit_manager_property_get_all (ConsoleKitManage
 		dbus_message_iter_open_container (&reply_iter, DBUS_TYPE_ARRAY, "{sv}", &subiter);
 		dbus_message_iter_close_container (&reply_iter, &subiter);
 	} else {
-		return NULL;
+		dbus_message_unref (reply);
+		reply = NULL;
 	}
+	g_free (interface_name);
 	return reply;
+}
+
+
+static void _vala_ConsoleKitSessionParameter_array_free (ConsoleKitSessionParameter* array, gint array_length) {
+	if (array != NULL) {
+		int i;
+		for (i = 0; i < array_length; i = i + 1) {
+			console_kit_session_parameter_destroy (&array[i]);
+		}
+	}
+	g_free (array);
 }
 
 
@@ -600,8 +680,10 @@ static DBusMessage* _dbus_console_kit_manager_open_session_with_parameters (Cons
 	result = console_kit_manager_open_session_with_parameters (self, parameters, parameters_length1);
 	reply = dbus_message_new_method_return (message);
 	dbus_message_iter_init_append (reply, &iter);
+	parameters = (_vala_ConsoleKitSessionParameter_array_free (parameters, parameters_length1), NULL);
 	_tmp21_ = result;
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &_tmp21_);
+	result = (g_free (result), NULL);
 	return reply;
 }
 
@@ -609,7 +691,7 @@ static DBusMessage* _dbus_console_kit_manager_open_session_with_parameters (Cons
 static DBusMessage* _dbus_console_kit_manager_close_session (ConsoleKitManager* self, DBusConnection* connection, DBusMessage* message) {
 	DBusMessageIter iter;
 	GError* error;
-	const char* cookie;
+	char* cookie;
 	const char* _tmp22_;
 	gint result;
 	DBusMessage* reply;
@@ -626,6 +708,7 @@ static DBusMessage* _dbus_console_kit_manager_close_session (ConsoleKitManager* 
 	result = console_kit_manager_close_session (self, cookie);
 	reply = dbus_message_new_method_return (message);
 	dbus_message_iter_init_append (reply, &iter);
+	cookie = (g_free (cookie), NULL);
 	_tmp23_ = result;
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_INT32, &_tmp23_);
 	return reply;
@@ -635,7 +718,7 @@ static DBusMessage* _dbus_console_kit_manager_close_session (ConsoleKitManager* 
 static DBusMessage* _dbus_console_kit_manager_get_session_for_cookie (ConsoleKitManager* self, DBusConnection* connection, DBusMessage* message) {
 	DBusMessageIter iter;
 	GError* error;
-	const char* cookie;
+	char* cookie;
 	const char* _tmp24_;
 	char* result;
 	DBusMessage* reply;
@@ -652,8 +735,10 @@ static DBusMessage* _dbus_console_kit_manager_get_session_for_cookie (ConsoleKit
 	result = console_kit_manager_get_session_for_cookie (self, cookie);
 	reply = dbus_message_new_method_return (message);
 	dbus_message_iter_init_append (reply, &iter);
+	cookie = (g_free (cookie), NULL);
 	_tmp25_ = result;
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_OBJECT_PATH, &_tmp25_);
+	result = (g_free (result), NULL);
 	return reply;
 }
 
@@ -742,6 +827,7 @@ GType console_kit_manager_get_type (void) {
 		static const GTypeInfo g_define_type_info = { sizeof (ConsoleKitManagerIface), (GBaseInitFunc) console_kit_manager_base_init, (GBaseFinalizeFunc) NULL, (GClassInitFunc) NULL, (GClassFinalizeFunc) NULL, NULL, 0, 0, (GInstanceInitFunc) NULL, NULL };
 		console_kit_manager_type_id = g_type_register_static (G_TYPE_INTERFACE, "ConsoleKitManager", &g_define_type_info, 0);
 		g_type_interface_add_prerequisite (console_kit_manager_type_id, DBUS_TYPE_G_PROXY);
+		g_type_set_qdata (console_kit_manager_type_id, g_quark_from_string ("ValaDBusInterfaceProxyType"), &console_kit_manager_dbus_proxy_get_type);
 	}
 	return console_kit_manager_type_id;
 }
@@ -750,11 +836,24 @@ GType console_kit_manager_get_type (void) {
 G_DEFINE_TYPE_EXTENDED (ConsoleKitManagerDBusProxy, console_kit_manager_dbus_proxy, DBUS_TYPE_G_PROXY, 0, G_IMPLEMENT_INTERFACE (CONSOLE_KIT_TYPE_MANAGER, console_kit_manager_dbus_proxy_interface_init));
 ConsoleKitManager* console_kit_manager_dbus_proxy_new (DBusGConnection* connection, const char* name, const char* path) {
 	ConsoleKitManager* self;
-	char* filter;
 	self = g_object_new (console_kit_manager_dbus_proxy_get_type (), "connection", connection, "name", name, "path", path, "interface", "org.freedesktop.ConsoleKit.Manager", NULL);
+	return self;
+}
+
+
+static GObject* console_kit_manager_dbus_proxy_construct (GType gtype, guint n_properties, GObjectConstructParam* properties) {
+	GObject* self;
+	DBusGConnection *connection;
+	char* path;
+	char* filter;
+	self = G_OBJECT_CLASS (console_kit_manager_dbus_proxy_parent_class)->constructor (gtype, n_properties, properties);
+	g_object_get (self, "connection", &connection, NULL);
+	g_object_get (self, "path", &path, NULL);
 	dbus_connection_add_filter (dbus_g_connection_get_connection (connection), console_kit_manager_dbus_proxy_filter, self, NULL);
 	filter = g_strdup_printf ("type='signal',path='%s'", path);
 	dbus_bus_add_match (dbus_g_connection_get_connection (connection), filter, NULL);
+	dbus_g_connection_unref (connection);
+	g_free (path);
 	g_free (filter);
 	return self;
 }
@@ -769,6 +868,10 @@ DBusHandlerResult console_kit_manager_dbus_proxy_filter (DBusConnection* connect
 
 static void console_kit_manager_dbus_proxy_dispose (GObject* self) {
 	DBusGConnection *connection;
+	if (((ConsoleKitManagerDBusProxy*) self)->disposed) {
+		return;
+	}
+	((ConsoleKitManagerDBusProxy*) self)->disposed = TRUE;
 	g_object_get (self, "connection", &connection, NULL);
 	dbus_connection_remove_filter (dbus_g_connection_get_connection (connection), console_kit_manager_dbus_proxy_filter, self);
 	G_OBJECT_CLASS (console_kit_manager_dbus_proxy_parent_class)->dispose (self);
@@ -776,7 +879,10 @@ static void console_kit_manager_dbus_proxy_dispose (GObject* self) {
 
 
 static void console_kit_manager_dbus_proxy_class_init (ConsoleKitManagerDBusProxyClass* klass) {
+	G_OBJECT_CLASS (klass)->constructor = console_kit_manager_dbus_proxy_construct;
 	G_OBJECT_CLASS (klass)->dispose = console_kit_manager_dbus_proxy_dispose;
+	G_OBJECT_CLASS (klass)->get_property = console_kit_manager_dbus_proxy_get_property;
+	G_OBJECT_CLASS (klass)->set_property = console_kit_manager_dbus_proxy_set_property;
 }
 
 
@@ -793,6 +899,9 @@ static char* console_kit_manager_dbus_proxy_open_session_with_parameters (Consol
 	int _tmp28_;
 	char* _result;
 	const char* _tmp40_;
+	if (((ConsoleKitManagerDBusProxy*) self)->disposed) {
+		return NULL;
+	}
 	_message = dbus_message_new_method_call (dbus_g_proxy_get_bus_name ((DBusGProxy*) self), dbus_g_proxy_get_path ((DBusGProxy*) self), "org.freedesktop.ConsoleKit.Manager", "OpenSessionWithParameters");
 	dbus_message_iter_init_append (_message, &_iter);
 	_tmp26_ = parameters;
@@ -877,6 +986,9 @@ static gint console_kit_manager_dbus_proxy_close_session (ConsoleKitManager* sel
 	const char* _tmp41_;
 	gint _result;
 	dbus_int32_t _tmp42_;
+	if (((ConsoleKitManagerDBusProxy*) self)->disposed) {
+		return 0;
+	}
 	_message = dbus_message_new_method_call (dbus_g_proxy_get_bus_name ((DBusGProxy*) self), dbus_g_proxy_get_path ((DBusGProxy*) self), "org.freedesktop.ConsoleKit.Manager", "CloseSession");
 	dbus_message_iter_init_append (_message, &_iter);
 	_tmp41_ = cookie;
@@ -901,6 +1013,9 @@ static char* console_kit_manager_dbus_proxy_get_session_for_cookie (ConsoleKitMa
 	const char* _tmp43_;
 	char* _result;
 	const char* _tmp44_;
+	if (((ConsoleKitManagerDBusProxy*) self)->disposed) {
+		return NULL;
+	}
 	_message = dbus_message_new_method_call (dbus_g_proxy_get_bus_name ((DBusGProxy*) self), dbus_g_proxy_get_path ((DBusGProxy*) self), "org.freedesktop.ConsoleKit.Manager", "GetSessionForCookie");
 	dbus_message_iter_init_append (_message, &_iter);
 	_tmp43_ = cookie;
@@ -922,6 +1037,9 @@ static void console_kit_manager_dbus_proxy_restart (ConsoleKitManager* self) {
 	DBusGConnection *_connection;
 	DBusMessage *_message, *_reply;
 	DBusMessageIter _iter;
+	if (((ConsoleKitManagerDBusProxy*) self)->disposed) {
+		return;
+	}
 	_message = dbus_message_new_method_call (dbus_g_proxy_get_bus_name ((DBusGProxy*) self), dbus_g_proxy_get_path ((DBusGProxy*) self), "org.freedesktop.ConsoleKit.Manager", "Restart");
 	dbus_message_iter_init_append (_message, &_iter);
 	g_object_get (self, "connection", &_connection, NULL);
@@ -937,6 +1055,9 @@ static void console_kit_manager_dbus_proxy_stop (ConsoleKitManager* self) {
 	DBusGConnection *_connection;
 	DBusMessage *_message, *_reply;
 	DBusMessageIter _iter;
+	if (((ConsoleKitManagerDBusProxy*) self)->disposed) {
+		return;
+	}
 	_message = dbus_message_new_method_call (dbus_g_proxy_get_bus_name ((DBusGProxy*) self), dbus_g_proxy_get_path ((DBusGProxy*) self), "org.freedesktop.ConsoleKit.Manager", "Stop");
 	dbus_message_iter_init_append (_message, &_iter);
 	g_object_get (self, "connection", &_connection, NULL);
@@ -954,6 +1075,14 @@ static void console_kit_manager_dbus_proxy_interface_init (ConsoleKitManagerIfac
 	iface->get_session_for_cookie = console_kit_manager_dbus_proxy_get_session_for_cookie;
 	iface->restart = console_kit_manager_dbus_proxy_restart;
 	iface->stop = console_kit_manager_dbus_proxy_stop;
+}
+
+
+static void console_kit_manager_dbus_proxy_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec) {
+}
+
+
+static void console_kit_manager_dbus_proxy_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec) {
 }
 
 
@@ -1001,8 +1130,10 @@ static DBusMessage* _dbus_settings_daemon_manager_property_get_all (SettingsDaem
 		dbus_message_iter_open_container (&reply_iter, DBUS_TYPE_ARRAY, "{sv}", &subiter);
 		dbus_message_iter_close_container (&reply_iter, &subiter);
 	} else {
-		return NULL;
+		dbus_message_unref (reply);
+		reply = NULL;
 	}
+	g_free (interface_name);
 	return reply;
 }
 
@@ -1049,6 +1180,7 @@ GType settings_daemon_manager_get_type (void) {
 		static const GTypeInfo g_define_type_info = { sizeof (SettingsDaemonManagerIface), (GBaseInitFunc) settings_daemon_manager_base_init, (GBaseFinalizeFunc) NULL, (GClassInitFunc) NULL, (GClassFinalizeFunc) NULL, NULL, 0, 0, (GInstanceInitFunc) NULL, NULL };
 		settings_daemon_manager_type_id = g_type_register_static (G_TYPE_INTERFACE, "SettingsDaemonManager", &g_define_type_info, 0);
 		g_type_interface_add_prerequisite (settings_daemon_manager_type_id, DBUS_TYPE_G_PROXY);
+		g_type_set_qdata (settings_daemon_manager_type_id, g_quark_from_string ("ValaDBusInterfaceProxyType"), &settings_daemon_manager_dbus_proxy_get_type);
 	}
 	return settings_daemon_manager_type_id;
 }
@@ -1057,11 +1189,24 @@ GType settings_daemon_manager_get_type (void) {
 G_DEFINE_TYPE_EXTENDED (SettingsDaemonManagerDBusProxy, settings_daemon_manager_dbus_proxy, DBUS_TYPE_G_PROXY, 0, G_IMPLEMENT_INTERFACE (SETTINGS_DAEMON_TYPE_MANAGER, settings_daemon_manager_dbus_proxy_interface_init));
 SettingsDaemonManager* settings_daemon_manager_dbus_proxy_new (DBusGConnection* connection, const char* name, const char* path) {
 	SettingsDaemonManager* self;
-	char* filter;
 	self = g_object_new (settings_daemon_manager_dbus_proxy_get_type (), "connection", connection, "name", name, "path", path, "interface", "org.gnome.SettingsDaemon", NULL);
+	return self;
+}
+
+
+static GObject* settings_daemon_manager_dbus_proxy_construct (GType gtype, guint n_properties, GObjectConstructParam* properties) {
+	GObject* self;
+	DBusGConnection *connection;
+	char* path;
+	char* filter;
+	self = G_OBJECT_CLASS (settings_daemon_manager_dbus_proxy_parent_class)->constructor (gtype, n_properties, properties);
+	g_object_get (self, "connection", &connection, NULL);
+	g_object_get (self, "path", &path, NULL);
 	dbus_connection_add_filter (dbus_g_connection_get_connection (connection), settings_daemon_manager_dbus_proxy_filter, self, NULL);
 	filter = g_strdup_printf ("type='signal',path='%s'", path);
 	dbus_bus_add_match (dbus_g_connection_get_connection (connection), filter, NULL);
+	dbus_g_connection_unref (connection);
+	g_free (path);
 	g_free (filter);
 	return self;
 }
@@ -1076,6 +1221,10 @@ DBusHandlerResult settings_daemon_manager_dbus_proxy_filter (DBusConnection* con
 
 static void settings_daemon_manager_dbus_proxy_dispose (GObject* self) {
 	DBusGConnection *connection;
+	if (((SettingsDaemonManagerDBusProxy*) self)->disposed) {
+		return;
+	}
+	((SettingsDaemonManagerDBusProxy*) self)->disposed = TRUE;
 	g_object_get (self, "connection", &connection, NULL);
 	dbus_connection_remove_filter (dbus_g_connection_get_connection (connection), settings_daemon_manager_dbus_proxy_filter, self);
 	G_OBJECT_CLASS (settings_daemon_manager_dbus_proxy_parent_class)->dispose (self);
@@ -1083,7 +1232,10 @@ static void settings_daemon_manager_dbus_proxy_dispose (GObject* self) {
 
 
 static void settings_daemon_manager_dbus_proxy_class_init (SettingsDaemonManagerDBusProxyClass* klass) {
+	G_OBJECT_CLASS (klass)->constructor = settings_daemon_manager_dbus_proxy_construct;
 	G_OBJECT_CLASS (klass)->dispose = settings_daemon_manager_dbus_proxy_dispose;
+	G_OBJECT_CLASS (klass)->get_property = settings_daemon_manager_dbus_proxy_get_property;
+	G_OBJECT_CLASS (klass)->set_property = settings_daemon_manager_dbus_proxy_set_property;
 }
 
 
@@ -1092,6 +1244,14 @@ static void settings_daemon_manager_dbus_proxy_init (SettingsDaemonManagerDBusPr
 
 
 static void settings_daemon_manager_dbus_proxy_interface_init (SettingsDaemonManagerIface* iface) {
+}
+
+
+static void settings_daemon_manager_dbus_proxy_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec) {
+}
+
+
+static void settings_daemon_manager_dbus_proxy_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec) {
 }
 
 
@@ -1120,6 +1280,7 @@ XSAASessionManager* xsaa_session_manager_new (DBusGConnection* conn) {
 
 
 gboolean xsaa_session_manager_open_session (XSAASessionManager* self, const char* user, gint display, const char* device, gboolean autologin, char** path) {
+	gboolean result;
 	GError * _inner_error_;
 	char* _tmp4_;
 	char* _tmp3_;
@@ -1171,9 +1332,10 @@ gboolean xsaa_session_manager_open_session (XSAASessionManager* self, const char
 		err = _inner_error_;
 		_inner_error_ = NULL;
 		{
-			gboolean _tmp6_;
 			fprintf (stderr, "Error on create session : %s", err->message);
-			return (_tmp6_ = FALSE, (err == NULL) ? NULL : (err = (g_error_free (err), NULL)), _tmp6_);
+			result = FALSE;
+			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
+			return result;
 		}
 	}
 	__finally5:
@@ -1182,7 +1344,8 @@ gboolean xsaa_session_manager_open_session (XSAASessionManager* self, const char
 		g_clear_error (&_inner_error_);
 		return FALSE;
 	}
-	return TRUE;
+	result = TRUE;
+	return result;
 }
 
 
@@ -1249,8 +1412,10 @@ static DBusMessage* _dbus_xsaa_session_manager_property_get_all (XSAASessionMana
 		dbus_message_iter_open_container (&reply_iter, DBUS_TYPE_ARRAY, "{sv}", &subiter);
 		dbus_message_iter_close_container (&reply_iter, &subiter);
 	} else {
-		return NULL;
+		dbus_message_unref (reply);
+		reply = NULL;
 	}
+	g_free (interface_name);
 	return reply;
 }
 
@@ -1258,11 +1423,11 @@ static DBusMessage* _dbus_xsaa_session_manager_property_get_all (XSAASessionMana
 static DBusMessage* _dbus_xsaa_session_manager_open_session (XSAASessionManager* self, DBusConnection* connection, DBusMessage* message) {
 	DBusMessageIter iter;
 	GError* error;
-	const char* user;
+	char* user;
 	const char* _tmp47_;
 	gint display;
 	dbus_int32_t _tmp48_;
-	const char* device;
+	char* device;
 	const char* _tmp49_;
 	gboolean autologin;
 	dbus_bool_t _tmp50_;
@@ -1296,8 +1461,11 @@ static DBusMessage* _dbus_xsaa_session_manager_open_session (XSAASessionManager*
 	result = xsaa_session_manager_open_session (self, user, display, device, autologin, &path);
 	reply = dbus_message_new_method_return (message);
 	dbus_message_iter_init_append (reply, &iter);
+	user = (g_free (user), NULL);
+	device = (g_free (device), NULL);
 	_tmp51_ = path;
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_OBJECT_PATH, &_tmp51_);
+	path = (g_free (path), NULL);
 	_tmp52_ = result;
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &_tmp52_);
 	return reply;
@@ -1307,7 +1475,7 @@ static DBusMessage* _dbus_xsaa_session_manager_open_session (XSAASessionManager*
 static DBusMessage* _dbus_xsaa_session_manager_close_session (XSAASessionManager* self, DBusConnection* connection, DBusMessage* message) {
 	DBusMessageIter iter;
 	GError* error;
-	const char* path;
+	char* path;
 	const char* _tmp53_;
 	DBusMessage* reply;
 	error = NULL;
@@ -1322,6 +1490,7 @@ static DBusMessage* _dbus_xsaa_session_manager_close_session (XSAASessionManager
 	xsaa_session_manager_close_session (self, path);
 	reply = dbus_message_new_method_return (message);
 	dbus_message_iter_init_append (reply, &iter);
+	path = (g_free (path), NULL);
 	return reply;
 }
 
@@ -1447,6 +1616,7 @@ guint _dynamic_request_name1 (DBusGProxy* self, const char* param1, guint param2
 
 
 gint xsaa_main (char** args, int args_length1) {
+	gint result;
 	GError * _inner_error_;
 	_inner_error_ = NULL;
 	{
@@ -1471,9 +1641,10 @@ gint xsaa_main (char** args, int args_length1) {
 		err = _inner_error_;
 		_inner_error_ = NULL;
 		{
-			gint _tmp0_;
 			fprintf (stderr, "Option parsing failed: %s\n", err->message);
-			return (_tmp0_ = -1, (err == NULL) ? NULL : (err = (g_error_free (err), NULL)), _tmp0_);
+			result = -1;
+			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
+			return result;
 		}
 	}
 	__finally6:
@@ -1486,14 +1657,14 @@ gint xsaa_main (char** args, int args_length1) {
 		daemon (0, 0);
 	}
 	{
-		GMainLoop* _tmp1_;
+		GMainLoop* _tmp0_;
 		DBusGConnection* conn;
 		DBusGProxy* bus;
 		guint r1;
 		guint r2;
-		gboolean _tmp2_;
-		_tmp1_ = NULL;
-		xsaa_loop = (_tmp1_ = g_main_loop_new (NULL, FALSE), (xsaa_loop == NULL) ? NULL : (xsaa_loop = (g_main_loop_unref (xsaa_loop), NULL)), _tmp1_);
+		gboolean _tmp1_;
+		_tmp0_ = NULL;
+		xsaa_loop = (_tmp0_ = g_main_loop_new (NULL, FALSE), (xsaa_loop == NULL) ? NULL : (xsaa_loop = (g_main_loop_unref (xsaa_loop), NULL)), _tmp0_);
 		conn = dbus_g_bus_get (DBUS_BUS_SYSTEM, &_inner_error_);
 		if (_inner_error_ != NULL) {
 			goto __catch7_g_error;
@@ -1514,13 +1685,13 @@ gint xsaa_main (char** args, int args_length1) {
 			goto __catch7_g_error;
 			goto __finally7;
 		}
-		_tmp2_ = FALSE;
+		_tmp1_ = FALSE;
 		if (r1 == DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER) {
-			_tmp2_ = r2 == DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER;
+			_tmp1_ = r2 == DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER;
 		} else {
-			_tmp2_ = FALSE;
+			_tmp1_ = FALSE;
 		}
-		if (_tmp2_) {
+		if (_tmp1_) {
 			XSAASessionManager* service;
 			service = xsaa_session_manager_new (conn);
 			_vala_dbus_register_object (dbus_g_connection_get_connection (conn), "/fr/supersonicimagine/XSAA/Manager", (GObject*) service);
@@ -1537,9 +1708,10 @@ gint xsaa_main (char** args, int args_length1) {
 		err = _inner_error_;
 		_inner_error_ = NULL;
 		{
-			gint _tmp3_;
 			g_message ("xsaa-session-daemon.vala:177: %s\n", err->message);
-			return (_tmp3_ = -1, (err == NULL) ? NULL : (err = (g_error_free (err), NULL)), _tmp3_);
+			result = -1;
+			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
+			return result;
 		}
 	}
 	__finally7:
@@ -1548,7 +1720,8 @@ gint xsaa_main (char** args, int args_length1) {
 		g_clear_error (&_inner_error_);
 		return 0;
 	}
-	return 0;
+	result = 0;
+	return result;
 }
 
 

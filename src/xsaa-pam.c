@@ -72,6 +72,7 @@ struct _XSAAPamSessionPrivate {
 };
 
 
+static gpointer xsaa_pam_session_parent_class = NULL;
 
 GQuark xsaa_pam_error_quark (void);
 GType xsaa_pam_session_get_type (void);
@@ -82,10 +83,8 @@ enum  {
 };
 XSAAPamSession* xsaa_pam_session_new (const char* service, const char* username, gint display, const char* xauth_file, const char* device, GError** error);
 XSAAPamSession* xsaa_pam_session_construct (GType object_type, const char* service, const char* username, gint display, const char* xauth_file, const char* device, GError** error);
-XSAAPamSession* xsaa_pam_session_new (const char* service, const char* username, gint display, const char* xauth_file, const char* device, GError** error);
 void xsaa_pam_session_open_session (XSAAPamSession* self, GError** error);
 void xsaa_pam_session_set_env (XSAAPamSession* self);
-static gpointer xsaa_pam_session_parent_class = NULL;
 static void xsaa_pam_session_finalize (GObject* obj);
 static void _vala_array_destroy (gpointer array, gint array_length, GDestroyNotify destroy_func);
 static void _vala_array_free (gpointer array, gint array_length, GDestroyNotify destroy_func);
@@ -100,55 +99,68 @@ GQuark xsaa_pam_error_quark (void) {
 
 
 gint xsaa_on_pam_conversation (gint num_msg, struct pam_message** messages, struct pam_response** resp, void* appdata_ptr) {
+	gint result;
 	XSAAPamSession* pam;
 	pam = XSAA_PAM_SESSION (appdata_ptr);
-	(*resp) = (struct pam_response*) g_malloc (sizeof (struct pam_response) * num_msg);
+	(*resp) = g_new0 (struct pam_response, num_msg);
 	{
 		gint i;
 		i = 0;
-		for (; i < num_msg; i++) {
-			struct pam_message* msg;
-			msg = messages[i];
-			switch (msg->msg_style) {
-				case PAM_PROMPT_ECHO_ON:
-				{
-					fprintf (stderr, "Echo on message : %s\n", msg->msg);
+		{
+			gboolean _tmp0_;
+			_tmp0_ = TRUE;
+			while (TRUE) {
+				struct pam_message* msg;
+				if (!_tmp0_) {
+					i++;
+				}
+				_tmp0_ = FALSE;
+				if (!(i < num_msg)) {
 					break;
 				}
-				case PAM_PROMPT_ECHO_OFF:
-				{
-					char* _tmp0_;
-					char* passwd;
-					fprintf (stderr, "Echo off message : %s\n", msg->msg);
-					_tmp0_ = NULL;
-					passwd = (g_signal_emit_by_name (pam, "passwd", &_tmp0_), _tmp0_);
-					fprintf (stderr, "Passwd : %s\n", passwd);
-					(*resp)[i].resp = g_memdup (passwd, (guint) g_utf8_strlen (passwd, -1));
-					(*resp)[i].resp_retcode = PAM_SUCCESS;
-					passwd = (g_free (passwd), NULL);
-					break;
-				}
-				case PAM_TEXT_INFO:
-				{
-					fprintf (stderr, "Text info message : %s", msg->msg);
-					g_signal_emit_by_name (pam, "info", msg->msg);
-					break;
-				}
-				case PAM_ERROR_MSG:
-				{
-					fprintf (stderr, "Error message : %s", msg->msg);
-					g_signal_emit_by_name (pam, "error-msg", msg->msg);
-					break;
-				}
-				default:
-				{
-					fprintf (stderr, "unkown message");
-					break;
+				msg = messages[i];
+				switch (msg->msg_style) {
+					case PAM_PROMPT_ECHO_ON:
+					{
+						fprintf (stderr, "Echo on message : %s\n", msg->msg);
+						break;
+					}
+					case PAM_PROMPT_ECHO_OFF:
+					{
+						char* _tmp1_;
+						char* passwd;
+						fprintf (stderr, "Echo off message : %s\n", msg->msg);
+						_tmp1_ = NULL;
+						passwd = (g_signal_emit_by_name (pam, "passwd", &_tmp1_), _tmp1_);
+						fprintf (stderr, "Passwd : %s\n", passwd);
+						(*resp)[i].resp = g_memdup (passwd, (guint) g_utf8_strlen (passwd, -1));
+						(*resp)[i].resp_retcode = PAM_SUCCESS;
+						passwd = (g_free (passwd), NULL);
+						break;
+					}
+					case PAM_TEXT_INFO:
+					{
+						fprintf (stderr, "Text info message : %s", msg->msg);
+						g_signal_emit_by_name (pam, "info", msg->msg);
+						break;
+					}
+					case PAM_ERROR_MSG:
+					{
+						fprintf (stderr, "Error message : %s", msg->msg);
+						g_signal_emit_by_name (pam, "error-msg", msg->msg);
+						break;
+					}
+					default:
+					{
+						fprintf (stderr, "unkown message");
+						break;
+					}
 				}
 			}
 		}
 	}
-	return PAM_SUCCESS;
+	result = PAM_SUCCESS;
+	return result;
 }
 
 
@@ -445,10 +457,13 @@ void xsaa_pam_session_set_env (XSAAPamSession* self) {
 		_tmp0_ = NULL;
 		_tmp1_ = NULL;
 		_key_it = (_tmp1_ = gee_iterable_iterator ((GeeIterable*) (_tmp0_ = gee_map_get_keys (self->envs))), (_tmp0_ == NULL) ? NULL : (_tmp0_ = (gee_collection_object_unref (_tmp0_), NULL)), _tmp1_);
-		while (gee_iterator_next (_key_it)) {
+		while (TRUE) {
 			char* key;
 			char* _tmp2_;
 			char* _tmp3_;
+			if (!gee_iterator_next (_key_it)) {
+				break;
+			}
 			key = (char*) gee_iterator_get (_key_it);
 			_tmp2_ = NULL;
 			setenv (key, _tmp2_ = (char*) gee_map_get (self->envs, key), 1);

@@ -31,10 +31,10 @@
 #include <stdio.h>
 #include <gdk/gdk.h>
 #include <fcntl.h>
+#include <sys/types.h>
 #include <stropts.h>
 #include <linux/vt.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <dbus/dbus.h>
@@ -47,7 +47,7 @@
 
 typedef struct _XSAAManager XSAAManager;
 typedef struct _XSAAManagerIface XSAAManagerIface;
-typedef DBusGProxy XSAAManagerDBusProxy;
+typedef struct _XSAAManagerDBusProxy XSAAManagerDBusProxy;
 typedef DBusGProxyClass XSAAManagerDBusProxyClass;
 
 #define XSAA_TYPE_SESSION (xsaa_session_get_type ())
@@ -57,7 +57,7 @@ typedef DBusGProxyClass XSAAManagerDBusProxyClass;
 
 typedef struct _XSAASession XSAASession;
 typedef struct _XSAASessionIface XSAASessionIface;
-typedef DBusGProxy XSAASessionDBusProxy;
+typedef struct _XSAASessionDBusProxy XSAASessionDBusProxy;
 typedef DBusGProxyClass XSAASessionDBusProxyClass;
 
 #define XSAA_TYPE_DAEMON (xsaa_daemon_get_type ())
@@ -120,11 +120,21 @@ struct _XSAAManagerIface {
 	void (*halt) (XSAAManager* self);
 };
 
+struct _XSAAManagerDBusProxy {
+	DBusGProxy parent_instance;
+	gboolean disposed;
+};
+
 struct _XSAASessionIface {
 	GTypeInterface parent_iface;
 	void (*set_passwd) (XSAASession* self, const char* pass);
 	void (*authenticate) (XSAASession* self);
 	void (*launch) (XSAASession* self, const char* cmd);
+};
+
+struct _XSAASessionDBusProxy {
+	DBusGProxy parent_instance;
+	gboolean disposed;
 };
 
 typedef enum  {
@@ -176,6 +186,7 @@ struct _DBusObjectVTable {
 };
 
 
+static gpointer xsaa_daemon_parent_class = NULL;
 
 GType xsaa_manager_get_type (void);
 gboolean xsaa_manager_open_session (XSAAManager* self, const char* user, gint display, const char* device, gboolean autologin, char** path);
@@ -191,13 +202,19 @@ static DBusMessage* _dbus_xsaa_manager_open_session (XSAAManager* self, DBusConn
 static DBusMessage* _dbus_xsaa_manager_close_session (XSAAManager* self, DBusConnection* connection, DBusMessage* message);
 static DBusMessage* _dbus_xsaa_manager_reboot (XSAAManager* self, DBusConnection* connection, DBusMessage* message);
 static DBusMessage* _dbus_xsaa_manager_halt (XSAAManager* self, DBusConnection* connection, DBusMessage* message);
+GType xsaa_manager_dbus_proxy_get_type (void);
 XSAAManager* xsaa_manager_dbus_proxy_new (DBusGConnection* connection, const char* name, const char* path);
 DBusHandlerResult xsaa_manager_dbus_proxy_filter (DBusConnection* connection, DBusMessage* message, void* user_data);
+enum  {
+	XSAA_MANAGER_DBUS_PROXY_DUMMY_PROPERTY
+};
 static gboolean xsaa_manager_dbus_proxy_open_session (XSAAManager* self, const char* user, gint display, const char* device, gboolean autologin, char** path);
 static void xsaa_manager_dbus_proxy_close_session (XSAAManager* self, const char* path);
 static void xsaa_manager_dbus_proxy_reboot (XSAAManager* self);
 static void xsaa_manager_dbus_proxy_halt (XSAAManager* self);
 static void xsaa_manager_dbus_proxy_interface_init (XSAAManagerIface* iface);
+static void xsaa_manager_dbus_proxy_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec);
+static void xsaa_manager_dbus_proxy_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec);
 GType xsaa_session_get_type (void);
 void xsaa_session_set_passwd (XSAASession* self, const char* pass);
 void xsaa_session_authenticate (XSAASession* self);
@@ -215,6 +232,7 @@ static void _dbus_xsaa_session_exited (GObject* _sender, DBusConnection* _connec
 static void _dbus_xsaa_session_authenticated (GObject* _sender, DBusConnection* _connection);
 static void _dbus_xsaa_session_info (GObject* _sender, const char* msg, DBusConnection* _connection);
 static void _dbus_xsaa_session_error_msg (GObject* _sender, const char* msg, DBusConnection* _connection);
+GType xsaa_session_dbus_proxy_get_type (void);
 XSAASession* xsaa_session_dbus_proxy_new (DBusGConnection* connection, const char* name, const char* path);
 static void _dbus_handle_xsaa_session_died (XSAASession* self, DBusConnection* connection, DBusMessage* message);
 static void _dbus_handle_xsaa_session_exited (XSAASession* self, DBusConnection* connection, DBusMessage* message);
@@ -222,10 +240,15 @@ static void _dbus_handle_xsaa_session_authenticated (XSAASession* self, DBusConn
 static void _dbus_handle_xsaa_session_info (XSAASession* self, DBusConnection* connection, DBusMessage* message);
 static void _dbus_handle_xsaa_session_error_msg (XSAASession* self, DBusConnection* connection, DBusMessage* message);
 DBusHandlerResult xsaa_session_dbus_proxy_filter (DBusConnection* connection, DBusMessage* message, void* user_data);
+enum  {
+	XSAA_SESSION_DBUS_PROXY_DUMMY_PROPERTY
+};
 static void xsaa_session_dbus_proxy_set_passwd (XSAASession* self, const char* pass);
 static void xsaa_session_dbus_proxy_authenticate (XSAASession* self);
 static void xsaa_session_dbus_proxy_launch (XSAASession* self, const char* cmd);
 static void xsaa_session_dbus_proxy_interface_init (XSAASessionIface* iface);
+static void xsaa_session_dbus_proxy_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec);
+static void xsaa_session_dbus_proxy_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec);
 #define XSAA_SOCKET_NAME "/tmp/xsplashaa-socket"
 GQuark xsaa_daemon_error_quark (void);
 GType xsaa_daemon_get_type (void);
@@ -259,7 +282,6 @@ static void xsaa_daemon_on_quit (XSAADaemon* self);
 static void _xsaa_daemon_on_quit_xsaa_server_quit (XSAAServer* _sender, gpointer self);
 XSAADaemon* xsaa_daemon_new (const char* socket_name, GError** error);
 XSAADaemon* xsaa_daemon_construct (GType object_type, const char* socket_name, GError** error);
-XSAADaemon* xsaa_daemon_new (const char* socket_name, GError** error);
 void xsaa_change_vt (gint vt);
 static void xsaa_daemon_change_to_display_vt (XSAADaemon* self);
 XSAASplash* xsaa_splash_new (XSAAServer* server);
@@ -286,7 +308,6 @@ void xsaa_splash_show_shutdown (XSAASplash* self);
 void xsaa_splash_login_message (XSAASplash* self, const char* msg);
 void xsaa_splash_show_launch (XSAASplash* self);
 void xsaa_daemon_run (XSAADaemon* self, gboolean first_start);
-static gpointer xsaa_daemon_parent_class = NULL;
 static void xsaa_daemon_finalize (GObject* obj);
 void xsaa_on_sig_kill (gint signum);
 static void _xsaa_on_sig_kill_sighandler_t (gint signal);
@@ -367,8 +388,10 @@ static DBusMessage* _dbus_xsaa_manager_property_get_all (XSAAManager* self, DBus
 		dbus_message_iter_open_container (&reply_iter, DBUS_TYPE_ARRAY, "{sv}", &subiter);
 		dbus_message_iter_close_container (&reply_iter, &subiter);
 	} else {
-		return NULL;
+		dbus_message_unref (reply);
+		reply = NULL;
 	}
+	g_free (interface_name);
 	return reply;
 }
 
@@ -376,11 +399,11 @@ static DBusMessage* _dbus_xsaa_manager_property_get_all (XSAAManager* self, DBus
 static DBusMessage* _dbus_xsaa_manager_open_session (XSAAManager* self, DBusConnection* connection, DBusMessage* message) {
 	DBusMessageIter iter;
 	GError* error;
-	const char* user;
+	char* user;
 	const char* _tmp1_;
 	gint display;
 	dbus_int32_t _tmp2_;
-	const char* device;
+	char* device;
 	const char* _tmp3_;
 	gboolean autologin;
 	dbus_bool_t _tmp4_;
@@ -414,8 +437,11 @@ static DBusMessage* _dbus_xsaa_manager_open_session (XSAAManager* self, DBusConn
 	result = xsaa_manager_open_session (self, user, display, device, autologin, &path);
 	reply = dbus_message_new_method_return (message);
 	dbus_message_iter_init_append (reply, &iter);
+	user = (g_free (user), NULL);
+	device = (g_free (device), NULL);
 	_tmp5_ = path;
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_OBJECT_PATH, &_tmp5_);
+	path = (g_free (path), NULL);
 	_tmp6_ = result;
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &_tmp6_);
 	return reply;
@@ -425,7 +451,7 @@ static DBusMessage* _dbus_xsaa_manager_open_session (XSAAManager* self, DBusConn
 static DBusMessage* _dbus_xsaa_manager_close_session (XSAAManager* self, DBusConnection* connection, DBusMessage* message) {
 	DBusMessageIter iter;
 	GError* error;
-	const char* path;
+	char* path;
 	const char* _tmp7_;
 	DBusMessage* reply;
 	error = NULL;
@@ -440,6 +466,7 @@ static DBusMessage* _dbus_xsaa_manager_close_session (XSAAManager* self, DBusCon
 	xsaa_manager_close_session (self, path);
 	reply = dbus_message_new_method_return (message);
 	dbus_message_iter_init_append (reply, &iter);
+	path = (g_free (path), NULL);
 	return reply;
 }
 
@@ -526,6 +553,7 @@ GType xsaa_manager_get_type (void) {
 		static const GTypeInfo g_define_type_info = { sizeof (XSAAManagerIface), (GBaseInitFunc) xsaa_manager_base_init, (GBaseFinalizeFunc) NULL, (GClassInitFunc) NULL, (GClassFinalizeFunc) NULL, NULL, 0, 0, (GInstanceInitFunc) NULL, NULL };
 		xsaa_manager_type_id = g_type_register_static (G_TYPE_INTERFACE, "XSAAManager", &g_define_type_info, 0);
 		g_type_interface_add_prerequisite (xsaa_manager_type_id, DBUS_TYPE_G_PROXY);
+		g_type_set_qdata (xsaa_manager_type_id, g_quark_from_string ("ValaDBusInterfaceProxyType"), &xsaa_manager_dbus_proxy_get_type);
 	}
 	return xsaa_manager_type_id;
 }
@@ -534,11 +562,24 @@ GType xsaa_manager_get_type (void) {
 G_DEFINE_TYPE_EXTENDED (XSAAManagerDBusProxy, xsaa_manager_dbus_proxy, DBUS_TYPE_G_PROXY, 0, G_IMPLEMENT_INTERFACE (XSAA_TYPE_MANAGER, xsaa_manager_dbus_proxy_interface_init));
 XSAAManager* xsaa_manager_dbus_proxy_new (DBusGConnection* connection, const char* name, const char* path) {
 	XSAAManager* self;
-	char* filter;
 	self = g_object_new (xsaa_manager_dbus_proxy_get_type (), "connection", connection, "name", name, "path", path, "interface", "fr.supersonicimagine.XSAA.Manager", NULL);
+	return self;
+}
+
+
+static GObject* xsaa_manager_dbus_proxy_construct (GType gtype, guint n_properties, GObjectConstructParam* properties) {
+	GObject* self;
+	DBusGConnection *connection;
+	char* path;
+	char* filter;
+	self = G_OBJECT_CLASS (xsaa_manager_dbus_proxy_parent_class)->constructor (gtype, n_properties, properties);
+	g_object_get (self, "connection", &connection, NULL);
+	g_object_get (self, "path", &path, NULL);
 	dbus_connection_add_filter (dbus_g_connection_get_connection (connection), xsaa_manager_dbus_proxy_filter, self, NULL);
 	filter = g_strdup_printf ("type='signal',path='%s'", path);
 	dbus_bus_add_match (dbus_g_connection_get_connection (connection), filter, NULL);
+	dbus_g_connection_unref (connection);
+	g_free (path);
 	g_free (filter);
 	return self;
 }
@@ -553,6 +594,10 @@ DBusHandlerResult xsaa_manager_dbus_proxy_filter (DBusConnection* connection, DB
 
 static void xsaa_manager_dbus_proxy_dispose (GObject* self) {
 	DBusGConnection *connection;
+	if (((XSAAManagerDBusProxy*) self)->disposed) {
+		return;
+	}
+	((XSAAManagerDBusProxy*) self)->disposed = TRUE;
 	g_object_get (self, "connection", &connection, NULL);
 	dbus_connection_remove_filter (dbus_g_connection_get_connection (connection), xsaa_manager_dbus_proxy_filter, self);
 	G_OBJECT_CLASS (xsaa_manager_dbus_proxy_parent_class)->dispose (self);
@@ -560,7 +605,10 @@ static void xsaa_manager_dbus_proxy_dispose (GObject* self) {
 
 
 static void xsaa_manager_dbus_proxy_class_init (XSAAManagerDBusProxyClass* klass) {
+	G_OBJECT_CLASS (klass)->constructor = xsaa_manager_dbus_proxy_construct;
 	G_OBJECT_CLASS (klass)->dispose = xsaa_manager_dbus_proxy_dispose;
+	G_OBJECT_CLASS (klass)->get_property = xsaa_manager_dbus_proxy_get_property;
+	G_OBJECT_CLASS (klass)->set_property = xsaa_manager_dbus_proxy_set_property;
 }
 
 
@@ -580,6 +628,9 @@ static gboolean xsaa_manager_dbus_proxy_open_session (XSAAManager* self, const c
 	const char* _tmp12_;
 	gboolean _result;
 	dbus_bool_t _tmp13_;
+	if (((XSAAManagerDBusProxy*) self)->disposed) {
+		return FALSE;
+	}
 	_message = dbus_message_new_method_call (dbus_g_proxy_get_bus_name ((DBusGProxy*) self), dbus_g_proxy_get_path ((DBusGProxy*) self), "fr.supersonicimagine.XSAA.Manager", "OpenSession");
 	dbus_message_iter_init_append (_message, &_iter);
 	_tmp8_ = user;
@@ -612,6 +663,9 @@ static void xsaa_manager_dbus_proxy_close_session (XSAAManager* self, const char
 	DBusMessage *_message, *_reply;
 	DBusMessageIter _iter;
 	const char* _tmp14_;
+	if (((XSAAManagerDBusProxy*) self)->disposed) {
+		return;
+	}
 	_message = dbus_message_new_method_call (dbus_g_proxy_get_bus_name ((DBusGProxy*) self), dbus_g_proxy_get_path ((DBusGProxy*) self), "fr.supersonicimagine.XSAA.Manager", "CloseSession");
 	dbus_message_iter_init_append (_message, &_iter);
 	_tmp14_ = path;
@@ -629,6 +683,9 @@ static void xsaa_manager_dbus_proxy_reboot (XSAAManager* self) {
 	DBusGConnection *_connection;
 	DBusMessage *_message, *_reply;
 	DBusMessageIter _iter;
+	if (((XSAAManagerDBusProxy*) self)->disposed) {
+		return;
+	}
 	_message = dbus_message_new_method_call (dbus_g_proxy_get_bus_name ((DBusGProxy*) self), dbus_g_proxy_get_path ((DBusGProxy*) self), "fr.supersonicimagine.XSAA.Manager", "Reboot");
 	dbus_message_iter_init_append (_message, &_iter);
 	g_object_get (self, "connection", &_connection, NULL);
@@ -644,6 +701,9 @@ static void xsaa_manager_dbus_proxy_halt (XSAAManager* self) {
 	DBusGConnection *_connection;
 	DBusMessage *_message, *_reply;
 	DBusMessageIter _iter;
+	if (((XSAAManagerDBusProxy*) self)->disposed) {
+		return;
+	}
 	_message = dbus_message_new_method_call (dbus_g_proxy_get_bus_name ((DBusGProxy*) self), dbus_g_proxy_get_path ((DBusGProxy*) self), "fr.supersonicimagine.XSAA.Manager", "Halt");
 	dbus_message_iter_init_append (_message, &_iter);
 	g_object_get (self, "connection", &_connection, NULL);
@@ -660,6 +720,14 @@ static void xsaa_manager_dbus_proxy_interface_init (XSAAManagerIface* iface) {
 	iface->close_session = xsaa_manager_dbus_proxy_close_session;
 	iface->reboot = xsaa_manager_dbus_proxy_reboot;
 	iface->halt = xsaa_manager_dbus_proxy_halt;
+}
+
+
+static void xsaa_manager_dbus_proxy_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec) {
+}
+
+
+static void xsaa_manager_dbus_proxy_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec) {
 }
 
 
@@ -722,8 +790,10 @@ static DBusMessage* _dbus_xsaa_session_property_get_all (XSAASession* self, DBus
 		dbus_message_iter_open_container (&reply_iter, DBUS_TYPE_ARRAY, "{sv}", &subiter);
 		dbus_message_iter_close_container (&reply_iter, &subiter);
 	} else {
-		return NULL;
+		dbus_message_unref (reply);
+		reply = NULL;
 	}
+	g_free (interface_name);
 	return reply;
 }
 
@@ -731,7 +801,7 @@ static DBusMessage* _dbus_xsaa_session_property_get_all (XSAASession* self, DBus
 static DBusMessage* _dbus_xsaa_session_set_passwd (XSAASession* self, DBusConnection* connection, DBusMessage* message) {
 	DBusMessageIter iter;
 	GError* error;
-	const char* pass;
+	char* pass;
 	const char* _tmp16_;
 	DBusMessage* reply;
 	error = NULL;
@@ -746,6 +816,7 @@ static DBusMessage* _dbus_xsaa_session_set_passwd (XSAASession* self, DBusConnec
 	xsaa_session_set_passwd (self, pass);
 	reply = dbus_message_new_method_return (message);
 	dbus_message_iter_init_append (reply, &iter);
+	pass = (g_free (pass), NULL);
 	return reply;
 }
 
@@ -769,7 +840,7 @@ static DBusMessage* _dbus_xsaa_session_authenticate (XSAASession* self, DBusConn
 static DBusMessage* _dbus_xsaa_session_launch (XSAASession* self, DBusConnection* connection, DBusMessage* message) {
 	DBusMessageIter iter;
 	GError* error;
-	const char* cmd;
+	char* cmd;
 	const char* _tmp17_;
 	DBusMessage* reply;
 	error = NULL;
@@ -784,6 +855,7 @@ static DBusMessage* _dbus_xsaa_session_launch (XSAASession* self, DBusConnection
 	xsaa_session_launch (self, cmd);
 	reply = dbus_message_new_method_return (message);
 	dbus_message_iter_init_append (reply, &iter);
+	cmd = (g_free (cmd), NULL);
 	return reply;
 }
 
@@ -912,6 +984,7 @@ GType xsaa_session_get_type (void) {
 		static const GTypeInfo g_define_type_info = { sizeof (XSAASessionIface), (GBaseInitFunc) xsaa_session_base_init, (GBaseFinalizeFunc) NULL, (GClassInitFunc) NULL, (GClassFinalizeFunc) NULL, NULL, 0, 0, (GInstanceInitFunc) NULL, NULL };
 		xsaa_session_type_id = g_type_register_static (G_TYPE_INTERFACE, "XSAASession", &g_define_type_info, 0);
 		g_type_interface_add_prerequisite (xsaa_session_type_id, DBUS_TYPE_G_PROXY);
+		g_type_set_qdata (xsaa_session_type_id, g_quark_from_string ("ValaDBusInterfaceProxyType"), &xsaa_session_dbus_proxy_get_type);
 	}
 	return xsaa_session_type_id;
 }
@@ -920,11 +993,24 @@ GType xsaa_session_get_type (void) {
 G_DEFINE_TYPE_EXTENDED (XSAASessionDBusProxy, xsaa_session_dbus_proxy, DBUS_TYPE_G_PROXY, 0, G_IMPLEMENT_INTERFACE (XSAA_TYPE_SESSION, xsaa_session_dbus_proxy_interface_init));
 XSAASession* xsaa_session_dbus_proxy_new (DBusGConnection* connection, const char* name, const char* path) {
 	XSAASession* self;
-	char* filter;
 	self = g_object_new (xsaa_session_dbus_proxy_get_type (), "connection", connection, "name", name, "path", path, "interface", "fr.supersonicimagine.XSAA.Manager.Session", NULL);
+	return self;
+}
+
+
+static GObject* xsaa_session_dbus_proxy_construct (GType gtype, guint n_properties, GObjectConstructParam* properties) {
+	GObject* self;
+	DBusGConnection *connection;
+	char* path;
+	char* filter;
+	self = G_OBJECT_CLASS (xsaa_session_dbus_proxy_parent_class)->constructor (gtype, n_properties, properties);
+	g_object_get (self, "connection", &connection, NULL);
+	g_object_get (self, "path", &path, NULL);
 	dbus_connection_add_filter (dbus_g_connection_get_connection (connection), xsaa_session_dbus_proxy_filter, self, NULL);
 	filter = g_strdup_printf ("type='signal',path='%s'", path);
 	dbus_bus_add_match (dbus_g_connection_get_connection (connection), filter, NULL);
+	dbus_g_connection_unref (connection);
+	g_free (path);
 	g_free (filter);
 	return self;
 }
@@ -1017,6 +1103,10 @@ DBusHandlerResult xsaa_session_dbus_proxy_filter (DBusConnection* connection, DB
 
 static void xsaa_session_dbus_proxy_dispose (GObject* self) {
 	DBusGConnection *connection;
+	if (((XSAASessionDBusProxy*) self)->disposed) {
+		return;
+	}
+	((XSAASessionDBusProxy*) self)->disposed = TRUE;
 	g_object_get (self, "connection", &connection, NULL);
 	dbus_connection_remove_filter (dbus_g_connection_get_connection (connection), xsaa_session_dbus_proxy_filter, self);
 	G_OBJECT_CLASS (xsaa_session_dbus_proxy_parent_class)->dispose (self);
@@ -1024,7 +1114,10 @@ static void xsaa_session_dbus_proxy_dispose (GObject* self) {
 
 
 static void xsaa_session_dbus_proxy_class_init (XSAASessionDBusProxyClass* klass) {
+	G_OBJECT_CLASS (klass)->constructor = xsaa_session_dbus_proxy_construct;
 	G_OBJECT_CLASS (klass)->dispose = xsaa_session_dbus_proxy_dispose;
+	G_OBJECT_CLASS (klass)->get_property = xsaa_session_dbus_proxy_get_property;
+	G_OBJECT_CLASS (klass)->set_property = xsaa_session_dbus_proxy_set_property;
 }
 
 
@@ -1037,6 +1130,9 @@ static void xsaa_session_dbus_proxy_set_passwd (XSAASession* self, const char* p
 	DBusMessage *_message, *_reply;
 	DBusMessageIter _iter;
 	const char* _tmp22_;
+	if (((XSAASessionDBusProxy*) self)->disposed) {
+		return;
+	}
 	_message = dbus_message_new_method_call (dbus_g_proxy_get_bus_name ((DBusGProxy*) self), dbus_g_proxy_get_path ((DBusGProxy*) self), "fr.supersonicimagine.XSAA.Manager.Session", "SetPasswd");
 	dbus_message_iter_init_append (_message, &_iter);
 	_tmp22_ = pass;
@@ -1054,6 +1150,9 @@ static void xsaa_session_dbus_proxy_authenticate (XSAASession* self) {
 	DBusGConnection *_connection;
 	DBusMessage *_message, *_reply;
 	DBusMessageIter _iter;
+	if (((XSAASessionDBusProxy*) self)->disposed) {
+		return;
+	}
 	_message = dbus_message_new_method_call (dbus_g_proxy_get_bus_name ((DBusGProxy*) self), dbus_g_proxy_get_path ((DBusGProxy*) self), "fr.supersonicimagine.XSAA.Manager.Session", "Authenticate");
 	dbus_message_iter_init_append (_message, &_iter);
 	g_object_get (self, "connection", &_connection, NULL);
@@ -1070,6 +1169,9 @@ static void xsaa_session_dbus_proxy_launch (XSAASession* self, const char* cmd) 
 	DBusMessage *_message, *_reply;
 	DBusMessageIter _iter;
 	const char* _tmp23_;
+	if (((XSAASessionDBusProxy*) self)->disposed) {
+		return;
+	}
 	_message = dbus_message_new_method_call (dbus_g_proxy_get_bus_name ((DBusGProxy*) self), dbus_g_proxy_get_path ((DBusGProxy*) self), "fr.supersonicimagine.XSAA.Manager.Session", "Launch");
 	dbus_message_iter_init_append (_message, &_iter);
 	_tmp23_ = cmd;
@@ -1087,6 +1189,14 @@ static void xsaa_session_dbus_proxy_interface_init (XSAASessionIface* iface) {
 	iface->set_passwd = xsaa_session_dbus_proxy_set_passwd;
 	iface->authenticate = xsaa_session_dbus_proxy_authenticate;
 	iface->launch = xsaa_session_dbus_proxy_launch;
+}
+
+
+static void xsaa_session_dbus_proxy_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec) {
+}
+
+
+static void xsaa_session_dbus_proxy_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec) {
 }
 
 
@@ -1158,22 +1268,26 @@ XSAADaemon* xsaa_daemon_construct (GType object_type, const char* socket_name, G
 	cmd = (_tmp4_ = g_strconcat (_tmp3_ = g_strconcat (_tmp2_ = g_strconcat (_tmp0_ = g_strconcat (self->priv->server, " :", NULL), _tmp1_ = g_strdup_printf ("%i", self->priv->number), NULL), " ", NULL), self->priv->options, NULL), _tmp3_ = (g_free (_tmp3_), NULL), _tmp2_ = (g_free (_tmp2_), NULL), _tmp1_ = (g_free (_tmp1_), NULL), _tmp0_ = (g_free (_tmp0_), NULL), _tmp4_);
 	{
 		XSAADisplay* _tmp5_;
-		XSAAServer* _tmp6_;
-		_tmp5_ = NULL;
-		self->priv->display = (_tmp5_ = xsaa_display_new (cmd, self->priv->number, &_inner_error_), (self->priv->display == NULL) ? NULL : (self->priv->display = (g_object_unref (self->priv->display), NULL)), _tmp5_);
+		XSAADisplay* _tmp6_;
+		XSAAServer* _tmp7_;
+		XSAAServer* _tmp8_;
+		_tmp5_ = xsaa_display_new (cmd, self->priv->number, &_inner_error_);
 		if (_inner_error_ != NULL) {
 			goto __catch15_g_error;
 			goto __finally15;
 		}
+		_tmp6_ = NULL;
+		self->priv->display = (_tmp6_ = _tmp5_, (self->priv->display == NULL) ? NULL : (self->priv->display = (g_object_unref (self->priv->display), NULL)), _tmp6_);
 		g_signal_connect_object (self->priv->display, "ready", (GCallback) _xsaa_daemon_on_display_ready_xsaa_display_ready, self, 0);
 		g_signal_connect_object (self->priv->display, "died", (GCallback) _xsaa_daemon_on_display_exit_xsaa_display_died, self, 0);
 		g_signal_connect_object (self->priv->display, "exited", (GCallback) _xsaa_daemon_on_display_exit_xsaa_display_exited, self, 0);
-		_tmp6_ = NULL;
-		self->priv->socket = (_tmp6_ = xsaa_server_new (socket_name, &_inner_error_), (self->priv->socket == NULL) ? NULL : (self->priv->socket = (g_object_unref (self->priv->socket), NULL)), _tmp6_);
+		_tmp7_ = xsaa_server_new (socket_name, &_inner_error_);
 		if (_inner_error_ != NULL) {
 			goto __catch15_g_error;
 			goto __finally15;
 		}
+		_tmp8_ = NULL;
+		self->priv->socket = (_tmp8_ = _tmp7_, (self->priv->socket == NULL) ? NULL : (self->priv->socket = (g_object_unref (self->priv->socket), NULL)), _tmp8_);
 		g_signal_connect_object (self->priv->socket, "dbus", (GCallback) _xsaa_daemon_on_dbus_ready_xsaa_server_dbus, self, 0);
 		g_signal_connect_object (self->priv->socket, "session", (GCallback) _xsaa_daemon_on_session_ready_xsaa_server_session, self, 0);
 		g_signal_connect_object (self->priv->socket, "close-session", (GCallback) _xsaa_daemon_on_init_shutdown_xsaa_server_close_session, self, 0);
@@ -1186,15 +1300,14 @@ XSAADaemon* xsaa_daemon_construct (GType object_type, const char* socket_name, G
 		err = _inner_error_;
 		_inner_error_ = NULL;
 		{
-			GError* _tmp7_;
+			GError* _tmp9_;
 			g_object_unref ((GObject*) self);
-			_tmp7_ = NULL;
-			_inner_error_ = (_tmp7_ = err, (_tmp7_ == NULL) ? ((gpointer) _tmp7_) : g_error_copy (_tmp7_));
+			_tmp9_ = NULL;
+			_inner_error_ = (_tmp9_ = err, (_tmp9_ == NULL) ? ((gpointer) _tmp9_) : g_error_copy (_tmp9_));
 			if (_inner_error_ != NULL) {
-				g_propagate_error (error, _inner_error_);
 				(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 				cmd = (g_free (cmd), NULL);
-				return;
+				goto __finally15;
 			}
 			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 		}
@@ -1312,7 +1425,7 @@ static void xsaa_daemon_change_to_display_vt (XSAADaemon* self) {
 	gint vt;
 	g_return_if_fail (self != NULL);
 	vt = 0;
-	sscanf (self->priv->device, "/dev/tty%i", &vt, NULL);
+	sscanf (self->priv->device, "/dev/tty%i", &vt);
 	xsaa_change_vt (vt);
 }
 
@@ -1401,6 +1514,7 @@ static void _xsaa_daemon_on_error_msg_xsaa_session_error_msg (XSAASession* _send
 
 
 static gboolean xsaa_daemon_open_session (XSAADaemon* self, const char* username, gboolean autologin) {
+	gboolean result;
 	GError * _inner_error_;
 	gboolean ret;
 	g_return_val_if_fail (self != NULL, FALSE);
@@ -1462,7 +1576,8 @@ static gboolean xsaa_daemon_open_session (XSAADaemon* self, const char* username
 		g_clear_error (&_inner_error_);
 		return FALSE;
 	}
-	return ret;
+	result = ret;
+	return result;
 }
 
 
@@ -1806,20 +1921,27 @@ static char** _vala_array_dup1 (char** self, int length) {
 
 
 gint xsaa_main (char** args, int args_length1) {
+	gint result;
 	GError * _inner_error_;
+	pid_t pid;
 	pid_t ppgid;
 	gint status;
 	gboolean first_start;
 	_inner_error_ = NULL;
+	pid = 0;
 	ppgid = 0;
-	ppgid = getpgid ();
+	pid = getpid ();
+	ppgid = getpgid (pid);
 	setsid ();
 	setpgid ((pid_t) 0, ppgid);
 	signal (SIGTERM, _xsaa_on_sig_kill_sighandler_t);
 	signal (SIGKILL, _xsaa_on_sig_kill_sighandler_t);
 	status = -1;
 	first_start = TRUE;
-	while (status != 0) {
+	while (TRUE) {
+		if (!(status != 0)) {
+			break;
+		}
 		switch (fork ()) {
 			case 0:
 			{
@@ -1850,9 +1972,10 @@ gint xsaa_main (char** args, int args_length1) {
 					err = _inner_error_;
 					_inner_error_ = NULL;
 					{
-						gint _tmp3_;
 						fprintf (stderr, "%s\n", err->message);
-						return (_tmp3_ = -1, (err == NULL) ? NULL : (err = (g_error_free (err), NULL)), _tmp3_);
+						result = -1;
+						(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
+						return result;
 					}
 				}
 				__finally20:
@@ -1861,11 +1984,13 @@ gint xsaa_main (char** args, int args_length1) {
 					g_clear_error (&_inner_error_);
 					return 0;
 				}
-				return 0;
+				result = 0;
+				return result;
 			}
 			case -1:
 			{
-				return -1;
+				result = -1;
+				return result;
 			}
 			default:
 			{
@@ -1886,7 +2011,8 @@ gint xsaa_main (char** args, int args_length1) {
 			}
 		}
 	}
-	return 0;
+	result = 0;
+	return result;
 }
 
 

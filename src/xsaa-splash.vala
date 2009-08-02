@@ -23,6 +23,7 @@ using GLib;
 using Gtk;
 using Posix;
 using Config;
+using SSI;
 
 namespace XSAA
 {

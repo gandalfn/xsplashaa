@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <gtk/gtk.h>
 
@@ -82,14 +83,15 @@ typedef enum  {
 } XSAASocketError;
 #define XSAA_SOCKET_ERROR xsaa_socket_error_quark ()
 
+static gint xsaa_server_BUFFER_LENGTH;
+static gint xsaa_server_BUFFER_LENGTH = 200;
+static gpointer xsaa_server_parent_class = NULL;
 
 GType xsaa_socket_get_type (void);
 GType xsaa_server_get_type (void);
 enum  {
 	XSAA_SERVER_DUMMY_PROPERTY
 };
-static gint xsaa_server_BUFFER_LENGTH;
-static gint xsaa_server_BUFFER_LENGTH = 200;
 GQuark xsaa_socket_error_quark (void);
 XSAASocket* xsaa_socket_new (const char* socket_name, GError** error);
 XSAASocket* xsaa_socket_construct (GType object_type, const char* socket_name, GError** error);
@@ -97,11 +99,9 @@ static void xsaa_server_on_client_connect (XSAAServer* self);
 static void _xsaa_server_on_client_connect_xsaa_socket_in (XSAAServer* _sender, gpointer self);
 XSAAServer* xsaa_server_new (const char* socket_name, GError** error);
 XSAAServer* xsaa_server_construct (GType object_type, const char* socket_name, GError** error);
-XSAAServer* xsaa_server_new (const char* socket_name, GError** error);
 static gboolean xsaa_server_on_client_message (XSAAServer* self, GIOChannel* client, GIOCondition condition);
 static gboolean _xsaa_server_on_client_message_gio_func (GIOChannel* source, GIOCondition condition, gpointer self);
 static void xsaa_server_handle_client_message (XSAAServer* self, GIOChannel* client, const char* buffer);
-static gpointer xsaa_server_parent_class = NULL;
 static void xsaa_server_finalize (GObject* obj);
 static void _vala_array_destroy (gpointer array, gint array_length, GDestroyNotify destroy_func);
 static void _vala_array_free (gpointer array, gint array_length, GDestroyNotify destroy_func);
@@ -181,24 +181,24 @@ static void xsaa_server_on_client_connect (XSAAServer* self) {
 			if (_inner_error_ != NULL) {
 				(ioc == NULL) ? NULL : (ioc = (g_io_channel_unref (ioc), NULL));
 				if (_inner_error_->domain == G_IO_CHANNEL_ERROR) {
-					goto __catch1_g_io_channel_error;
+					goto __catch0_g_io_channel_error;
 				}
-				goto __finally1;
+				goto __finally0;
 			}
 			g_io_channel_set_buffered (ioc, FALSE);
 			g_io_channel_set_flags (ioc, g_io_channel_get_flags (ioc) | G_IO_FLAG_NONBLOCK, &_inner_error_);
 			if (_inner_error_ != NULL) {
 				(ioc == NULL) ? NULL : (ioc = (g_io_channel_unref (ioc), NULL));
 				if (_inner_error_->domain == G_IO_CHANNEL_ERROR) {
-					goto __catch1_g_io_channel_error;
+					goto __catch0_g_io_channel_error;
 				}
-				goto __finally1;
+				goto __finally0;
 			}
 			g_io_add_watch (ioc, G_IO_IN, _xsaa_server_on_client_message_gio_func, self);
 			(ioc == NULL) ? NULL : (ioc = (g_io_channel_unref (ioc), NULL));
 		}
-		goto __finally1;
-		__catch1_g_io_channel_error:
+		goto __finally0;
+		__catch0_g_io_channel_error:
 		{
 			GError * err;
 			err = _inner_error_;
@@ -208,7 +208,7 @@ static void xsaa_server_on_client_connect (XSAAServer* self) {
 				(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 			}
 		}
-		__finally1:
+		__finally0:
 		if (_inner_error_ != NULL) {
 			g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
 			g_clear_error (&_inner_error_);
@@ -219,13 +219,13 @@ static void xsaa_server_on_client_connect (XSAAServer* self) {
 
 
 static gboolean xsaa_server_on_client_message (XSAAServer* self, GIOChannel* client, GIOCondition condition) {
+	gboolean result;
 	GError * _inner_error_;
 	gchar* _tmp0_;
 	gint buffer_size;
 	gint buffer_length1;
 	gchar* buffer;
 	gsize bytes_read;
-	gboolean _tmp2_;
 	g_return_val_if_fail (self != NULL, FALSE);
 	g_return_val_if_fail (client != NULL, FALSE);
 	_inner_error_ = NULL;
@@ -236,8 +236,8 @@ static gboolean xsaa_server_on_client_message (XSAAServer* self, GIOChannel* cli
 		gboolean _tmp1_;
 		g_io_channel_read_chars (client, buffer, buffer_length1, &bytes_read, &_inner_error_);
 		if (_inner_error_ != NULL) {
-			goto __catch2_g_error;
-			goto __finally2;
+			goto __catch1_g_error;
+			goto __finally1;
 		}
 		_tmp1_ = FALSE;
 		if (bytes_read > 0) {
@@ -250,8 +250,8 @@ static gboolean xsaa_server_on_client_message (XSAAServer* self, GIOChannel* cli
 			xsaa_server_handle_client_message (self, client, (const char*) buffer);
 		}
 	}
-	goto __finally2;
-	__catch2_g_error:
+	goto __finally1;
+	__catch1_g_error:
 	{
 		GError * err;
 		err = _inner_error_;
@@ -261,7 +261,7 @@ static gboolean xsaa_server_on_client_message (XSAAServer* self, GIOChannel* cli
 			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 		}
 	}
-	__finally2:
+	__finally1:
 	if (_inner_error_ != NULL) {
 		buffer = (g_free (buffer), NULL);
 		g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
@@ -269,14 +269,18 @@ static gboolean xsaa_server_on_client_message (XSAAServer* self, GIOChannel* cli
 		return FALSE;
 	}
 	close (g_io_channel_unix_get_fd (client));
-	return (_tmp2_ = FALSE, buffer = (g_free (buffer), NULL), _tmp2_);
+	result = FALSE;
+	buffer = (g_free (buffer), NULL);
+	return result;
 }
 
 
 static gboolean string_contains (const char* self, const char* needle) {
+	gboolean result;
 	g_return_val_if_fail (self != NULL, FALSE);
 	g_return_val_if_fail (needle != NULL, FALSE);
-	return strstr (self, needle) != NULL;
+	result = strstr (self, needle) != NULL;
+	return result;
 }
 
 
