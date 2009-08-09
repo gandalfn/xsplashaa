@@ -458,14 +458,20 @@ namespace XSAA
             
             Gdk.Color color;
 
-            Gdk.Color.parse("#1B242D", out color);
+            Gdk.Color.parse(bg, out color);
             modify_bg(StateType.NORMAL, color);
             notebook.modify_bg(StateType.NORMAL, color);
+
+            var screen = get_window().get_screen();
+            var root = screen.get_root_window();
+            root.set_background(color);
     	}
 
         public void
         show_launch()
         {
+            var cursor = new Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR);
+            get_window().set_cursor(cursor);
             notebook.set_current_page(2);
             throbber_session.start();
         }
@@ -473,6 +479,8 @@ namespace XSAA
         public void
         show_shutdown()
         {
+            var cursor = new Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR);
+            get_window().set_cursor(cursor);
             notebook.set_current_page(3);
             progress.show();
             on_start_pulse();
@@ -482,6 +490,9 @@ namespace XSAA
         public void
         ask_for_login()
         {
+            var cursor = new Gdk.Cursor(Gdk.CursorType.LEFT_PTR);
+            get_window().set_cursor(cursor);
+            
             notebook.set_current_page(1);
             label_prompt.set_markup("<span size='xx-large' color='" + 
                                      text +"'>Login :</span>");

@@ -51,7 +51,9 @@ public interface XSAA.Session : DBus.Object
 namespace XSAA
 {
     const string SOCKET_NAME = "/tmp/xsplashaa-socket";
-
+    static Daemon? daemon = null;
+    static bool shutdown = false;
+    
     errordomain DaemonError
     {
         DISABLED
@@ -63,7 +65,7 @@ namespace XSAA
 	    bool first_start = true;
         
 	    public string[] args;
-
+        
         Server socket;
         Splash splash;
         Display display;
@@ -80,6 +82,8 @@ namespace XSAA
 
         DBus.ObjectPath path = null;
         XSAA.Session session = null;
+
+        public jmp_buf env;
         
         public Daemon(string socket_name) throws GLib.Error
         {
@@ -134,6 +138,17 @@ namespace XSAA
             }
         }
 
+        ~Daemon()
+	    {
+            if (manager != null && path != null)
+            {
+                manager.close_session(path);
+                session = null;
+            }
+
+            manager = null;
+	    }
+
         private void
         change_to_display_vt()
         {
@@ -152,17 +167,22 @@ namespace XSAA
             var display = Gdk.Display.open(":" + number.to_string());
             var manager = Gdk.DisplayManager.get();
             manager.set_default_display(display);
+            X.set_io_error_handler(on_display_io_error);
             splash = new Splash(socket);
             splash.login += on_login_response;
             splash.restart += on_restart_request;
             splash.shutdown += on_shutdown_request;
             splash.show();
-	        if (!first_start) on_dbus_ready();
+            if (shutdown) 
+                on_init_shutdown();
+	        else if (!first_start) 
+                on_dbus_ready();
         }
 
         private void
         on_session_ready()
         {
+            
             if (session != null) splash.hide();
         }
 
@@ -215,7 +235,7 @@ namespace XSAA
         on_dbus_ready()
         {
             device = display.get_device();
-            
+
             if (user == null || user.len() == 0)
             {
                 splash.ask_for_login();
@@ -233,7 +253,10 @@ namespace XSAA
         on_session_ended()
         {
             stderr.printf("Session end\n");
-            manager.close_session(path);
+            if (manager != null && path != null)
+            {
+                manager.close_session(path);
+            }
             session = null;
             splash.show();
             splash.ask_for_login();
@@ -244,7 +267,7 @@ namespace XSAA
         {
             stderr.printf("Init shutdown\n");
             change_to_display_vt();
-            if (session != null)
+            if (manager != null && path != null && session != null)
             {
                 manager.close_session(path);
                 session = null;
@@ -253,6 +276,8 @@ namespace XSAA
             conn = null;
             splash.show();   
             splash.show_shutdown();
+            if (!shutdown && setjmp(env) == 0)
+               shutdown = true; 
         }
 
         private void
@@ -383,10 +408,21 @@ namespace XSAA
         }
     }
         
-    static void
-    on_sig_kill(int signum)
+    static int
+    on_display_io_error(X.Display display)
     {
-        change_vt(8);
+	    stderr.printf("DISPLAY Error\n");
+	    daemon = null;
+	    return -1;
+    } 
+
+    static void
+    on_sig_term(int signum)
+    {
+        if (shutdown && daemon != null)
+            longjmp(daemon.env, 1);
+        else
+            exit (-1);
     }
     
     static int 
@@ -400,8 +436,8 @@ namespace XSAA
 	    setsid();
     	setpgid(0, ppgid);
 
-        signal(SIGTERM,on_sig_kill);
-        signal(SIGKILL,on_sig_kill);
+        signal(SIGTERM, SIG_IGN);
+        signal(SIGKILL, SIG_IGN);
         int status = -1;
         bool first_start = true;
         while (status != 0)
@@ -411,16 +447,18 @@ namespace XSAA
                 case 0:
                     try 
                     {
-                        signal(SIGTERM,on_sig_kill);
-                        signal(SIGKILL,on_sig_kill);
-	                    Daemon daemon = new Daemon (SOCKET_NAME);
+                        signal(SIGSEGV, on_sig_term);
+                        signal(SIGTERM, on_sig_term);
+                        signal(SIGKILL, on_sig_term);
+                        daemon = new Daemon (SOCKET_NAME);
 	                    daemon.args = args;                    
                         daemon.run(first_start);
-	                    daemon.unref();
+	                    daemon = null;
                     }
                     catch (GLib.Error err)
                     {
                         stderr.printf("%s\n", err.message);
+	                    daemon = null;
                         return -1;
                     }
                 
@@ -431,15 +469,7 @@ namespace XSAA
                     int ret;
                     first_start = false;
                     wait(out ret);
-		    if (Process.if_signaled(ret))
-		    {
-			if (Process.core_dump(ret))
-		            status = -1;
-			else
-			    status = 0;
-		    }
-		    else
-                    	status = Process.exit_status(ret);
+		            status = Process.exit_status(ret);
                     break;
             }
         }

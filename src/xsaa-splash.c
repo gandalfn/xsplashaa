@@ -22,6 +22,7 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
+#include <xsaa-private.h>
 #include <vala-widgets/ssi-vala-widgets.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,16 +45,6 @@
 typedef struct _XSAASplash XSAASplash;
 typedef struct _XSAASplashClass XSAASplashClass;
 typedef struct _XSAASplashPrivate XSAASplashPrivate;
-
-#define XSAA_TYPE_SOCKET (xsaa_socket_get_type ())
-#define XSAA_SOCKET(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XSAA_TYPE_SOCKET, XSAASocket))
-#define XSAA_SOCKET_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), XSAA_TYPE_SOCKET, XSAASocketClass))
-#define XSAA_IS_SOCKET(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XSAA_TYPE_SOCKET))
-#define XSAA_IS_SOCKET_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), XSAA_TYPE_SOCKET))
-#define XSAA_SOCKET_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), XSAA_TYPE_SOCKET, XSAASocketClass))
-
-typedef struct _XSAASocket XSAASocket;
-typedef struct _XSAASocketClass XSAASocketClass;
 
 #define XSAA_TYPE_SERVER (xsaa_server_get_type ())
 #define XSAA_SERVER(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XSAA_TYPE_SERVER, XSAAServer))
@@ -109,7 +100,6 @@ struct _XSAASplashPrivate {
 static gpointer xsaa_splash_parent_class = NULL;
 
 GType xsaa_splash_get_type (void);
-GType xsaa_socket_get_type (void);
 GType xsaa_server_get_type (void);
 GType xsaa_throbber_get_type (void);
 #define XSAA_SPLASH_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), XSAA_TYPE_SPLASH, XSAASplashPrivate))
@@ -750,34 +740,56 @@ static void xsaa_splash_on_shutdown_clicked (XSAASplash* self) {
 static void xsaa_splash_real_realize (GtkWidget* base) {
 	XSAASplash * self;
 	GdkColor color = {0};
+	GdkScreen* _tmp0_;
+	GdkScreen* screen;
+	GdkWindow* _tmp1_;
+	GdkWindow* root;
 	self = (XSAASplash*) base;
 	GTK_WIDGET_CLASS (xsaa_splash_parent_class)->realize ((GtkWidget*) GTK_WINDOW (self));
-	gdk_color_parse ("#1B242D", &color);
+	gdk_color_parse (self->priv->bg, &color);
 	gtk_widget_modify_bg ((GtkWidget*) self, GTK_STATE_NORMAL, &color);
 	gtk_widget_modify_bg ((GtkWidget*) self->priv->notebook, GTK_STATE_NORMAL, &color);
+	_tmp0_ = NULL;
+	screen = (_tmp0_ = gdk_drawable_get_screen ((GdkDrawable*) gtk_widget_get_window ((GtkWidget*) self)), (_tmp0_ == NULL) ? NULL : g_object_ref (_tmp0_));
+	_tmp1_ = NULL;
+	root = (_tmp1_ = gdk_screen_get_root_window (screen), (_tmp1_ == NULL) ? NULL : g_object_ref (_tmp1_));
+	gdk_window_set_background (root, &color);
+	(screen == NULL) ? NULL : (screen = (g_object_unref (screen), NULL));
+	(root == NULL) ? NULL : (root = (g_object_unref (root), NULL));
 }
 
 
 void xsaa_splash_show_launch (XSAASplash* self) {
+	GdkCursor* cursor;
 	g_return_if_fail (self != NULL);
+	cursor = gdk_cursor_new (GDK_BLANK_CURSOR);
+	gdk_window_set_cursor (gtk_widget_get_window ((GtkWidget*) self), cursor);
 	gtk_notebook_set_current_page ((GtkNotebook*) self->priv->notebook, 2);
 	xsaa_throbber_start (self->priv->throbber_session);
+	(cursor == NULL) ? NULL : (cursor = (gdk_cursor_unref (cursor), NULL));
 }
 
 
 void xsaa_splash_show_shutdown (XSAASplash* self) {
+	GdkCursor* cursor;
 	g_return_if_fail (self != NULL);
+	cursor = gdk_cursor_new (GDK_BLANK_CURSOR);
+	gdk_window_set_cursor (gtk_widget_get_window ((GtkWidget*) self), cursor);
 	gtk_notebook_set_current_page ((GtkNotebook*) self->priv->notebook, 3);
 	gtk_widget_show ((GtkWidget*) self->priv->progress);
 	xsaa_splash_on_start_pulse (self);
 	xsaa_throbber_start (self->priv->throbber_shutdown);
+	(cursor == NULL) ? NULL : (cursor = (gdk_cursor_unref (cursor), NULL));
 }
 
 
 void xsaa_splash_ask_for_login (XSAASplash* self) {
+	GdkCursor* cursor;
 	char* _tmp1_;
 	char* _tmp0_;
 	g_return_if_fail (self != NULL);
+	cursor = gdk_cursor_new (GDK_LEFT_PTR);
+	gdk_window_set_cursor (gtk_widget_get_window ((GtkWidget*) self), cursor);
 	gtk_notebook_set_current_page ((GtkNotebook*) self->priv->notebook, 1);
 	_tmp1_ = NULL;
 	_tmp0_ = NULL;
@@ -795,6 +807,7 @@ void xsaa_splash_ask_for_login (XSAASplash* self) {
 	}
 	self->priv->id_pulse = (guint) 0;
 	gtk_widget_hide ((GtkWidget*) self->priv->progress);
+	(cursor == NULL) ? NULL : (cursor = (gdk_cursor_unref (cursor), NULL));
 }
 
 

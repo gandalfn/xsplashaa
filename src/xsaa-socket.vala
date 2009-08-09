@@ -25,7 +25,7 @@ using Posix;
 
 namespace XSAA
 {
-    errordomain SocketError
+    public errordomain SocketError
     {
         INVALID_NAME,
 		CREATE
@@ -40,7 +40,7 @@ namespace XSAA
         protected sockaddr_un saddr;
         protected IOChannel ioc;
 
-        signal void @in();
+        public signal void @in();
         
         public Socket(string socket_name) throws SocketError
         {

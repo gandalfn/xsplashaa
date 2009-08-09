@@ -25,11 +25,17 @@
 #include <dbus/dbus-glib.h>
 #include <stdlib.h>
 #include <string.h>
+#include <setjmp.h>
+#include <xsaa-private.h>
 #include <gtk/gtk.h>
 #include <glib/gstdio.h>
 #include <config.h>
 #include <stdio.h>
 #include <gdk/gdk.h>
+#include <X11/X.h>
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
+#include <X11/Xutil.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <stropts.h>
@@ -70,16 +76,6 @@ typedef DBusGProxyClass XSAASessionDBusProxyClass;
 typedef struct _XSAADaemon XSAADaemon;
 typedef struct _XSAADaemonClass XSAADaemonClass;
 typedef struct _XSAADaemonPrivate XSAADaemonPrivate;
-
-#define XSAA_TYPE_SOCKET (xsaa_socket_get_type ())
-#define XSAA_SOCKET(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XSAA_TYPE_SOCKET, XSAASocket))
-#define XSAA_SOCKET_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), XSAA_TYPE_SOCKET, XSAASocketClass))
-#define XSAA_IS_SOCKET(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XSAA_TYPE_SOCKET))
-#define XSAA_IS_SOCKET_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), XSAA_TYPE_SOCKET))
-#define XSAA_SOCKET_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), XSAA_TYPE_SOCKET, XSAASocketClass))
-
-typedef struct _XSAASocket XSAASocket;
-typedef struct _XSAASocketClass XSAASocketClass;
 
 #define XSAA_TYPE_SERVER (xsaa_server_get_type ())
 #define XSAA_SERVER(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XSAA_TYPE_SERVER, XSAAServer))
@@ -146,6 +142,7 @@ struct _XSAADaemon {
 	XSAADaemonPrivate * priv;
 	char** args;
 	gint args_length1;
+	jmp_buf env;
 };
 
 struct _XSAADaemonClass {
@@ -176,16 +173,15 @@ typedef enum  {
 	XSAA_DISPLAY_ERROR_LAUNCH
 } XSAADisplayError;
 #define XSAA_DISPLAY_ERROR xsaa_display_error_quark ()
-typedef enum  {
-	XSAA_SOCKET_ERROR_INVALID_NAME,
-	XSAA_SOCKET_ERROR_CREATE
-} XSAASocketError;
-#define XSAA_SOCKET_ERROR xsaa_socket_error_quark ()
 struct _DBusObjectVTable {
 	void (*register_object) (DBusConnection*, const char*, void*);
 };
 
 
+extern XSAADaemon* xsaa_daemon;
+XSAADaemon* xsaa_daemon = NULL;
+extern gboolean xsaa_shutdown;
+gboolean xsaa_shutdown = FALSE;
 static gpointer xsaa_daemon_parent_class = NULL;
 
 GType xsaa_manager_get_type (void);
@@ -250,9 +246,8 @@ static void xsaa_session_dbus_proxy_interface_init (XSAASessionIface* iface);
 static void xsaa_session_dbus_proxy_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec);
 static void xsaa_session_dbus_proxy_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec);
 #define XSAA_SOCKET_NAME "/tmp/xsplashaa-socket"
-GQuark xsaa_daemon_error_quark (void);
 GType xsaa_daemon_get_type (void);
-GType xsaa_socket_get_type (void);
+GQuark xsaa_daemon_error_quark (void);
 GType xsaa_server_get_type (void);
 GType xsaa_splash_get_type (void);
 GType xsaa_display_get_type (void);
@@ -269,7 +264,6 @@ static void _xsaa_daemon_on_display_ready_xsaa_display_ready (XSAADisplay* _send
 static void xsaa_daemon_on_display_exit (XSAADaemon* self);
 static void _xsaa_daemon_on_display_exit_xsaa_display_died (XSAADisplay* _sender, gpointer self);
 static void _xsaa_daemon_on_display_exit_xsaa_display_exited (XSAADisplay* _sender, gpointer self);
-GQuark xsaa_socket_error_quark (void);
 XSAAServer* xsaa_server_new (const char* socket_name, GError** error);
 XSAAServer* xsaa_server_construct (GType object_type, const char* socket_name, GError** error);
 static void xsaa_daemon_on_dbus_ready (XSAADaemon* self);
@@ -284,6 +278,8 @@ XSAADaemon* xsaa_daemon_new (const char* socket_name, GError** error);
 XSAADaemon* xsaa_daemon_construct (GType object_type, const char* socket_name, GError** error);
 void xsaa_change_vt (gint vt);
 static void xsaa_daemon_change_to_display_vt (XSAADaemon* self);
+gint xsaa_on_display_io_error (Display* display);
+static gint _xsaa_on_display_io_error_io_error_handler (Display* display);
 XSAASplash* xsaa_splash_new (XSAAServer* server);
 XSAASplash* xsaa_splash_construct (GType object_type, XSAAServer* server);
 static void xsaa_daemon_on_login_response (XSAADaemon* self, const char* username, const char* passwd);
@@ -309,8 +305,8 @@ void xsaa_splash_login_message (XSAASplash* self, const char* msg);
 void xsaa_splash_show_launch (XSAASplash* self);
 void xsaa_daemon_run (XSAADaemon* self, gboolean first_start);
 static void xsaa_daemon_finalize (GObject* obj);
-void xsaa_on_sig_kill (gint signum);
-static void _xsaa_on_sig_kill_sighandler_t (gint signal);
+void xsaa_on_sig_term (gint signum);
+static void _xsaa_on_sig_term_sighandler_t (gint signal);
 static char** _vala_array_dup1 (char** self, int length);
 gint xsaa_main (char** args, int args_length1);
 static void _vala_array_destroy (gpointer array, gint array_length, GDestroyNotify destroy_func);
@@ -1273,8 +1269,8 @@ XSAADaemon* xsaa_daemon_construct (GType object_type, const char* socket_name, G
 		XSAAServer* _tmp8_;
 		_tmp5_ = xsaa_display_new (cmd, self->priv->number, &_inner_error_);
 		if (_inner_error_ != NULL) {
-			goto __catch15_g_error;
-			goto __finally15;
+			goto __catch14_g_error;
+			goto __finally14;
 		}
 		_tmp6_ = NULL;
 		self->priv->display = (_tmp6_ = _tmp5_, (self->priv->display == NULL) ? NULL : (self->priv->display = (g_object_unref (self->priv->display), NULL)), _tmp6_);
@@ -1283,8 +1279,8 @@ XSAADaemon* xsaa_daemon_construct (GType object_type, const char* socket_name, G
 		g_signal_connect_object (self->priv->display, "exited", (GCallback) _xsaa_daemon_on_display_exit_xsaa_display_exited, self, 0);
 		_tmp7_ = xsaa_server_new (socket_name, &_inner_error_);
 		if (_inner_error_ != NULL) {
-			goto __catch15_g_error;
-			goto __finally15;
+			goto __catch14_g_error;
+			goto __finally14;
 		}
 		_tmp8_ = NULL;
 		self->priv->socket = (_tmp8_ = _tmp7_, (self->priv->socket == NULL) ? NULL : (self->priv->socket = (g_object_unref (self->priv->socket), NULL)), _tmp8_);
@@ -1293,8 +1289,8 @@ XSAADaemon* xsaa_daemon_construct (GType object_type, const char* socket_name, G
 		g_signal_connect_object (self->priv->socket, "close-session", (GCallback) _xsaa_daemon_on_init_shutdown_xsaa_server_close_session, self, 0);
 		g_signal_connect_object (self->priv->socket, "quit", (GCallback) _xsaa_daemon_on_quit_xsaa_server_quit, self, 0);
 	}
-	goto __finally15;
-	__catch15_g_error:
+	goto __finally14;
+	__catch14_g_error:
 	{
 		GError * err;
 		err = _inner_error_;
@@ -1307,12 +1303,12 @@ XSAADaemon* xsaa_daemon_construct (GType object_type, const char* socket_name, G
 			if (_inner_error_ != NULL) {
 				(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 				cmd = (g_free (cmd), NULL);
-				goto __finally15;
+				goto __finally14;
 			}
 			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 		}
 	}
-	__finally15:
+	__finally14:
 	if (_inner_error_ != NULL) {
 		g_propagate_error (error, _inner_error_);
 		cmd = (g_free (cmd), NULL);
@@ -1349,59 +1345,59 @@ static void xsaa_daemon_load_config (XSAADaemon* self) {
 			g_key_file_load_from_file (config, PACKAGE_CONFIG_FILE, G_KEY_FILE_NONE, &_inner_error_);
 			if (_inner_error_ != NULL) {
 				(config == NULL) ? NULL : (config = (g_key_file_free (config), NULL));
-				goto __catch16_g_error;
-				goto __finally16;
+				goto __catch15_g_error;
+				goto __finally15;
 			}
 			_tmp0_ = g_key_file_get_boolean (config, "general", "enable", &_inner_error_);
 			if (_inner_error_ != NULL) {
 				(config == NULL) ? NULL : (config = (g_key_file_free (config), NULL));
-				goto __catch16_g_error;
-				goto __finally16;
+				goto __catch15_g_error;
+				goto __finally15;
 			}
 			self->priv->enable = _tmp0_;
 			_tmp1_ = g_key_file_get_string (config, "display", "server", &_inner_error_);
 			if (_inner_error_ != NULL) {
 				(config == NULL) ? NULL : (config = (g_key_file_free (config), NULL));
-				goto __catch16_g_error;
-				goto __finally16;
+				goto __catch15_g_error;
+				goto __finally15;
 			}
 			_tmp2_ = NULL;
 			self->priv->server = (_tmp2_ = _tmp1_, self->priv->server = (g_free (self->priv->server), NULL), _tmp2_);
 			_tmp3_ = g_key_file_get_integer (config, "display", "number", &_inner_error_);
 			if (_inner_error_ != NULL) {
 				(config == NULL) ? NULL : (config = (g_key_file_free (config), NULL));
-				goto __catch16_g_error;
-				goto __finally16;
+				goto __catch15_g_error;
+				goto __finally15;
 			}
 			self->priv->number = _tmp3_;
 			_tmp4_ = g_key_file_get_string (config, "display", "options", &_inner_error_);
 			if (_inner_error_ != NULL) {
 				(config == NULL) ? NULL : (config = (g_key_file_free (config), NULL));
-				goto __catch16_g_error;
-				goto __finally16;
+				goto __catch15_g_error;
+				goto __finally15;
 			}
 			_tmp5_ = NULL;
 			self->priv->options = (_tmp5_ = _tmp4_, self->priv->options = (g_free (self->priv->options), NULL), _tmp5_);
 			_tmp6_ = g_key_file_get_string (config, "session", "exec", &_inner_error_);
 			if (_inner_error_ != NULL) {
 				(config == NULL) ? NULL : (config = (g_key_file_free (config), NULL));
-				goto __catch16_g_error;
-				goto __finally16;
+				goto __catch15_g_error;
+				goto __finally15;
 			}
 			_tmp7_ = NULL;
 			self->priv->exec = (_tmp7_ = _tmp6_, self->priv->exec = (g_free (self->priv->exec), NULL), _tmp7_);
 			_tmp8_ = g_key_file_get_string (config, "session", "user", &_inner_error_);
 			if (_inner_error_ != NULL) {
 				(config == NULL) ? NULL : (config = (g_key_file_free (config), NULL));
-				goto __catch16_g_error;
-				goto __finally16;
+				goto __catch15_g_error;
+				goto __finally15;
 			}
 			_tmp9_ = NULL;
 			self->priv->user = (_tmp9_ = _tmp8_, self->priv->user = (g_free (self->priv->user), NULL), _tmp9_);
 			(config == NULL) ? NULL : (config = (g_key_file_free (config), NULL));
 		}
-		goto __finally16;
-		__catch16_g_error:
+		goto __finally15;
+		__catch15_g_error:
 		{
 			GError * err;
 			err = _inner_error_;
@@ -1411,7 +1407,7 @@ static void xsaa_daemon_load_config (XSAADaemon* self) {
 				(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 			}
 		}
-		__finally16:
+		__finally15:
 		if (_inner_error_ != NULL) {
 			g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
 			g_clear_error (&_inner_error_);
@@ -1427,6 +1423,11 @@ static void xsaa_daemon_change_to_display_vt (XSAADaemon* self) {
 	vt = 0;
 	sscanf (self->priv->device, "/dev/tty%i", &vt);
 	xsaa_change_vt (vt);
+}
+
+
+static gint _xsaa_on_display_io_error_io_error_handler (Display* display) {
+	return xsaa_on_display_io_error (display);
 }
 
 
@@ -1471,14 +1472,19 @@ static void xsaa_daemon_on_display_ready (XSAADaemon* self) {
 	_tmp6_ = NULL;
 	manager = (_tmp6_ = gdk_display_manager_get (), (_tmp6_ == NULL) ? NULL : g_object_ref (_tmp6_));
 	gdk_display_manager_set_default_display (manager, display);
+	XSetIOErrorHandler (_xsaa_on_display_io_error_io_error_handler);
 	_tmp7_ = NULL;
 	self->priv->splash = (_tmp7_ = g_object_ref_sink (xsaa_splash_new (self->priv->socket)), (self->priv->splash == NULL) ? NULL : (self->priv->splash = (g_object_unref (self->priv->splash), NULL)), _tmp7_);
 	g_signal_connect_object (self->priv->splash, "login", (GCallback) _xsaa_daemon_on_login_response_xsaa_splash_login, self, 0);
 	g_signal_connect_object (self->priv->splash, "restart", (GCallback) _xsaa_daemon_on_restart_request_xsaa_splash_restart, self, 0);
 	g_signal_connect_object (self->priv->splash, "shutdown", (GCallback) _xsaa_daemon_on_shutdown_request_xsaa_splash_shutdown, self, 0);
 	gtk_widget_show ((GtkWidget*) self->priv->splash);
-	if (!self->priv->first_start) {
-		xsaa_daemon_on_dbus_ready (self);
+	if (xsaa_shutdown) {
+		xsaa_daemon_on_init_shutdown (self);
+	} else {
+		if (!self->priv->first_start) {
+			xsaa_daemon_on_dbus_ready (self);
+		}
 	}
 	(display == NULL) ? NULL : (display = (g_object_unref (display), NULL));
 	(manager == NULL) ? NULL : (manager = (g_object_unref (manager), NULL));
@@ -1527,8 +1533,8 @@ static gboolean xsaa_daemon_open_session (XSAADaemon* self, const char* username
 			DBusGConnection* _tmp1_;
 			_tmp0_ = dbus_g_bus_get (DBUS_BUS_SYSTEM, &_inner_error_);
 			if (_inner_error_ != NULL) {
-				goto __catch17_g_error;
-				goto __finally17;
+				goto __catch16_g_error;
+				goto __finally16;
 			}
 			_tmp1_ = NULL;
 			self->priv->conn = (_tmp1_ = _tmp0_, (self->priv->conn == NULL) ? NULL : (self->priv->conn = (dbus_g_connection_unref (self->priv->conn), NULL)), _tmp1_);
@@ -1559,8 +1565,8 @@ static gboolean xsaa_daemon_open_session (XSAADaemon* self, const char* username
 			}
 		}
 	}
-	goto __finally17;
-	__catch17_g_error:
+	goto __finally16;
+	__catch16_g_error:
 	{
 		GError * err;
 		err = _inner_error_;
@@ -1570,7 +1576,7 @@ static gboolean xsaa_daemon_open_session (XSAADaemon* self, const char* username
 			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 		}
 	}
-	__finally17:
+	__finally16:
 	if (_inner_error_ != NULL) {
 		g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
 		g_clear_error (&_inner_error_);
@@ -1609,35 +1615,68 @@ static void xsaa_daemon_on_dbus_ready (XSAADaemon* self) {
 
 
 static void xsaa_daemon_on_session_ended (XSAADaemon* self) {
-	XSAASession* _tmp0_;
+	gboolean _tmp0_;
+	XSAASession* _tmp1_;
 	g_return_if_fail (self != NULL);
 	fprintf (stderr, "Session end\n");
-	xsaa_manager_close_session (self->priv->manager, self->priv->path);
-	_tmp0_ = NULL;
-	self->priv->session = (_tmp0_ = NULL, (self->priv->session == NULL) ? NULL : (self->priv->session = (g_object_unref (self->priv->session), NULL)), _tmp0_);
+	_tmp0_ = FALSE;
+	if (self->priv->manager != NULL) {
+		_tmp0_ = self->priv->path != NULL;
+	} else {
+		_tmp0_ = FALSE;
+	}
+	if (_tmp0_) {
+		xsaa_manager_close_session (self->priv->manager, self->priv->path);
+	}
+	_tmp1_ = NULL;
+	self->priv->session = (_tmp1_ = NULL, (self->priv->session == NULL) ? NULL : (self->priv->session = (g_object_unref (self->priv->session), NULL)), _tmp1_);
 	gtk_widget_show ((GtkWidget*) self->priv->splash);
 	xsaa_splash_ask_for_login (self->priv->splash);
 }
 
 
 static void xsaa_daemon_on_init_shutdown (XSAADaemon* self) {
-	XSAAManager* _tmp1_;
-	DBusGConnection* _tmp2_;
+	gboolean _tmp0_;
+	gboolean _tmp1_;
+	XSAAManager* _tmp3_;
+	DBusGConnection* _tmp4_;
+	gboolean _tmp5_;
 	g_return_if_fail (self != NULL);
 	fprintf (stderr, "Init shutdown\n");
 	xsaa_daemon_change_to_display_vt (self);
-	if (self->priv->session != NULL) {
-		XSAASession* _tmp0_;
-		xsaa_manager_close_session (self->priv->manager, self->priv->path);
-		_tmp0_ = NULL;
-		self->priv->session = (_tmp0_ = NULL, (self->priv->session == NULL) ? NULL : (self->priv->session = (g_object_unref (self->priv->session), NULL)), _tmp0_);
+	_tmp0_ = FALSE;
+	_tmp1_ = FALSE;
+	if (self->priv->manager != NULL) {
+		_tmp1_ = self->priv->path != NULL;
+	} else {
+		_tmp1_ = FALSE;
 	}
-	_tmp1_ = NULL;
-	self->priv->manager = (_tmp1_ = NULL, (self->priv->manager == NULL) ? NULL : (self->priv->manager = (g_object_unref (self->priv->manager), NULL)), _tmp1_);
-	_tmp2_ = NULL;
-	self->priv->conn = (_tmp2_ = NULL, (self->priv->conn == NULL) ? NULL : (self->priv->conn = (dbus_g_connection_unref (self->priv->conn), NULL)), _tmp2_);
+	if (_tmp1_) {
+		_tmp0_ = self->priv->session != NULL;
+	} else {
+		_tmp0_ = FALSE;
+	}
+	if (_tmp0_) {
+		XSAASession* _tmp2_;
+		xsaa_manager_close_session (self->priv->manager, self->priv->path);
+		_tmp2_ = NULL;
+		self->priv->session = (_tmp2_ = NULL, (self->priv->session == NULL) ? NULL : (self->priv->session = (g_object_unref (self->priv->session), NULL)), _tmp2_);
+	}
+	_tmp3_ = NULL;
+	self->priv->manager = (_tmp3_ = NULL, (self->priv->manager == NULL) ? NULL : (self->priv->manager = (g_object_unref (self->priv->manager), NULL)), _tmp3_);
+	_tmp4_ = NULL;
+	self->priv->conn = (_tmp4_ = NULL, (self->priv->conn == NULL) ? NULL : (self->priv->conn = (dbus_g_connection_unref (self->priv->conn), NULL)), _tmp4_);
 	gtk_widget_show ((GtkWidget*) self->priv->splash);
 	xsaa_splash_show_shutdown (self->priv->splash);
+	_tmp5_ = FALSE;
+	if (!xsaa_shutdown) {
+		_tmp5_ = setjmp (self->env) == 0;
+	} else {
+		_tmp5_ = FALSE;
+	}
+	if (_tmp5_) {
+		xsaa_shutdown = TRUE;
+	}
 }
 
 
@@ -1649,6 +1688,44 @@ static void xsaa_daemon_on_restart_request (XSAADaemon* self) {
 		XSAAManager* _tmp0_;
 		DBusGConnection* _tmp1_;
 		g_spawn_command_line_async ("shutdown -r now", &_inner_error_);
+		if (_inner_error_ != NULL) {
+			goto __catch17_g_error;
+			goto __finally17;
+		}
+		_tmp0_ = NULL;
+		self->priv->manager = (_tmp0_ = NULL, (self->priv->manager == NULL) ? NULL : (self->priv->manager = (g_object_unref (self->priv->manager), NULL)), _tmp0_);
+		_tmp1_ = NULL;
+		self->priv->conn = (_tmp1_ = NULL, (self->priv->conn == NULL) ? NULL : (self->priv->conn = (dbus_g_connection_unref (self->priv->conn), NULL)), _tmp1_);
+	}
+	goto __finally17;
+	__catch17_g_error:
+	{
+		GError * err;
+		err = _inner_error_;
+		_inner_error_ = NULL;
+		{
+			fprintf (stderr, "Error on launch shutdown: %s\n", err->message);
+			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
+		}
+	}
+	__finally17:
+	if (_inner_error_ != NULL) {
+		g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
+		g_clear_error (&_inner_error_);
+		return;
+	}
+	xsaa_splash_show_shutdown (self->priv->splash);
+}
+
+
+static void xsaa_daemon_on_shutdown_request (XSAADaemon* self) {
+	GError * _inner_error_;
+	g_return_if_fail (self != NULL);
+	_inner_error_ = NULL;
+	{
+		XSAAManager* _tmp0_;
+		DBusGConnection* _tmp1_;
+		g_spawn_command_line_async ("shutdown -h now", &_inner_error_);
 		if (_inner_error_ != NULL) {
 			goto __catch18_g_error;
 			goto __finally18;
@@ -1670,44 +1747,6 @@ static void xsaa_daemon_on_restart_request (XSAADaemon* self) {
 		}
 	}
 	__finally18:
-	if (_inner_error_ != NULL) {
-		g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
-		g_clear_error (&_inner_error_);
-		return;
-	}
-	xsaa_splash_show_shutdown (self->priv->splash);
-}
-
-
-static void xsaa_daemon_on_shutdown_request (XSAADaemon* self) {
-	GError * _inner_error_;
-	g_return_if_fail (self != NULL);
-	_inner_error_ = NULL;
-	{
-		XSAAManager* _tmp0_;
-		DBusGConnection* _tmp1_;
-		g_spawn_command_line_async ("shutdown -h now", &_inner_error_);
-		if (_inner_error_ != NULL) {
-			goto __catch19_g_error;
-			goto __finally19;
-		}
-		_tmp0_ = NULL;
-		self->priv->manager = (_tmp0_ = NULL, (self->priv->manager == NULL) ? NULL : (self->priv->manager = (g_object_unref (self->priv->manager), NULL)), _tmp0_);
-		_tmp1_ = NULL;
-		self->priv->conn = (_tmp1_ = NULL, (self->priv->conn == NULL) ? NULL : (self->priv->conn = (dbus_g_connection_unref (self->priv->conn), NULL)), _tmp1_);
-	}
-	goto __finally19;
-	__catch19_g_error:
-	{
-		GError * err;
-		err = _inner_error_;
-		_inner_error_ = NULL;
-		{
-			fprintf (stderr, "Error on launch shutdown: %s\n", err->message);
-			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
-		}
-	}
-	__finally19:
 	if (_inner_error_ != NULL) {
 		g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
 		g_clear_error (&_inner_error_);
@@ -1850,6 +1889,24 @@ static void xsaa_daemon_instance_init (XSAADaemon * self) {
 static void xsaa_daemon_finalize (GObject* obj) {
 	XSAADaemon * self;
 	self = XSAA_DAEMON (obj);
+	{
+		gboolean _tmp24_;
+		XSAAManager* _tmp26_;
+		_tmp24_ = FALSE;
+		if (self->priv->manager != NULL) {
+			_tmp24_ = self->priv->path != NULL;
+		} else {
+			_tmp24_ = FALSE;
+		}
+		if (_tmp24_) {
+			XSAASession* _tmp25_;
+			xsaa_manager_close_session (self->priv->manager, self->priv->path);
+			_tmp25_ = NULL;
+			self->priv->session = (_tmp25_ = NULL, (self->priv->session == NULL) ? NULL : (self->priv->session = (g_object_unref (self->priv->session), NULL)), _tmp25_);
+		}
+		_tmp26_ = NULL;
+		self->priv->manager = (_tmp26_ = NULL, (self->priv->manager == NULL) ? NULL : (self->priv->manager = (g_object_unref (self->priv->manager), NULL)), _tmp26_);
+	}
 	self->args = (_vala_array_free (self->args, self->args_length1, (GDestroyNotify) g_free), NULL);
 	(self->priv->socket == NULL) ? NULL : (self->priv->socket = (g_object_unref (self->priv->socket), NULL));
 	(self->priv->splash == NULL) ? NULL : (self->priv->splash = (g_object_unref (self->priv->splash), NULL));
@@ -1898,23 +1955,46 @@ void xsaa_change_vt (gint vt) {
 }
 
 
-void xsaa_on_sig_kill (gint signum) {
-	xsaa_change_vt (8);
+gint xsaa_on_display_io_error (Display* display) {
+	gint result;
+	XSAADaemon* _tmp0_;
+	g_return_val_if_fail (display != NULL, 0);
+	fprintf (stderr, "DISPLAY Error\n");
+	_tmp0_ = NULL;
+	xsaa_daemon = (_tmp0_ = NULL, (xsaa_daemon == NULL) ? NULL : (xsaa_daemon = (g_object_unref (xsaa_daemon), NULL)), _tmp0_);
+	result = -1;
+	return result;
 }
 
 
-static void _xsaa_on_sig_kill_sighandler_t (gint signal) {
-	xsaa_on_sig_kill (signal);
+void xsaa_on_sig_term (gint signum) {
+	gboolean _tmp0_;
+	_tmp0_ = FALSE;
+	if (xsaa_shutdown) {
+		_tmp0_ = xsaa_daemon != NULL;
+	} else {
+		_tmp0_ = FALSE;
+	}
+	if (_tmp0_) {
+		longjmp (xsaa_daemon->env, 1);
+	} else {
+		exit (-1);
+	}
+}
+
+
+static void _xsaa_on_sig_term_sighandler_t (gint signal) {
+	xsaa_on_sig_term (signal);
 }
 
 
 static char** _vala_array_dup1 (char** self, int length) {
 	char** result;
 	int i;
-	const char* _tmp0_;
+	const char* _tmp2_;
 	result = g_new0 (char*, length);
 	for (i = 0; i < length; i++) {
-		result[i] = (_tmp0_ = self[i], (_tmp0_ == NULL) ? NULL : g_strdup (_tmp0_));
+		result[i] = (_tmp2_ = self[i], (_tmp2_ == NULL) ? NULL : g_strdup (_tmp2_));
 	}
 	return result;
 }
@@ -1934,8 +2014,8 @@ gint xsaa_main (char** args, int args_length1) {
 	ppgid = getpgid (pid);
 	setsid ();
 	setpgid ((pid_t) 0, ppgid);
-	signal (SIGTERM, _xsaa_on_sig_kill_sighandler_t);
-	signal (SIGKILL, _xsaa_on_sig_kill_sighandler_t);
+	signal (SIGTERM, SIG_IGN);
+	signal (SIGKILL, SIG_IGN);
 	status = -1;
 	first_start = TRUE;
 	while (TRUE) {
@@ -1946,39 +2026,47 @@ gint xsaa_main (char** args, int args_length1) {
 			case 0:
 			{
 				{
-					XSAADaemon* daemon;
-					char** _tmp2_;
-					char** _tmp1_;
-					const char* _tmp0_;
-					signal (SIGTERM, _xsaa_on_sig_kill_sighandler_t);
-					signal (SIGKILL, _xsaa_on_sig_kill_sighandler_t);
-					daemon = xsaa_daemon_new (XSAA_SOCKET_NAME, &_inner_error_);
+					XSAADaemon* _tmp0_;
+					XSAADaemon* _tmp1_;
+					char** _tmp4_;
+					char** _tmp3_;
+					const char* _tmp2_;
+					XSAADaemon* _tmp5_;
+					signal (SIGSEGV, _xsaa_on_sig_term_sighandler_t);
+					signal (SIGTERM, _xsaa_on_sig_term_sighandler_t);
+					signal (SIGKILL, _xsaa_on_sig_term_sighandler_t);
+					_tmp0_ = xsaa_daemon_new (XSAA_SOCKET_NAME, &_inner_error_);
 					if (_inner_error_ != NULL) {
-						goto __catch20_g_error;
-						goto __finally20;
+						goto __catch19_g_error;
+						goto __finally19;
 					}
-					_tmp2_ = NULL;
 					_tmp1_ = NULL;
-					_tmp0_ = NULL;
-					daemon->args = (_tmp2_ = (_tmp1_ = args, (_tmp1_ == NULL) ? ((gpointer) _tmp1_) : _vala_array_dup1 (_tmp1_, args_length1)), daemon->args = (_vala_array_free (daemon->args, daemon->args_length1, (GDestroyNotify) g_free), NULL), daemon->args_length1 = args_length1, _tmp2_);
-					xsaa_daemon_run (daemon, first_start);
-					g_object_unref ((GObject*) daemon);
-					(daemon == NULL) ? NULL : (daemon = (g_object_unref (daemon), NULL));
+					xsaa_daemon = (_tmp1_ = _tmp0_, (xsaa_daemon == NULL) ? NULL : (xsaa_daemon = (g_object_unref (xsaa_daemon), NULL)), _tmp1_);
+					_tmp4_ = NULL;
+					_tmp3_ = NULL;
+					_tmp2_ = NULL;
+					xsaa_daemon->args = (_tmp4_ = (_tmp3_ = args, (_tmp3_ == NULL) ? ((gpointer) _tmp3_) : _vala_array_dup1 (_tmp3_, args_length1)), xsaa_daemon->args = (_vala_array_free (xsaa_daemon->args, xsaa_daemon->args_length1, (GDestroyNotify) g_free), NULL), xsaa_daemon->args_length1 = args_length1, _tmp4_);
+					xsaa_daemon_run (xsaa_daemon, first_start);
+					_tmp5_ = NULL;
+					xsaa_daemon = (_tmp5_ = NULL, (xsaa_daemon == NULL) ? NULL : (xsaa_daemon = (g_object_unref (xsaa_daemon), NULL)), _tmp5_);
 				}
-				goto __finally20;
-				__catch20_g_error:
+				goto __finally19;
+				__catch19_g_error:
 				{
 					GError * err;
 					err = _inner_error_;
 					_inner_error_ = NULL;
 					{
+						XSAADaemon* _tmp6_;
 						fprintf (stderr, "%s\n", err->message);
+						_tmp6_ = NULL;
+						xsaa_daemon = (_tmp6_ = NULL, (xsaa_daemon == NULL) ? NULL : (xsaa_daemon = (g_object_unref (xsaa_daemon), NULL)), _tmp6_);
 						result = -1;
 						(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 						return result;
 					}
 				}
-				__finally20:
+				__finally19:
 				if (_inner_error_ != NULL) {
 					g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
 					g_clear_error (&_inner_error_);
@@ -1998,15 +2086,7 @@ gint xsaa_main (char** args, int args_length1) {
 				ret = 0;
 				first_start = FALSE;
 				wait (&ret);
-				if (WIFSIGNALED (ret)) {
-					if (WCOREDUMP (ret)) {
-						status = -1;
-					} else {
-						status = 0;
-					}
-				} else {
-					status = WEXITSTATUS (ret);
-				}
+				status = WEXITSTATUS (ret);
 				break;
 			}
 		}

@@ -15,6 +15,7 @@
 
 @SET_MAKE@
 
+
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -38,9 +39,9 @@ bin_PROGRAMS = xsplashaa$(EXEEXT) xsplashaa-client$(EXEEXT) \
 	xsplashaa-session-daemon$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	xsaa-client.c xsaa-display.c xsaa-main.c xsaa-pam.c \
-	xsaa-server.c xsaa-session-daemon.c xsaa-session.c \
-	xsaa-socket.c xsaa-splash.c xsaa-throbber.c \
+	libxsaa_private_la_vala.stamp xsaa-client.c xsaa-display.c \
+	xsaa-main.c xsaa-pam.c xsaa-server.c xsaa-session-daemon.c \
+	xsaa-session.c xsaa-socket.c xsaa-splash.c xsaa-throbber.c \
 	xsplashaa_client_vala.stamp \
 	xsplashaa_session_daemon_vala.stamp xsplashaa_vala.stamp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -51,21 +52,25 @@ mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
+LTLIBRARIES = $(noinst_LTLIBRARIES)
+libxsaa_private_la_LIBADD =
+am_libxsaa_private_la_OBJECTS = xsaa-socket.lo
+libxsaa_private_la_OBJECTS = $(am_libxsaa_private_la_OBJECTS)
+AM_V_lt = $(am__v_lt_$(V))
+am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+am__v_lt_0 = --silent
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_xsplashaa_OBJECTS = xsaa-server.$(OBJEXT) xsaa-display.$(OBJEXT) \
 	xsaa-throbber.$(OBJEXT) xsaa-splash.$(OBJEXT) \
-	xsaa-socket.$(OBJEXT) xsaa-main.$(OBJEXT)
+	xsaa-main.$(OBJEXT)
 xsplashaa_OBJECTS = $(am_xsplashaa_OBJECTS)
 am__DEPENDENCIES_1 =
-xsplashaa_DEPENDENCIES = $(am__DEPENDENCIES_1)
-AM_V_lt = $(am__v_lt_$(V))
-am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
-am__v_lt_0 = --silent
-am_xsplashaa_client_OBJECTS = xsaa-socket.$(OBJEXT) \
-	xsaa-client.$(OBJEXT)
+xsplashaa_DEPENDENCIES = $(am__DEPENDENCIES_1) libxsaa-private.la
+am_xsplashaa_client_OBJECTS = xsaa-client.$(OBJEXT)
 xsplashaa_client_OBJECTS = $(am_xsplashaa_client_OBJECTS)
-xsplashaa_client_DEPENDENCIES = $(am__DEPENDENCIES_1)
+xsplashaa_client_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	libxsaa-private.la
 am_xsplashaa_session_daemon_OBJECTS = xsaa-pam.$(OBJEXT) \
 	xsaa-session.$(OBJEXT) xsaa-session-daemon.$(OBJEXT)
 xsplashaa_session_daemon_OBJECTS =  \
@@ -104,9 +109,11 @@ am__v_VALAC_0 = @echo "  VALAC " $@;
 AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(xsplashaa_SOURCES) $(xsplashaa_client_SOURCES) \
+SOURCES = $(libxsaa_private_la_SOURCES) $(xsplashaa_SOURCES) \
+	$(xsplashaa_client_SOURCES) \
 	$(xsplashaa_session_daemon_SOURCES)
-DIST_SOURCES = $(xsplashaa_SOURCES) $(xsplashaa_client_SOURCES) \
+DIST_SOURCES = $(libxsaa_private_la_SOURCES) $(xsplashaa_SOURCES) \
+	$(xsplashaa_client_SOURCES) \
 	$(xsplashaa_session_daemon_SOURCES)
 ETAGS = etags
 CTAGS = ctags
@@ -267,27 +274,43 @@ VALAFLAGS = \
     --pkg=posix \
     --pkg=posix-comp \
     --pkg=pam \
+    --pkg=x11 \
     --pkg=X-comp \
     --pkg=ssi-timeline \
     --pkg=ssi-vala-widgets
+
+noinst_LTLIBRARIES = libxsaa-private.la
+libxsaa_private_la_VALAFLAGS = \
+    --header=xsaa-private.h \
+   	--library=xsaa-private \
+   	--vapi=xsaa-private.vapi
+
+libxsaa_private_la_SOURCES = \
+   	xsaa-socket.vala
 
 xsplashaa_SOURCES = \
 	xsaa-server.vala \
 	xsaa-display.vala \
 	xsaa-throbber.vala \
 	xsaa-splash.vala \
-    	xsaa-socket.vala \
 	xsaa-main.vala
 
+xsplashaa_VALAFLAGS = \
+    --vapidir=. \
+    --pkg=xsaa-private
+
 xsplashaa_LDADD = \
-	$(XSPLASHAA_LIBS)
+	$(XSPLASHAA_LIBS) libxsaa-private.la
 
 xsplashaa_client_SOURCES = \
-    	xsaa-socket.vala \
-	xsaa-client.vala
+  	xsaa-client.vala
+
+xsplashaa_client_VALAFLAGS = \
+    --vapidir=. \
+    --pkg=xsaa-private
 
 xsplashaa_client_LDADD = \
-	$(XSPLASHAA_LIBS)
+	$(XSPLASHAA_LIBS) libxsaa-private.la
 
 xsplashaa_session_daemon_SOURCES = \
     xsaa-pam.vala \
@@ -296,6 +319,18 @@ xsplashaa_session_daemon_SOURCES = \
 
 xsplashaa_session_daemon_LDADD = \
 	$(XSPLASHAA_LIBS) -lpam
+
+CLEANFILES = \
+    xsaa-private.h \
+    xsaa-private.vapi \
+    $(libxsaa_private_la_SOURCES:.vala=.c) \
+    libxsaa_private_la_vala.stamp \
+    $(xsplashaa_SOURCES:.vala=.c) \
+    xsplashaa_vala.stamp \
+    $(xsplashaa_client_SOURCES:.vala=.c) \
+    xsplashaa_client_vala.stamp \
+    $(xsplashaa_session_daemon_SOURCES:.vala=.c) \
+    xsplashaa_session_daemon_vala.stamp
 
 all: all-am
 
@@ -331,6 +366,17 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
+
+clean-noinstLTLIBRARIES:
+	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
+	@list='$(noinst_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test "$$dir" != "$$p" || dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
+	done
+libxsaa-private.la: $(libxsaa_private_la_OBJECTS) $(libxsaa_private_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(LINK)  $(libxsaa_private_la_OBJECTS) $(libxsaa_private_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
@@ -397,7 +443,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xsaa-server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xsaa-session-daemon.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xsaa-session.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xsaa-socket.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xsaa-socket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xsaa-splash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xsaa-throbber.Po@am__quote@
 
@@ -442,18 +488,13 @@ $(srcdir)/xsaa-session-daemon.c: $(srcdir)/xsplashaa_session_daemon_vala.stamp
 xsplashaa_session_daemon_vala.stamp: $(xsplashaa_session_daemon_SOURCES)
 	$(AM_V_VALAC)$(VALAC) $(AM_VALAFLAGS) $(VALAFLAGS) -C $(xsplashaa_session_daemon_SOURCES)
 	$(AM_V_at)touch $@
-$(srcdir)/xsaa-socket.c: $(srcdir)/xsplashaa_client_vala.stamp
-	@if test -f $@; then :; else \
-	  rm -f $(srcdir)/xsplashaa_client_vala.stamp; \
-	  $(am__cd) $(srcdir) && $(MAKE) $(AM_MAKEFLAGS) xsplashaa_client_vala.stamp; \
-	fi
 $(srcdir)/xsaa-client.c: $(srcdir)/xsplashaa_client_vala.stamp
 	@if test -f $@; then :; else \
 	  rm -f $(srcdir)/xsplashaa_client_vala.stamp; \
 	  $(am__cd) $(srcdir) && $(MAKE) $(AM_MAKEFLAGS) xsplashaa_client_vala.stamp; \
 	fi
 xsplashaa_client_vala.stamp: $(xsplashaa_client_SOURCES)
-	$(AM_V_VALAC)$(VALAC) $(AM_VALAFLAGS) $(VALAFLAGS) -C $(xsplashaa_client_SOURCES)
+	$(AM_V_VALAC)$(VALAC) $(xsplashaa_client_VALAFLAGS) $(VALAFLAGS) -C $(xsplashaa_client_SOURCES)
 	$(AM_V_at)touch $@
 $(srcdir)/xsaa-server.c: $(srcdir)/xsplashaa_vala.stamp
 	@if test -f $@; then :; else \
@@ -475,18 +516,21 @@ $(srcdir)/xsaa-splash.c: $(srcdir)/xsplashaa_vala.stamp
 	  rm -f $(srcdir)/xsplashaa_vala.stamp; \
 	  $(am__cd) $(srcdir) && $(MAKE) $(AM_MAKEFLAGS) xsplashaa_vala.stamp; \
 	fi
-$(srcdir)/xsaa-socket.c: $(srcdir)/xsplashaa_vala.stamp
-	@if test -f $@; then :; else \
-	  rm -f $(srcdir)/xsplashaa_vala.stamp; \
-	  $(am__cd) $(srcdir) && $(MAKE) $(AM_MAKEFLAGS) xsplashaa_vala.stamp; \
-	fi
 $(srcdir)/xsaa-main.c: $(srcdir)/xsplashaa_vala.stamp
 	@if test -f $@; then :; else \
 	  rm -f $(srcdir)/xsplashaa_vala.stamp; \
 	  $(am__cd) $(srcdir) && $(MAKE) $(AM_MAKEFLAGS) xsplashaa_vala.stamp; \
 	fi
 xsplashaa_vala.stamp: $(xsplashaa_SOURCES)
-	$(AM_V_VALAC)$(VALAC) $(AM_VALAFLAGS) $(VALAFLAGS) -C $(xsplashaa_SOURCES)
+	$(AM_V_VALAC)$(VALAC) $(xsplashaa_VALAFLAGS) $(VALAFLAGS) -C $(xsplashaa_SOURCES)
+	$(AM_V_at)touch $@
+$(srcdir)/xsaa-socket.c: $(srcdir)/libxsaa_private_la_vala.stamp
+	@if test -f $@; then :; else \
+	  rm -f $(srcdir)/libxsaa_private_la_vala.stamp; \
+	  $(am__cd) $(srcdir) && $(MAKE) $(AM_MAKEFLAGS) libxsaa_private_la_vala.stamp; \
+	fi
+libxsaa_private_la_vala.stamp: $(libxsaa_private_la_SOURCES)
+	$(AM_V_VALAC)$(VALAC) $(libxsaa_private_la_VALAFLAGS) $(VALAFLAGS) -C $(libxsaa_private_la_SOURCES)
 	$(AM_V_at)touch $@
 
 mostlyclean-libtool:
@@ -579,7 +623,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS)
+all-am: Makefile $(LTLIBRARIES) $(PROGRAMS)
 installdirs:
 	for dir in "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -601,6 +645,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -609,6 +654,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-rm -f libxsaa_private_la_vala.stamp
 	-rm -f xsaa-client.c
 	-rm -f xsaa-display.c
 	-rm -f xsaa-main.c
@@ -624,7 +670,8 @@ maintainer-clean-generic:
 	-rm -f xsplashaa_vala.stamp
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-libtool \
+	clean-noinstLTLIBRARIES mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -695,18 +742,18 @@ uninstall-am: uninstall-binPROGRAMS
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
-	clean-generic clean-libtool ctags distclean distclean-compile \
-	distclean-generic distclean-libtool distclean-tags distdir dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-binPROGRAMS install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am \
-	uninstall-binPROGRAMS
+	clean-generic clean-libtool clean-noinstLTLIBRARIES ctags \
+	distclean distclean-compile distclean-generic \
+	distclean-libtool distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-binPROGRAMS \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-binPROGRAMS
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

@@ -87,6 +87,18 @@ namespace Posix
     
     [CCode (cheader_filename = "linux/vt.h")]
 	public const int VT_WAITACTIVE;
+
+    [SimpleType]
+    [CCode (cheader_filename = "setjmp.h")]
+    public struct jmp_buf
+    {
+    }
+
+    [CCode (cheader_filename = "setjmp.h")]
+    public int setjmp(jmp_buf env);
+
+    [CCode (cheader_filename = "setjmp.h")]
+    public void longjmp(jmp_buf env, int val);
 }
 
 

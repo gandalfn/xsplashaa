@@ -44,6 +44,7 @@ mkdir -p ${DESTDIR}/usr/share/fonts/X11/Type1
 mkdir -p ${DESTDIR}/usr/share/fonts/X11/100dpi
 mkdir -p ${DESTDIR}/var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType
 mkdir -p ${DESTDIR}/usr/share/xsplashaa/chicken-curie
+mkdir -p ${DESTDIR}/usr/share/mime
 mkdir -p ${DESTDIR}/etc/xsplashaa
 mkdir -p ${DESTDIR}/etc/init.d
 mkdir -p ${DESTDIR}/etc/rc2.d
@@ -116,3 +117,14 @@ copy_exec_if_exist /var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType/fonts.alias 
 copy_exec_if_exist /var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType/fonts.dir /var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType
 copy_exec_if_exist /usr/lib/ConsoleKit/ck-get-x11-display-device /usr/lib/ConsoleKit
 copy_exec_if_exist /usr/lib/ConsoleKit/ck-get-x11-server-pid /usr/lib/ConsoleKit
+copy_exec_if_exist /usr/share/mime/XMLnamespaces /usr/share/mime
+copy_exec_if_exist /usr/share/mime/globs /usr/share/mime
+copy_exec_if_exist /usr/share/mime/icons /usr/share/mime
+copy_exec_if_exist /usr/share/mime/magic /usr/share/mime
+copy_exec_if_exist /usr/share/mime/types /usr/share/mime
+copy_exec_if_exist /usr/share/mime/subclasses /usr/share/mime
+copy_exec_if_exist /usr/share/mime/globs2 /usr/share/mime
+copy_exec_if_exist /usr/share/mime/treemagic /usr/share/mime
+copy_exec_if_exist /usr/share/mime/aliases /usr/share/mime
+copy_exec_if_exist /usr/share/mime/generic-icons /usr/share/mime
+copy_exec_if_exist /usr/share/mime/mime.cache /usr/share/mime

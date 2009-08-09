@@ -233,8 +233,11 @@ GType xsaa_session_get_type (void);
 enum  {
 	XSAA_SESSION_MANAGER_DUMMY_PROPERTY
 };
-XSAASessionManager* xsaa_session_manager_new (DBusGConnection* conn);
-XSAASessionManager* xsaa_session_manager_construct (GType object_type, DBusGConnection* conn);
+static void xsaa_session_manager_on_client_lost (XSAASessionManager* self, DBusGProxy* sender, const char* name, const char* prev, const char* newp);
+static void _xsaa_session_manager_on_client_lost_dynamic_NameOwnerChanged0_ (DBusGProxy* _sender, const char* name, const char* prev, const char* newp, gpointer self);
+void _dynamic_NameOwnerChanged1_connect (gpointer obj, const char * signal_name, GCallback handler, gpointer data);
+XSAASessionManager* xsaa_session_manager_new (DBusGConnection* conn, DBusGProxy* bus);
+XSAASessionManager* xsaa_session_manager_construct (GType object_type, DBusGConnection* conn, DBusGProxy* bus);
 GQuark xsaa_session_error_quark (void);
 XSAASession* xsaa_session_new (DBusGConnection* conn, ConsoleKitManager* manager, const char* service, const char* user, gint display, const char* device, GError** error);
 XSAASession* xsaa_session_construct (GType object_type, DBusGConnection* conn, ConsoleKitManager* manager, const char* service, const char* user, gint display, const char* device, GError** error);
@@ -268,6 +271,7 @@ static const DBusObjectPathVTable _xsaa_session_manager_dbus_path_vtable = {_xsa
 static const _DBusObjectVTable _xsaa_session_manager_dbus_vtable = {xsaa_session_manager_dbus_register_object};
 static const GOptionEntry XSAA_option_entries[] = {{"no-daemonize", 'd', 0, G_OPTION_ARG_NONE, &xsaa_no_daemon, "Do not run xsplashaa-session-daemon as a daemonn", NULL}, {NULL}};
 
+static void g_cclosure_user_marshal_VOID__STRING_STRING_STRING (GClosure * closure, GValue * return_value, guint n_param_values, const GValue * param_values, gpointer invocation_hint, gpointer marshal_data);
 
 void console_kit_session_activate (ConsoleKitSession* self) {
 	CONSOLE_KIT_SESSION_GET_INTERFACE (self)->activate (self);
@@ -1255,13 +1259,26 @@ static void settings_daemon_manager_dbus_proxy_set_property (GObject * object, g
 }
 
 
-XSAASessionManager* xsaa_session_manager_construct (GType object_type, DBusGConnection* conn) {
+static void _xsaa_session_manager_on_client_lost_dynamic_NameOwnerChanged0_ (DBusGProxy* _sender, const char* name, const char* prev, const char* newp, gpointer self) {
+	xsaa_session_manager_on_client_lost (self, _sender, name, prev, newp);
+}
+
+
+void _dynamic_NameOwnerChanged1_connect (gpointer obj, const char * signal_name, GCallback handler, gpointer data) {
+	dbus_g_object_register_marshaller (g_cclosure_user_marshal_VOID__STRING_STRING_STRING, G_TYPE_NONE, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+	dbus_g_proxy_add_signal (obj, "NameOwnerChanged", G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+	dbus_g_proxy_connect_signal (obj, signal_name, handler, data, NULL);
+}
+
+
+XSAASessionManager* xsaa_session_manager_construct (GType object_type, DBusGConnection* conn, DBusGProxy* bus) {
 	XSAASessionManager * self;
 	DBusGConnection* _tmp1_;
 	DBusGConnection* _tmp0_;
 	ConsoleKitManager* _tmp2_;
 	GeeMap* _tmp3_;
 	g_return_val_if_fail (conn != NULL, NULL);
+	g_return_val_if_fail (bus != NULL, NULL);
 	self = g_object_newv (object_type, 0, NULL);
 	_tmp1_ = NULL;
 	_tmp0_ = NULL;
@@ -1270,12 +1287,24 @@ XSAASessionManager* xsaa_session_manager_construct (GType object_type, DBusGConn
 	self->priv->manager = (_tmp2_ = console_kit_manager_dbus_proxy_new (conn, "org.freedesktop.ConsoleKit", "/org/freedesktop/ConsoleKit/Manager"), (self->priv->manager == NULL) ? NULL : (self->priv->manager = (g_object_unref (self->priv->manager), NULL)), _tmp2_);
 	_tmp3_ = NULL;
 	self->sessions = (_tmp3_ = (GeeMap*) gee_hash_map_new (G_TYPE_STRING, (GBoxedCopyFunc) g_strdup, g_free, XSAA_TYPE_SESSION, (GBoxedCopyFunc) g_object_ref, g_object_unref, g_str_hash, g_str_equal, g_direct_equal), (self->sessions == NULL) ? NULL : (self->sessions = (gee_collection_object_unref (self->sessions), NULL)), _tmp3_);
+	_dynamic_NameOwnerChanged1_connect (bus, "NameOwnerChanged", (GCallback) _xsaa_session_manager_on_client_lost_dynamic_NameOwnerChanged0_, self);
 	return self;
 }
 
 
-XSAASessionManager* xsaa_session_manager_new (DBusGConnection* conn) {
-	return xsaa_session_manager_construct (XSAA_TYPE_SESSION_MANAGER, conn);
+XSAASessionManager* xsaa_session_manager_new (DBusGConnection* conn, DBusGProxy* bus) {
+	return xsaa_session_manager_construct (XSAA_TYPE_SESSION_MANAGER, conn, bus);
+}
+
+
+static void xsaa_session_manager_on_client_lost (XSAASessionManager* self, DBusGProxy* sender, const char* name, const char* prev, const char* newp) {
+	g_return_if_fail (self != NULL);
+	g_return_if_fail (sender != NULL);
+	g_return_if_fail (name != NULL);
+	g_return_if_fail (prev != NULL);
+	g_return_if_fail (newp != NULL);
+	fprintf (stderr, "Lost session %s\n", name);
+	gee_map_remove (self->sessions, prev);
 }
 
 
@@ -1693,7 +1722,7 @@ gint xsaa_main (char** args, int args_length1) {
 		}
 		if (_tmp1_) {
 			XSAASessionManager* service;
-			service = xsaa_session_manager_new (conn);
+			service = xsaa_session_manager_new (conn, bus);
 			_vala_dbus_register_object (dbus_g_connection_get_connection (conn), "/fr/supersonicimagine/XSAA/Manager", (GObject*) service);
 			g_main_loop_run (xsaa_loop);
 			(service == NULL) ? NULL : (service = (g_object_unref (service), NULL));
@@ -1708,7 +1737,7 @@ gint xsaa_main (char** args, int args_length1) {
 		err = _inner_error_;
 		_inner_error_ = NULL;
 		{
-			g_message ("xsaa-session-daemon.vala:177: %s\n", err->message);
+			g_message ("xsaa-session-daemon.vala:185: %s\n", err->message);
 			result = -1;
 			(err == NULL) ? NULL : (err = (g_error_free (err), NULL));
 			return result;
@@ -1749,6 +1778,25 @@ static void _vala_dbus_unregister_object (gpointer connection, GObject* object) 
 	g_free (path);
 }
 
+
+
+static void g_cclosure_user_marshal_VOID__STRING_STRING_STRING (GClosure * closure, GValue * return_value, guint n_param_values, const GValue * param_values, gpointer invocation_hint, gpointer marshal_data) {
+	typedef void (*GMarshalFunc_VOID__STRING_STRING_STRING) (gpointer data1, const char* arg_1, const char* arg_2, const char* arg_3, gpointer data2);
+	register GMarshalFunc_VOID__STRING_STRING_STRING callback;
+	register GCClosure * cc;
+	register gpointer data1, data2;
+	cc = (GCClosure *) closure;
+	g_return_if_fail (n_param_values == 4);
+	if (G_CCLOSURE_SWAP_DATA (closure)) {
+		data1 = closure->data;
+		data2 = param_values->data[0].v_pointer;
+	} else {
+		data1 = param_values->data[0].v_pointer;
+		data2 = closure->data;
+	}
+	callback = (GMarshalFunc_VOID__STRING_STRING_STRING) (marshal_data ? marshal_data : cc->callback);
+	callback (data1, g_value_get_string (param_values + 1), g_value_get_string (param_values + 2), g_value_get_string (param_values + 3), data2);
+}
 
 
 

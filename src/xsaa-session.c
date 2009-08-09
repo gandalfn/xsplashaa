@@ -716,24 +716,6 @@ void xsaa_session_launch (XSAASession* self, const char* cmd, GError** error) {
 			goto __catch3_g_error;
 			goto __finally3;
 		}
-		{
-			char** argv_collection;
-			int argv_collection_length1;
-			int argv_it;
-			argv_collection = argvp;
-			argv_collection_length1 = argvp_length1;
-			for (argv_it = 0; argv_it < argvp_length1; argv_it = argv_it + 1) {
-				const char* _tmp0_;
-				char* argv;
-				_tmp0_ = NULL;
-				argv = (_tmp0_ = argv_collection[argv_it], (_tmp0_ == NULL) ? NULL : g_strdup (_tmp0_));
-				{
-					g_print ("%s ", argv);
-					argv = (g_free (argv), NULL);
-				}
-			}
-		}
-		g_print ("\n");
 	}
 	goto __finally3;
 	__catch3_g_error:

@@ -21,24 +21,13 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/un.h>
+#include <xsaa-private.h>
 #include <fcntl.h>
 #include <sys/socket.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 
-
-#define XSAA_TYPE_SOCKET (xsaa_socket_get_type ())
-#define XSAA_SOCKET(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XSAA_TYPE_SOCKET, XSAASocket))
-#define XSAA_SOCKET_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), XSAA_TYPE_SOCKET, XSAASocketClass))
-#define XSAA_IS_SOCKET(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XSAA_TYPE_SOCKET))
-#define XSAA_IS_SOCKET_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), XSAA_TYPE_SOCKET))
-#define XSAA_SOCKET_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), XSAA_TYPE_SOCKET, XSAASocketClass))
-
-typedef struct _XSAASocket XSAASocket;
-typedef struct _XSAASocketClass XSAASocketClass;
-typedef struct _XSAASocketPrivate XSAASocketPrivate;
 
 #define XSAA_TYPE_CLIENT (xsaa_client_get_type ())
 #define XSAA_CLIENT(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XSAA_TYPE_CLIENT, XSAAClient))
@@ -51,19 +40,6 @@ typedef struct _XSAAClient XSAAClient;
 typedef struct _XSAAClientClass XSAAClientClass;
 typedef struct _XSAAClientPrivate XSAAClientPrivate;
 
-struct _XSAASocket {
-	GObject parent_instance;
-	XSAASocketPrivate * priv;
-	char* filename;
-	gint fd;
-	struct sockaddr_un* saddr;
-	GIOChannel* ioc;
-};
-
-struct _XSAASocketClass {
-	GObjectClass parent_class;
-};
-
 struct _XSAAClient {
 	XSAASocket parent_instance;
 	XSAAClientPrivate * priv;
@@ -73,11 +49,6 @@ struct _XSAAClientClass {
 	XSAASocketClass parent_class;
 };
 
-typedef enum  {
-	XSAA_SOCKET_ERROR_INVALID_NAME,
-	XSAA_SOCKET_ERROR_CREATE
-} XSAASocketError;
-#define XSAA_SOCKET_ERROR xsaa_socket_error_quark ()
 
 static gpointer xsaa_client_parent_class = NULL;
 extern gboolean xsaa_ping;
@@ -105,19 +76,13 @@ char* xsaa_socket_name = NULL;
 extern XSAAClient* xsaa_client;
 XSAAClient* xsaa_client = NULL;
 
-GType xsaa_socket_get_type (void);
 GType xsaa_client_get_type (void);
 enum  {
 	XSAA_CLIENT_DUMMY_PROPERTY
 };
-GQuark xsaa_socket_error_quark (void);
-XSAASocket* xsaa_socket_new (const char* socket_name, GError** error);
-XSAASocket* xsaa_socket_construct (GType object_type, const char* socket_name, GError** error);
 XSAAClient* xsaa_client_new (const char* socket_name, GError** error);
 XSAAClient* xsaa_client_construct (GType object_type, const char* socket_name, GError** error);
-gboolean xsaa_socket_send (XSAASocket* self, const char* message);
 gint xsaa_handle_quit (void);
-gboolean xsaa_socket_recv (XSAASocket* self, char** message);
 void xsaa_on_pong (void);
 gint xsaa_handle_dbus (void);
 gint xsaa_handle_session (void);
@@ -316,14 +281,14 @@ gint xsaa_main (char** args, int args_length1) {
 		if (_inner_error_ != NULL) {
 			(opt_context == NULL) ? NULL : (opt_context = (g_option_context_free (opt_context), NULL));
 			if (_inner_error_->domain == G_OPTION_ERROR) {
-				goto __catch1_g_option_error;
+				goto __catch0_g_option_error;
 			}
-			goto __finally1;
+			goto __finally0;
 		}
 		(opt_context == NULL) ? NULL : (opt_context = (g_option_context_free (opt_context), NULL));
 	}
-	goto __finally1;
-	__catch1_g_option_error:
+	goto __finally0;
+	__catch0_g_option_error:
 	{
 		GError * err;
 		err = _inner_error_;
@@ -335,7 +300,7 @@ gint xsaa_main (char** args, int args_length1) {
 			return result;
 		}
 	}
-	__finally1:
+	__finally0:
 	if (_inner_error_ != NULL) {
 		g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
 		g_clear_error (&_inner_error_);
@@ -347,15 +312,15 @@ gint xsaa_main (char** args, int args_length1) {
 		_tmp1_ = xsaa_client_new (xsaa_socket_name, &_inner_error_);
 		if (_inner_error_ != NULL) {
 			if (_inner_error_->domain == XSAA_SOCKET_ERROR) {
-				goto __catch2_xsaa_socket_error;
+				goto __catch1_xsaa_socket_error;
 			}
-			goto __finally2;
+			goto __finally1;
 		}
 		_tmp2_ = NULL;
 		xsaa_client = (_tmp2_ = _tmp1_, (xsaa_client == NULL) ? NULL : (xsaa_client = (g_object_unref (xsaa_client), NULL)), _tmp2_);
 	}
-	goto __finally2;
-	__catch2_xsaa_socket_error:
+	goto __finally1;
+	__catch1_xsaa_socket_error:
 	{
 		GError * err;
 		err = _inner_error_;
@@ -366,7 +331,7 @@ gint xsaa_main (char** args, int args_length1) {
 			return result;
 		}
 	}
-	__finally2:
+	__finally1:
 	if (_inner_error_ != NULL) {
 		g_critical ("file %s: line %d: uncaught error: %s", __FILE__, __LINE__, _inner_error_->message);
 		g_clear_error (&_inner_error_);

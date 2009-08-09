@@ -1,4 +1,5 @@
 using GLib;
+using X;
 
 [CCode (cprefix = "", lower_case_cprefix = "")]
 namespace X
@@ -26,5 +27,10 @@ namespace X
     
     [CCode (cheader_filename = "X11/Xauth.h", cname="FamilyLocal")]
     public const ushort FamilyLocal;
+
+    public static delegate int IOErrorHandler(X.Display display);
+
+    [CCode (cheader_filename = "X11/X.h", cname="XSetIOErrorHandler")]
+    public static int set_io_error_handler(IOErrorHandler handler);
 }
 

@@ -67,7 +67,7 @@ namespace XSAA
         public Map <string, Session> sessions;
         private ConsoleKit.Manager manager;
         
-        public SessionManager(DBus.Connection conn)
+        public SessionManager(DBus.Connection conn, dynamic DBus.Object bus)
         {
             connection = conn;
 
@@ -76,8 +76,16 @@ namespace XSAA
                                                            "/org/freedesktop/ConsoleKit/Manager");
 
             sessions = new HashMap <string, Session> (GLib.str_hash, GLib.str_equal);
+            bus.NameOwnerChanged += on_client_lost;
         }
 
+        private void 
+        on_client_lost (DBus.Object sender, string name, string prev, string newp) 
+        {
+            stderr.printf("Lost session %s\n", name);
+            sessions.remove (prev);
+        }
+        
         public bool
         open_session(string user, int display, string device, bool autologin, out DBus.ObjectPath? path)
         {
@@ -164,7 +172,7 @@ namespace XSAA
             if (r1 == DBus.RequestNameReply.PRIMARY_OWNER &&
                 r2 == DBus.RequestNameReply.PRIMARY_OWNER) 
             {
-                var service = new SessionManager (conn);
+                var service = new SessionManager (conn, bus);
 
                 conn.register_object ("/fr/supersonicimagine/XSAA/Manager", 
                                       service);

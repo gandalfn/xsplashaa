@@ -107,7 +107,6 @@ namespace XSAA
         private void
         on_child_watch(Pid pid, int status)
         {
-            
             if (Process.if_exited(status))
             {
                 stderr.printf("Display exited : %i", status);

@@ -21,28 +21,17 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/un.h>
+#include <xsaa-private.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include <gtk/gtk.h>
 
-
-#define XSAA_TYPE_SOCKET (xsaa_socket_get_type ())
-#define XSAA_SOCKET(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XSAA_TYPE_SOCKET, XSAASocket))
-#define XSAA_SOCKET_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), XSAA_TYPE_SOCKET, XSAASocketClass))
-#define XSAA_IS_SOCKET(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XSAA_TYPE_SOCKET))
-#define XSAA_IS_SOCKET_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), XSAA_TYPE_SOCKET))
-#define XSAA_SOCKET_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), XSAA_TYPE_SOCKET, XSAASocketClass))
-
-typedef struct _XSAASocket XSAASocket;
-typedef struct _XSAASocketClass XSAASocketClass;
-typedef struct _XSAASocketPrivate XSAASocketPrivate;
 
 #define XSAA_TYPE_SERVER (xsaa_server_get_type ())
 #define XSAA_SERVER(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XSAA_TYPE_SERVER, XSAAServer))
@@ -55,19 +44,6 @@ typedef struct _XSAAServer XSAAServer;
 typedef struct _XSAAServerClass XSAAServerClass;
 typedef struct _XSAAServerPrivate XSAAServerPrivate;
 
-struct _XSAASocket {
-	GObject parent_instance;
-	XSAASocketPrivate * priv;
-	char* filename;
-	gint fd;
-	struct sockaddr_un* saddr;
-	GIOChannel* ioc;
-};
-
-struct _XSAASocketClass {
-	GObjectClass parent_class;
-};
-
 struct _XSAAServer {
 	XSAASocket parent_instance;
 	XSAAServerPrivate * priv;
@@ -77,24 +53,15 @@ struct _XSAAServerClass {
 	XSAASocketClass parent_class;
 };
 
-typedef enum  {
-	XSAA_SOCKET_ERROR_INVALID_NAME,
-	XSAA_SOCKET_ERROR_CREATE
-} XSAASocketError;
-#define XSAA_SOCKET_ERROR xsaa_socket_error_quark ()
 
 static gint xsaa_server_BUFFER_LENGTH;
 static gint xsaa_server_BUFFER_LENGTH = 200;
 static gpointer xsaa_server_parent_class = NULL;
 
-GType xsaa_socket_get_type (void);
 GType xsaa_server_get_type (void);
 enum  {
 	XSAA_SERVER_DUMMY_PROPERTY
 };
-GQuark xsaa_socket_error_quark (void);
-XSAASocket* xsaa_socket_new (const char* socket_name, GError** error);
-XSAASocket* xsaa_socket_construct (GType object_type, const char* socket_name, GError** error);
 static void xsaa_server_on_client_connect (XSAAServer* self);
 static void _xsaa_server_on_client_connect_xsaa_socket_in (XSAAServer* _sender, gpointer self);
 XSAAServer* xsaa_server_new (const char* socket_name, GError** error);
