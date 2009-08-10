@@ -1,5 +1,5 @@
-AC_INIT([xsplashaa], [0.1.0], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
-AC_CONFIG_SRCDIR([Makefile.am])
+AC_INIT([xsplashaa], [0.2.0], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
+AC_CONFIG_SRCDIR(src/xsaa-main.vala)
 AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE([dist-bzip2])
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
@@ -23,7 +23,7 @@ dnl ****************************************************************************
 GLIB_REQUIRED=2.12.0
 GTK_REQUIRED=2.10.0
 VALA_REQUIRED=0.7.5
-SSIGTKEXTRAS_REQUIRED=0.1.1
+SSIGTKEXTRAS_REQUIRED=0.2.0
 
 dnl ****************************************************************************
 dnl Check for vala
@@ -72,7 +72,8 @@ AC_ARG_WITH(init-dir,
             [initdir="/lib/init"])
 AC_SUBST(initdir)
 
-AC_CONFIG_FILES([Makefile
+AC_CONFIG_FILES([
+    Makefile
 	src/Makefile
 	po/Makefile.in
 	data/Makefile

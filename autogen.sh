@@ -1,159 +1,400 @@
 #!/bin/sh
+# $Id$
 # Run this to generate all the initial makefiles, etc.
 
-srcdir=`dirname $0`
-test -z "$srcdir" && srcdir=.
-
 DIE=0
+package=rubi
 
-if [ -n "$GNOME2_DIR" ]; then
-	ACLOCAL_FLAGS="-I $GNOME2_DIR/share/aclocal $ACLOCAL_FLAGS"
-	LD_LIBRARY_PATH="$GNOME2_DIR/lib:$LD_LIBRARY_PATH"
-	PATH="$GNOME2_DIR/bin:$PATH"
-	export PATH
-	export LD_LIBRARY_PATH
-fi
+# helper functions for autogen.sh
 
-(test -f $srcdir/configure.ac) || {
-    echo -n "**Error**: Directory "\`$srcdir\'" does not look like the"
-    echo " top-level package directory"
-    exit 1
-}
-
-(autoconf --version) < /dev/null > /dev/null 2>&1 || {
-  echo
-  echo "**Error**: You must have \`autoconf' installed."
-  echo "Download the appropriate package for your distribution,"
-  echo "or get the source tarball at ftp://ftp.gnu.org/pub/gnu/"
-  DIE=1
-}
-
-(grep "^IT_PROG_INTLTOOL" $srcdir/configure.ac >/dev/null) && {
-  (intltoolize --version) < /dev/null > /dev/null 2>&1 || {
-    echo 
-    echo "**Error**: You must have \`intltool' installed."
-    echo "You can get it from:"
-    echo "  ftp://ftp.gnome.org/pub/GNOME/"
-    DIE=1
-  }
-}
-
-(grep "^AM_PROG_XML_I18N_TOOLS" $srcdir/configure.ac >/dev/null) && {
-  (xml-i18n-toolize --version) < /dev/null > /dev/null 2>&1 || {
-    echo
-    echo "**Error**: You must have \`xml-i18n-toolize' installed."
-    echo "You can get it from:"
-    echo "  ftp://ftp.gnome.org/pub/GNOME/"
-    DIE=1
-  }
-}
-
-(grep "^AM_PROG_LIBTOOL" $srcdir/configure.ac >/dev/null) && {
-  (libtool --version) < /dev/null > /dev/null 2>&1 || {
-    echo
-    echo "**Error**: You must have \`libtool' installed."
-    echo "You can get it from: ftp://ftp.gnu.org/pub/gnu/"
-    DIE=1
-  }
-}
-
-(grep "^AM_GLIB_GNU_GETTEXT" $srcdir/configure.ac >/dev/null) && {
-  (grep "sed.*POTFILES" $srcdir/configure.ac) > /dev/null || \
-  (glib-gettextize --version) < /dev/null > /dev/null 2>&1 || {
-    echo
-    echo "**Error**: You must have \`glib' installed."
-    echo "You can get it from: ftp://ftp.gtk.org/pub/gtk"
-    DIE=1
-  }
-}
-
-(automake --version) < /dev/null > /dev/null 2>&1 || {
-  echo
-  echo "**Error**: You must have \`automake' installed."
-  echo "You can get it from: ftp://ftp.gnu.org/pub/gnu/"
-  DIE=1
-  NO_AUTOMAKE=yes
-}
-
-
-# if no automake, don't bother testing for aclocal
-test -n "$NO_AUTOMAKE" || (aclocal --version) < /dev/null > /dev/null 2>&1 || {
-  echo
-  echo "**Error**: Missing \`aclocal'.  The version of \`automake'"
-  echo "installed doesn't appear recent enough."
-  echo "You can get automake from ftp://ftp.gnu.org/pub/gnu/"
-  DIE=1
-}
-
-if test "$DIE" -eq 1; then
-  exit 1
-fi
-
-if test -z "$*"; then
-  echo "**Warning**: I am going to run \`configure' with no arguments."
-  echo "If you wish to pass any to it, please specify them on the"
-  echo \`$0\'" command line."
-  echo
-fi
-
-case $CC in
-xlc )
-  am_opt=--include-deps;;
-esac
-
-for coin in `find $srcdir -path $srcdir/CVS -prune -o -name configure.ac -print`
-do 
-  dr=`dirname $coin`
-  if test -f $dr/NO-AUTO-GEN; then
-    echo skipping $dr -- flagged as no auto-gen
-  else
-    echo processing $dr
-    ( cd $dr
-
-      aclocalinclude="-I . $ACLOCAL_FLAGS"
-
-      if grep "^AM_GLIB_GNU_GETTEXT" configure.ac >/dev/null; then
-	echo "Creating $dr/aclocal.m4 ..."
-	test -r $dr/aclocal.m4 || touch $dr/aclocal.m4
-	echo "Running glib-gettextize...  Ignore non-fatal messages."
-	echo "no" | glib-gettextize --force --copy
-	echo "Making $dr/aclocal.m4 writable ..."
-	test -r $dr/aclocal.m4 && chmod u+w $dr/aclocal.m4
-      fi
-      if grep "^IT_PROG_INTLTOOL" configure.ac >/dev/null; then
-        echo "Running intltoolize..."
-	intltoolize --copy --force --automake
-      fi
-      if grep "^AM_PROG_XML_I18N_TOOLS" configure.ac >/dev/null; then
-        echo "Running xml-i18n-toolize..."
-	xml-i18n-toolize --copy --force --automake
-      fi
-      if grep "^AM_PROG_LIBTOOL" configure.ac >/dev/null; then
-	if test -z "$NO_LIBTOOLIZE" ; then 
-	  echo "Running libtoolize..."
-	  libtoolize --force --copy
-	fi
-      fi
-      echo "Running aclocal $aclocalinclude ..."
-      aclocal $aclocalinclude
-      if grep "^AM_CONFIG_HEADER" configure.ac >/dev/null; then
-	echo "Running autoheader..."
-	autoheader
-      fi
-      echo "Running automake --gnu $am_opt ..."
-      automake --add-missing --gnu $am_opt
-      echo "Running autoconf ..."
-      autoconf
-    )
+debug ()
+# print out a debug message if DEBUG is a defined variable
+{
+  if test ! -z "$DEBUG"
+  then
+    echo "DEBUG: $1"
   fi
-done
+}
 
-conf_flags="--enable-maintainer-mode"
+version_check ()
+# check the version of a package
+# first argument : package name (executable)
+# second argument : optional path where to look for it instead
+# third argument : source download url
+# rest of arguments : major, minor, micro version
+# all consecutive ones : suggestions for binaries to use
+# (if not specified in second argument)
+{
+  PACKAGE=$1
+  PKG_PATH=$2
+  URL=$3
+  MAJOR=$4
+  MINOR=$5
+  MICRO=$6
 
-if test x$NOCONFIGURE = x; then
-  echo Running $srcdir/configure $conf_flags "$@" ...
-  $srcdir/configure $conf_flags "$@" \
-  && echo Now type \`make\' to compile. || exit 1
-else
-  echo Skipping configure process.
+  # for backwards compatibility, we let PKG_PATH=PACKAGE when PKG_PATH null
+  if test -z "$PKG_PATH"; then PKG_PATH=$PACKAGE; fi
+  debug "major $MAJOR minor $MINOR micro $MICRO"
+  VERSION=$MAJOR
+  if test ! -z "$MINOR"; then VERSION=$VERSION.$MINOR; else MINOR=0; fi
+  if test ! -z "$MICRO"; then VERSION=$VERSION.$MICRO; else MICRO=0; fi
+
+  debug "major $MAJOR minor $MINOR micro $MICRO"
+
+  for SUGGESTION in $PKG_PATH; do
+    COMMAND="$SUGGESTION"
+
+    # don't check if asked not to
+    test -z "$NOCHECK" && {
+      echo -n "  checking for $COMMAND >= $VERSION ... "
+    } || {
+      # we set a var with the same name as the package, but stripped of
+      # unwanted chars
+      VAR=`echo $PACKAGE | sed 's/-//g'`
+      debug "setting $VAR"
+      eval $VAR="$COMMAND"
+      return 0
+    }
+
+    debug "checking version with $COMMAND"
+    ($COMMAND --version) < /dev/null > /dev/null 2>&1 ||
+    {
+      echo "not found."
+      continue
+    }
+    # strip everything that's not a digit, then use cut to get the first field
+    pkg_version=`$COMMAND --version|head -n 1|sed 's/^[^0-9]*//'|cut -d' ' -f1`
+    debug "pkg_version $pkg_version"
+    # remove any non-digit characters from the version numbers to permit numeric
+    # comparison
+    pkg_major=`echo $pkg_version | cut -d. -f1 | sed s/[a-zA-Z\-].*//g`
+    pkg_minor=`echo $pkg_version | cut -d. -f2 | sed s/[a-zA-Z\-].*//g`
+    pkg_micro=`echo $pkg_version | cut -d. -f3 | sed s/[a-zA-Z\-].*//g`
+    test -z "$pkg_major" && pkg_major=0
+    test -z "$pkg_minor" && pkg_minor=0
+    test -z "$pkg_micro" && pkg_micro=0
+    debug "found major $pkg_major minor $pkg_minor micro $pkg_micro"
+
+    #start checking the version
+    debug "version check"
+
+    # reset check
+    WRONG=
+
+    if [ ! "$pkg_major" -gt "$MAJOR" ]; then
+      debug "major: $pkg_major <= $MAJOR"
+      if [ "$pkg_major" -lt "$MAJOR" ]; then
+        debug "major: $pkg_major < $MAJOR"
+        WRONG=1
+      elif [ ! "$pkg_minor" -gt "$MINOR" ]; then
+        debug "minor: $pkg_minor <= $MINOR"
+        if [ "$pkg_minor" -lt "$MINOR" ]; then
+          debug "minor: $pkg_minor < $MINOR"
+          WRONG=1
+        elif [ "$pkg_micro" -lt "$MICRO" ]; then
+          debug "micro: $pkg_micro < $MICRO"
+          WRONG=1
+        fi
+      fi
+    fi
+
+    if test ! -z "$WRONG"; then
+      echo "found $pkg_version, not ok !"
+      continue
+    else
+      echo "found $pkg_version, ok."
+      # we set a var with the same name as the package, but stripped of
+      # unwanted chars
+      VAR=`echo $PACKAGE | sed 's/-//g'`
+      debug "setting $VAR"
+      eval $VAR="$COMMAND"
+      return 0
+    fi
+  done
+
+  if test ! -z "$URL"; then
+    echo "not found !"
+    echo "You must have $PACKAGE installed to compile $package."
+    echo "Download the appropriate package for your distribution,"
+    echo "or get the source tarball at $URL"
+  fi
+  return 1;
+}
+
+aclocal_check ()
+{
+  # normally aclocal is part of automake
+  # so we expect it to be in the same place as automake
+  # so if a different automake is supplied, we need to adapt as well
+  # so how's about replacing automake with aclocal in the set var,
+  # and saving that in $aclocal ?
+  # note, this will fail if the actual automake isn't called automake*
+  # or if part of the path before it contains it
+  if [ -z "$automake" ]; then
+    echo "Error: no automake variable set !"
+    return 1
+  else
+    aclocal=`echo $automake | sed s/automake/aclocal/`
+    debug "aclocal: $aclocal"
+    if [ "$aclocal" != "aclocal" ];
+    then
+      CONFIGURE_DEF_OPT="$CONFIGURE_DEF_OPT --with-aclocal=$aclocal"
+    fi
+    if [ ! -x `which $aclocal` ]; then
+      echo "Error: cannot execute $aclocal !"
+      return 1
+    fi
+  fi
+}
+
+autoheader_check ()
+{
+  # same here - autoheader is part of autoconf
+  # use the same voodoo
+  if [ -z "$autoconf" ]; then
+    echo "Error: no autoconf variable set !"
+    return 1
+  else
+    autoheader=`echo $autoconf | sed s/autoconf/autoheader/`
+    debug "autoheader: $autoheader"
+    if [ "$autoheader" != "autoheader" ];
+    then
+      CONFIGURE_DEF_OPT="$CONFIGURE_DEF_OPT --with-autoheader=$autoheader"
+    fi
+    if [ ! -x `which $autoheader` ]; then
+      echo "Error: cannot execute $autoheader !"
+      return 1
+    fi
+  fi
+
+}
+autoconf_2_52d_check ()
+{
+  # autoconf 2.52d has a weird issue involving a yes:no error
+  # so don't allow it's use
+  test -z "$NOCHECK" && {
+    ac_version=`$autoconf --version|head -n 1|sed 's/^[a-zA-Z\.\ ()]*//;s/ .*$//'`
+    if test "$ac_version" = "2.52d"; then
+      echo "autoconf 2.52d has an issue with our current build."
+      echo "We don't know who's to blame however.  So until we do, get a"
+      echo "regular version.  RPM's of a working version are on the gstreamer site."
+      exit 1
+    fi
+  }
+  return 0
+}
+
+die_check ()
+{
+  # call with $DIE
+  # if set to 1, we need to print something helpful then die
+  DIE=$1
+  if test "x$DIE" = "x1";
+  then
+    echo
+    echo "- Please get the right tools before proceeding."
+    echo "- Alternatively, if you're sure we're wrong, run with --nocheck."
+    exit 1
+  fi
+}
+
+autogen_options ()
+{
+  if test "x$1" = "x"; then
+    return 0
+  fi
+
+  while test "x$1" != "x" ; do
+    optarg=`expr "x$1" : 'x[^=]*=\(.*\)'`
+    case "$1" in
+      --noconfigure)
+          NOCONFIGURE=defined
+	  AUTOGEN_EXT_OPT="$AUTOGEN_EXT_OPT --noconfigure"
+          echo "+ configure run disabled"
+          shift
+          ;;
+      --nocheck)
+	  AUTOGEN_EXT_OPT="$AUTOGEN_EXT_OPT --nocheck"
+          NOCHECK=defined
+          echo "+ autotools version check disabled"
+          shift
+          ;;
+      --debug)
+          DEBUG=defined
+	  AUTOGEN_EXT_OPT="$AUTOGEN_EXT_OPT --debug"
+          echo "+ debug output enabled"
+          shift
+          ;;
+      --sysconfdir=*)
+	  CONFIGURE_EXT_OPT="$CONFIGURE_EXT_OPT --sysconfdir=$optarg"
+	  echo "+ passing --sysconfdir=$optarg to configure"
+          shift
+          ;;
+      --prefix=*)
+	  CONFIGURE_EXT_OPT="$CONFIGURE_EXT_OPT --prefix=$optarg"
+	  echo "+ passing --prefix=$optarg to configure"
+          shift
+          ;;
+      --prefix)
+	  shift
+	  echo "DEBUG: $1"
+	  CONFIGURE_EXT_OPT="$CONFIGURE_EXT_OPT --prefix=$1"
+	  echo "+ passing --prefix=$1 to configure"
+          shift
+          ;;
+
+      -h|--help)
+          echo "autogen.sh (autogen options) -- (configure options)"
+          echo "autogen.sh help options: "
+          echo " --noconfigure            don't run the configure script"
+          echo " --nocheck                don't do version checks"
+          echo " --debug                  debug the autogen process"
+	  echo " --prefix		  will be passed on to configure"
+          echo
+          echo " --with-autoconf PATH     use autoconf in PATH"
+          echo " --with-automake PATH     use automake in PATH"
+          echo
+          echo "to pass options to configure, put them as arguments after -- "
+	  exit 1
+          ;;
+      --with-automake=*)
+          AUTOMAKE=$optarg
+          echo "+ using alternate automake in $optarg"
+	  CONFIGURE_DEF_OPT="$CONFIGURE_DEF_OPT --with-automake=$AUTOMAKE"
+          shift
+          ;;
+      --with-autoconf=*)
+          AUTOCONF=$optarg
+          echo "+ using alternate autoconf in $optarg"
+	  CONFIGURE_DEF_OPT="$CONFIGURE_DEF_OPT --with-autoconf=$AUTOCONF"
+          shift
+          ;;
+      --disable*|--enable*|--with*)
+          echo "+ passing option $1 to configure"
+	  CONFIGURE_EXT_OPT="$CONFIGURE_EXT_OPT $1"
+          shift
+          ;;
+       --) shift ; break ;;
+      *) CONFIGURE_EXT_OPT="$CONFIGURE_EXT_OPT $1"; shift ;;
+    esac
+  done
+
+  for arg do CONFIGURE_EXT_OPT="$CONFIGURE_EXT_OPT $arg"; done
+  if test ! -z "$CONFIGURE_EXT_OPT"
+  then
+    echo "+ options passed to configure: $CONFIGURE_EXT_OPT"
+  fi
+}
+
+toplevel_check ()
+{
+  srcfile=$1
+  test -f $srcfile || {
+        echo "You must run this script in the top-level $package directory"
+        exit 1
+  }
+}
+
+
+tool_run ()
+{
+  tool=$1
+  options=$2
+  echo "+ running $tool $options..."
+  $tool $options || {
+    echo
+    echo $tool failed
+    exit 1
+  }
+}
+
+CONFIGURE_DEF_OPT='--enable-maintainer-mode'
+
+autogen_options $@
+
+have_gtkdoc_1_9=0
+
+echo -n "+ check for build tools"
+if test ! -z "$NOCHECK"; then echo ": skipped version checks"; else  echo; fi
+version_check "autoconf" "$AUTOCONF autoconf autoconf-2.54 autoconf-2.53 autoconf-2.52" \
+              "ftp://ftp.gnu.org/pub/gnu/autoconf/" 2 52 || DIE=1
+version_check "automake" "$AUTOMAKE automake-1.11 automake" \
+              "ftp://ftp.gnu.org/pub/gnu/automake/" 1 11 || DIE=1
+version_check "intltoolize" "" \
+              "ftp://ftp.gnome.org/pub/gnome/sources/intltool/" 0 1 5 || DIE=1
+version_check "libtoolize" "libtoolize" \
+              "ftp://ftp.gnu.org/pub/gnu/libtool/" 1 5 0 || DIE=1
+version_check "pkg-config" "" \
+              "ftp://ftp.gnome.org/pub/gnome/sources/pkgconfig/" 0 8 0 || DIE=1
+
+die_check $DIE
+
+autoconf_2_52d_check || DIE=1
+aclocal_check || DIE=1
+autoheader_check || DIE=1
+
+die_check $DIE
+
+# if no arguments specified then this will be printed
+if test -z "$*"; then
+  echo "+ checking for autogen.sh options"
+  echo "  This autogen script will automatically run ./configure as:"
+  echo "  ./configure $CONFIGURE_DEF_OPT"
+  echo "  To pass any additional options, please specify them on the $0"
+  echo "  command line."
 fi
+
+toplevel_check $srcfile
+
+# remove cache directory
+if test -e autom4te.cache; then rm -rf autom4te.cache; fi
+
+# update po
+rm po/POTFILES.in
+touch po/POTFILES.in
+cd po
+tool_run "intltool-update" "-m"
+cd ..
+echo "[encoding: UTF-8]" > po/encoding
+cat po/encoding po/missing > po/POTFILES.in
+rm po/encoding
+rm po/missing
+
+# aclocal
+if test -f acinclude.m4; then rm acinclude.m4; fi
+tool_run "$aclocal" "$ACLOCAL_FLAGS -I ."
+
+tool_run "$libtoolize" "--copy --force"
+tool_run "$autoheader"
+
+# touch the stamp-h.in build stamp so we don't re-run autoheader in maintainer mode -- wingo
+echo timestamp > stamp-h.in 2> /dev/null
+
+tool_run "$autoconf"
+debug "automake: $automake"
+tool_run "$automake" "--add-missing --foreign"
+
+test -n "$NOCONFIGURE" && {
+  echo "skipping configure stage for package $package, as requested."
+  echo "autogen.sh done."
+  exit 0
+}
+
+tool_run "$intltoolize" "--copy --force --automake"
+
+# locale dir
+sed -i -e 's/itlocaledir = $(prefix)\/$(DATADIRNAME)\/locale/itlocaledir = @localedir@/' po/Makefile.in.in
+sed -i -e 's/ChangeLog//' po/Makefile.in.in
+
+echo "+ running configure ... "
+test ! -z "$CONFIGURE_DEF_OPT" && echo "  ./configure default flags: $CONFIGURE_DEF_OPT"
+test ! -z "$CONFIGURE_EXT_OPT" && echo "  ./configure external flags: $CONFIGURE_EXT_OPT"
+echo
+
+echo ./configure $CONFIGURE_DEF_OPT $CONFIGURE_EXT_OPT
+./configure $CONFIGURE_DEF_OPT $CONFIGURE_EXT_OPT || {
+        echo "  configure failed"
+        exit 1
+}
+
+echo "Now type 'make' to compile $package."
