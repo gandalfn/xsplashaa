@@ -62,7 +62,7 @@ xsplashaa_session_daemon_SOURCES = \
 xsplashaa_session_daemon_LDADD = \
 	$(XSPLASHAA_LIBS) -lpam
 
-CLEANFILES = \
+EXTRA_DIST = \
     xsaa-private.h \
     xsaa-private.vapi \
     $(libxsaa_private_la_SOURCES:.vala=.c) \
@@ -73,3 +73,6 @@ CLEANFILES = \
     xsplashaa_client_vala.stamp \
     $(xsplashaa_session_daemon_SOURCES:.vala=.c) \
     xsplashaa_session_daemon_vala.stamp
+
+DISTCLEANFILES = \
+    $(EXTRA_DIST)
