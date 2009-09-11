@@ -442,35 +442,39 @@ namespace XSAA
         bool first_start = true;
         while (status != 0)
         {
-            switch (fork())
+            int ret_fork = fork();
+
+            if (ret_fork == 0)
             {
-                case 0:
-                    try 
-                    {
-                        signal(SIGSEGV, on_sig_term);
-                        signal(SIGTERM, on_sig_term);
-                        signal(SIGKILL, on_sig_term);
-                        daemon = new Daemon (SOCKET_NAME);
-	                    daemon.args = args;                    
-                        daemon.run(first_start);
-	                    daemon = null;
-                    }
-                    catch (GLib.Error err)
-                    {
-                        stderr.printf("%s\n", err.message);
-	                    daemon = null;
-                        return -1;
-                    }
-                
-	                return 0;
-                 case -1:
+                try 
+                {
+                    signal(SIGSEGV, on_sig_term);
+                    signal(SIGTERM, on_sig_term);
+                    signal(SIGKILL, on_sig_term);
+                    daemon = new Daemon (SOCKET_NAME);
+                    daemon.args = args;                    
+                    daemon.run(first_start);
+                    daemon = null;
+                }
+                catch (GLib.Error err)
+                {
+                    stderr.printf("%s\n", err.message);
+                    daemon = null;
                     return -1;
-                 default:
-                    int ret;
-                    first_start = false;
-                    wait(out ret);
-		            status = Process.exit_status(ret);
-                    break;
+                }
+            
+                return 0;
+            }
+            else if (ret_fork == -1)
+            {
+                return -1;
+            }
+            else
+            {
+                int ret;
+                first_start = false;
+                wait(out ret);
+	            status = Process.exit_status(ret);
             }
         }
         

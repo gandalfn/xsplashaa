@@ -36,10 +36,10 @@ namespace XSAA
         int current_phase = 0;
         ProgressBar progress;
         SlideNotebook notebook;
-        Label label_prompt;
-        Entry entry_prompt;
+        Gtk.Label label_prompt;
+        Gtk.Entry entry_prompt;
         string username;
-        Label label_message;
+        Gtk.Label label_message;
         uint id_pulse = 0;
 
         string theme = "chicken-curie";
@@ -79,12 +79,12 @@ namespace XSAA
             alignment.show();
             add(alignment);
 
-            var vbox = new VBox(false, 75);
+            var vbox = new Gtk.VBox(false, 75);
             vbox.set_border_width(25);
             vbox.show();
             alignment.add(vbox);
 
-            var hbox = new HBox(false, 25);
+            var hbox = new Gtk.HBox(false, 25);
             hbox.show();
             vbox.pack_start(hbox, false, false, 0);
 
@@ -99,8 +99,8 @@ namespace XSAA
                                    ((double)pixbuf.get_height() / 
                                     (double)pixbuf.get_width()));
                 Gtk.Image image = 
-                    new Image.from_pixbuf(pixbuf.scale_simple(width, height, 
-                                                              Gdk.InterpType.BILINEAR));
+                    new Gtk.Image.from_pixbuf(pixbuf.scale_simple(width, height, 
+                                                                  Gdk.InterpType.BILINEAR));
                 image.show();
                 hbox.pack_start(image, false, false, 0);
             }
@@ -111,7 +111,7 @@ namespace XSAA
                               err.message);
             }            
 
-            var vbox_right = new VBox(false, 25);
+            var vbox_right = new Gtk.VBox(false, 25);
             vbox_right.show();
             hbox.pack_start(vbox_right, false, false, 0);
             
@@ -126,8 +126,8 @@ namespace XSAA
                                    ((double)pixbuf.get_height() / 
                                     (double)pixbuf.get_width()));
                 Gtk.Image image = 
-                    new Image.from_pixbuf(pixbuf.scale_simple(width, height, 
-                                                              Gdk.InterpType.BILINEAR));
+                    new Gtk.Image.from_pixbuf(pixbuf.scale_simple(width, height, 
+                                                                  Gdk.InterpType.BILINEAR));
                 image.show();
                 vbox_right.pack_start(image, true, true, 0);
             }
@@ -156,7 +156,7 @@ namespace XSAA
 
             construct_shutdown_page();
             
-            var table_progress = new Table(5, 1, false);
+            var table_progress = new Gtk.Table(5, 1, false);
             table_progress.show();
             table_progress.set_border_width(24);
             table_progress.set_col_spacings(12);
@@ -198,14 +198,14 @@ namespace XSAA
         private void
         construct_loading_page()
         {
-            var table = new Table(3, 2, false);
+            var table = new Gtk.Table(3, 2, false);
             table.show();
             notebook.append_page(table, null);
             table.set_border_width(12);
             table.set_col_spacings(12);
             table.set_row_spacings(12);
 
-            var label = new Label("<span size='xx-large' color='" + 
+            var label = new Gtk.Label("<span size='xx-large' color='" + 
                                   text +"'>Loading  ...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
@@ -224,8 +224,8 @@ namespace XSAA
                 stderr.printf("Error on loading throbber %s", err.message);
             }     
 
-            label = new Label("<span size='xx-large' color='" + 
-                              text +"'>Check filesystem ...</span>");
+            label = new Gtk.Label("<span size='xx-large' color='" + 
+                                  text +"'>Check filesystem ...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
@@ -242,8 +242,8 @@ namespace XSAA
                 stderr.printf("Error on loading throbber %s", err.message);
             } 
 
-            label = new Label("<span size='xx-large' color='" + 
-                              text +"'>Start System ...</span>");
+            label = new Gtk.Label("<span size='xx-large' color='" + 
+                                  text +"'>Start System ...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
@@ -268,29 +268,29 @@ namespace XSAA
             alignment.show();
             notebook.append_page(alignment, null);
 
-            var box = new VBox(false, 12);
+            var box = new Gtk.VBox(false, 12);
             box.show();
             alignment.add(box);
             
-            var table = new Table(3, 3, false);
+            var table = new Gtk.Table(3, 3, false);
             table.set_border_width(12);
             table.set_col_spacings(12);
             table.set_row_spacings(24);
             table.show();
             box.pack_start(table, true, true, 0);
 
-            label_prompt = new Label("<span size='xx-large' color='" + 
-                                  text +"'>Login :</span>");
+            label_prompt = new Gtk.Label("<span size='xx-large' color='" + 
+                                         text +"'>Login :</span>");
             label_prompt.set_use_markup(true);
             label_prompt.set_alignment(0.0f, 0.5f);
             label_prompt.show();
             table.attach_defaults(label_prompt, 1, 2, 0, 1);
 
-            entry_prompt = new Entry();
+            entry_prompt = new Gtk.Entry();
             entry_prompt.show();
             table.attach_defaults(entry_prompt, 2, 3, 0, 1);
 
-            label_message = new Label("");
+            label_message = new Gtk.Label("");
             label_message.set_use_markup(true);
             label_message.set_alignment(0.5f, 0.5f);
             label_message.show();
@@ -302,12 +302,12 @@ namespace XSAA
             button_box.set_layout(Gtk.ButtonBoxStyle.END);
             box.pack_start(button_box, false, false, 0);
 
-            var button = new Button.with_label("Restart");
+            var button = new Gtk.Button.with_label("Restart");
             button.show();
             button.clicked += on_restart_clicked;
             button_box.pack_start(button, false, false, 0);
 
-            button = new Button.with_label("Shutdown");
+            button = new Gtk.Button.with_label("Shutdown");
             button.show();
             button.clicked += on_shutdown_clicked;
             button_box.pack_start(button, false, false, 0);
@@ -316,15 +316,15 @@ namespace XSAA
         private void
         construct_launch_session_page()
         {
-            var table = new Table(1, 2, false);
+            var table = new Gtk.Table(1, 2, false);
             table.show();
             notebook.append_page(table, null);
             table.set_border_width(12);
             table.set_col_spacings(12);
             table.set_row_spacings(12);
 
-            var label =  new Label("<span size='xx-large' color='" + 
-                                   text +"'>Launch session ...</span>");
+            var label =  new Gtk.Label("<span size='xx-large' color='" + 
+                                       text +"'>Launch session ...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
@@ -345,15 +345,15 @@ namespace XSAA
         private void
         construct_shutdown_page()
         {
-            var table = new Table(1, 2, false);
+            var table = new Gtk.Table(1, 2, false);
             table.show();
             notebook.append_page(table, null);
             table.set_border_width(12);
             table.set_col_spacings(12);
             table.set_row_spacings(12);
 
-            var label =  new Label("<span size='xx-large' color='" + 
-                                   text +"'>Shutdown in progress ...</span>");
+            var label =  new Gtk.Label("<span size='xx-large' color='" + 
+                                       text +"'>Shutdown in progress ...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();

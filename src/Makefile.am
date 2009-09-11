@@ -74,5 +74,8 @@ EXTRA_DIST = \
     $(xsplashaa_session_daemon_SOURCES:.vala=.c) \
     xsplashaa_session_daemon_vala.stamp
 
+CLEANFILES = \
+    $(EXTRA_DIST)
+    
 DISTCLEANFILES = \
     $(EXTRA_DIST)

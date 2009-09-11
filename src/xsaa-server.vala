@@ -46,7 +46,7 @@ namespace XSAA
             
             fcntl(fd, F_SETFD, FD_CLOEXEC);
             
-            if (bind(fd, (sockaddr) saddr, 110) != 0)
+            if (bind(fd, ref saddr, 110) != 0)
 	        {
 	            this.unref();
 				throw new SocketError.CREATE("error on bind socket");

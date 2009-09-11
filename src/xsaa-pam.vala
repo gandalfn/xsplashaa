@@ -91,7 +91,7 @@ namespace XSAA
         {
             user = username;
             
-            conv = new Pam.Conv();
+            conv = Pam.Conv();
             conv.conv = (void*)on_pam_conversation;
             conv.appdata_ptr = this;
 
@@ -120,15 +120,15 @@ namespace XSAA
             }
 
             FileStream f = FileStream.open(xauth_file, "r");
-            X.Auth auth = X.Auth.ReadAuth(f);
+            weak X.Auth? auth = X.Auth.read(f);
             if (auth != null)
             {
-                Pam.XauthData pam_xauth = new Pam.XauthData();
+                var pam_xauth = Pam.XauthData();
                 pam_xauth.namelen = auth.name_length;
                 pam_xauth.name = auth.name;
                 pam_xauth.datalen = auth.data_length;
                 pam_xauth.data = auth.data;
-                if (pam_handle.set_item(XAUTHDATA, pam_xauth) != Pam.SUCCESS)
+                if (pam_handle.set_item(XAUTHDATA, ref pam_xauth) != Pam.SUCCESS)
                 {
                     this.unref();
                     throw new PamError.START("Error on set xauth");

@@ -16,14 +16,12 @@ namespace Posix
 	[CCode (cheader_filename = "sys/socket.h")]
     public int setsockopt(int fd, int level, int optname, void* optval, size_t optlen);
 	
-	[Compact]
     [CCode (cheader_filename = "sys/socket.h", cname = "struct sockaddr", free_function="g_free")]
-	public class sockaddr {
+	public struct sockaddr {
 	}
 	
-    [Compact]
     [CCode (cheader_filename = "sys/un.h", cname = "struct sockaddr_un", free_function="g_free")]
-	public class sockaddr_un : sockaddr {
+	public struct sockaddr_un : sockaddr {
 	    public int sun_family;
 	    public char sun_path[108];
 	}

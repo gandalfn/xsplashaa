@@ -4,9 +4,8 @@ using X;
 [CCode (cprefix = "", lower_case_cprefix = "")]
 namespace X
 {
-    [Compact]
-    [CCode (cheader_filename = "X11/Xauth.h", cname="Xauth", free_function="XauDisposeAuth")]
-    public class Auth {
+    [CCode (cheader_filename = "X11/Xauth.h", cname="Xauth", type_id = "XAuth", free_function="XauDisposeAuth", destroy_function="")]
+    public struct Auth {
         public ushort family;
         public ushort address_length;
         public string address;
@@ -18,11 +17,11 @@ namespace X
         public string data;
         
         [CCode (cheader_filename = "X11/Xauth.h", cname="XauReadAuth")]
-        public static Auth? ReadAuth(FileStream f);
-        [CCode (cheader_filename = "X11/Xauth.h", cname="XauWriteAuth")]
-        public static int WriteAuth(FileStream f, Auth auth);
+        public static weak Auth? read(FileStream f);
+        [CCode (cheader_filename = "X11/Xauth.h", cname="XauWriteAuth", instance_pos=-1)]
+        public int write(FileStream f);
         [CCode (cheader_filename = "X11/Xauth.h", cname="XauUnlockAuth")]
-        public static int UnlockAuth(string filename);
+        public static int unlock_auth(string filename);
     }
     
     [CCode (cheader_filename = "X11/Xauth.h", cname="FamilyLocal")]

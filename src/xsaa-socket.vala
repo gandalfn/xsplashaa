@@ -69,14 +69,23 @@ namespace XSAA
                                              socket_name);
             }
 
-            saddr = new sockaddr_un();
+            saddr = sockaddr_un();
             saddr.sun_family = AF_UNIX;
             memcpy(saddr.sun_path, socket_name, socket_name.len());
 
-            ioc = new IOChannel.unix_new(fd);
-	        ioc.set_encoding(null);
-	        ioc.set_buffered(false);
-            ioc.add_watch(IOCondition.IN, on_in_data);
+            try
+            {
+                ioc = new IOChannel.unix_new(fd);
+	            ioc.set_encoding(null);
+	            ioc.set_buffered(false);
+                ioc.add_watch(IOCondition.IN, on_in_data);
+            }
+            catch (GLib.Error err)
+            {
+                this.unref();
+				throw new SocketError.CREATE("error on create stream %s", 
+                                             err.message);
+            }
         }
 
         ~Socket()

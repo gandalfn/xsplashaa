@@ -32,7 +32,7 @@ namespace XSAA
             
             fcntl(fd, O_NONBLOCK);
 
-            if (Posix.connect(fd, (sockaddr) saddr, 110) != 0)
+            if (Posix.connect(fd, ref saddr, 110) != 0)
 	        {
 	            this.unref();
 				throw new SocketError.CREATE("error on connect %s", 

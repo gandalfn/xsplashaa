@@ -24,9 +24,9 @@ namespace Pam
     }
 
     public int start(string service, string username, Conv conv, out Handle handle);
-    [Compact]
-    [CCode (cname = "struct pam_xauth_data", free_function="free")]
-    class XauthData {
+    
+    [CCode (cname = "struct pam_xauth_data", destroy_function="")]
+    public struct XauthData {
         public int namelen;
         public string name;
         public int datalen;
@@ -41,15 +41,14 @@ namespace Pam
     }
 
     [SimpleType]
-    [CCode (cname = "struct pam_response", free_function="free")]
+    [CCode (cname = "struct pam_response")]
     public struct Response  {
         public void* resp;
         public int resp_retcode;
     }
 
-    [Compact]
-    [CCode (cname="struct pam_conv", free_function="free")]
-    public class Conv {
+    [CCode (cname="struct pam_conv")]
+    public struct Conv {
         public void* conv;
         public void* appdata_ptr;
     }

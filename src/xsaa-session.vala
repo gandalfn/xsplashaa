@@ -128,8 +128,9 @@ namespace XSAA
             }
 
             FileStream f = FileStream.open(xauth_file, "w");
-            
-            X.Auth auth = new X.Auth();
+                        
+            X.Auth auth = X.Auth();
+
             auth.family = X.FamilyLocal;
             auth.address = "localhost";
             auth.address_length = (ushort)"localhost".len();
@@ -148,9 +149,9 @@ namespace XSAA
             Memory.copy(auth.data, data, 16);
             auth.data_length = 16;
             
-            X.Auth.WriteAuth(f, auth);
+            auth.write(f);
             f.flush();
-           
+            
             if (chown(xauth_file, passwd.pw_uid, passwd.pw_gid) < 0)
             {
                 throw new SessionError.XAUTH("Error on generate " + xauth_file);

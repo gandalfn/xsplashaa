@@ -154,7 +154,14 @@ namespace XSAA
             return -1;
         }
 
-        if (!no_daemon) daemon (0, 0);
+        if (!no_daemon) 
+        {
+            if (daemon (0, 0) < 0)
+            {
+                stderr.printf("Error on launch has daemon\n");
+                return -1;
+            }
+        }
         
 		try 
         {
