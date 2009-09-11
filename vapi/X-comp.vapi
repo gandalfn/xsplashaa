@@ -20,6 +20,8 @@ namespace X
         public static weak Auth? read(FileStream f);
         [CCode (cheader_filename = "X11/Xauth.h", cname="XauWriteAuth", instance_pos=-1)]
         public int write(FileStream f);
+        [CCode (cheader_filename = "X11/Xauth.h", cname="XauDisposeAuth")]
+        public void dispose();
         [CCode (cheader_filename = "X11/Xauth.h", cname="XauUnlockAuth")]
         public static int unlock_auth(string filename);
     }

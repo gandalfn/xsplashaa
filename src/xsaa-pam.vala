@@ -128,6 +128,7 @@ namespace XSAA
                 pam_xauth.name = auth.name;
                 pam_xauth.datalen = auth.data_length;
                 pam_xauth.data = auth.data;
+				auth.dispose();
                 if (pam_handle.set_item(XAUTHDATA, ref pam_xauth) != Pam.SUCCESS)
                 {
                     this.unref();

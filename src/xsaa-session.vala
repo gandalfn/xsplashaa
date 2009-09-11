@@ -181,9 +181,15 @@ namespace XSAA
             ConsoleKit.SessionParameter islocal = 
                 ConsoleKit.SessionParameter("is-local", is_local_val);
 
+	        Value is_active = Value (typeof(bool));
+            is_active.set_boolean(true);
+            ConsoleKit.SessionParameter active = 
+                ConsoleKit.SessionParameter("active", is_active);
+
             ConsoleKit.SessionParameter[] parameters = {unixuser,
                                                         x11display,
 							                            x11displaydev,
+							                            active,
 							                            islocal};
 
             cookie = ck_manager.open_session_with_parameters (parameters); 
