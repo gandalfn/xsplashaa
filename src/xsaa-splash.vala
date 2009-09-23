@@ -43,6 +43,7 @@ namespace XSAA
         uint id_pulse = 0;
 
         string theme = "chicken-curie";
+        string layout = "horizontal";
         string bg = "#1B242D";
         string text = "#7BC4F5";
         float yposition = 0.5f;
@@ -84,15 +85,24 @@ namespace XSAA
             vbox.show();
             alignment.add(vbox);
 
-            var hbox = new Gtk.HBox(false, 25);
-            hbox.show();
-            vbox.pack_start(hbox, false, false, 0);
+            Gtk.Box box = null;
+            if (layout == "horizontal")
+            {
+                box = new Gtk.HBox(false, 25);
+            }
+            else
+            {
+                box = new Gtk.VBox(false, 25);
+            }
+            box.show();
+            vbox.pack_start(box, false, false, 0);
 
             try
             {
                 Gdk.Pixbuf pixbuf = 
                     new Gdk.Pixbuf.from_file(PACKAGE_DATA_DIR + "/" + theme +
                                              "/distrib-logo.png");
+                
                 int width = geometry.width / 3 > pixbuf.get_width() ? 
                             pixbuf.get_width() : geometry.width / 3;
                 int height = (int)((double)width * 
@@ -102,7 +112,7 @@ namespace XSAA
                     new Gtk.Image.from_pixbuf(pixbuf.scale_simple(width, height, 
                                                                   Gdk.InterpType.BILINEAR));
                 image.show();
-                hbox.pack_start(image, false, false, 0);
+                box.pack_start(image, false, false, 0);
             }
             catch (GLib.Error err)
             {
@@ -111,25 +121,46 @@ namespace XSAA
                               err.message);
             }            
 
-            var vbox_right = new Gtk.VBox(false, 25);
-            vbox_right.show();
-            hbox.pack_start(vbox_right, false, false, 0);
+            Gtk.Box box_info;
+            if (layout == "horizontal")
+            {
+                box_info = new Gtk.VBox(false, 25);
+            }
+            else
+            {
+                box_info = new Gtk.HBox(false, 25);
+            }
+            box_info.show();
+            box.pack_start(box_info, false, false, 0);
             
             try
             {
                 Gdk.Pixbuf pixbuf = 
                     new Gdk.Pixbuf.from_file(PACKAGE_DATA_DIR + "/" + theme +
                                              "/logo.png");
-                int width = geometry.width / 3 > pixbuf.get_width() ? 
+                int width, height;
+                
+                if (layout == "horizontal")
+                {
+                    width = geometry.width / 3 > pixbuf.get_width() ? 
                             pixbuf.get_width() : geometry.width / 3;
-                int height = (int)((double)width * 
+                    height = (int)((double)width * 
                                    ((double)pixbuf.get_height() / 
                                     (double)pixbuf.get_width()));
+                }
+                else 
+                {
+                    width = pixbuf.get_width(); /* > geometry.width  ? 
+                            geometry.width : pixbuf.get_width();*/
+                    height = (int)((double)width * 
+                                   ((double)pixbuf.get_height() / 
+                                    (double)pixbuf.get_width()));
+                }
                 Gtk.Image image = 
                     new Gtk.Image.from_pixbuf(pixbuf.scale_simple(width, height, 
                                                                   Gdk.InterpType.BILINEAR));
                 image.show();
-                vbox_right.pack_start(image, true, true, 0);
+                box_info.pack_start(image, true, true, 0);
             }
             catch (GLib.Error err)
             {
@@ -140,7 +171,7 @@ namespace XSAA
 
             alignment = new Alignment(0.5f, 0.5f, 0, 0);
             alignment.show();
-            vbox_right.pack_start(alignment, true, true, 0);
+            box_info.pack_start(alignment, true, true, 0);
             
             notebook = new SlideNotebook();
             notebook.show();
@@ -183,6 +214,7 @@ namespace XSAA
                     config.load_from_file(PACKAGE_CONFIG_FILE, 
                                           KeyFileFlags.NONE);
                     theme = config.get_string("splash", "theme");
+                    layout = config.get_string("splash", "layout");
                     bg = config.get_string("splash", "background");
                     text = config.get_string("splash", "text");
                     yposition = (float)config.get_double("splash", "yposition");

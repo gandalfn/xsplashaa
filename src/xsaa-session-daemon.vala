@@ -28,27 +28,26 @@ public const string PACKAGE_XAUTH_DIR = "/tmp/xsplashaa-xauth";
 [DBus (name = "org.freedesktop.ConsoleKit.Session")] 
 public interface ConsoleKit.Session : DBus.Object 
 {
-    public abstract void
-    activate();
+    public abstract void activate() throws DBus.Error;
 }
 
 [DBus (name = "org.freedesktop.ConsoleKit.Manager")] 
 public interface ConsoleKit.Manager : DBus.Object 
 { 
     public abstract string 
-    open_session_with_parameters (ConsoleKit.SessionParameter[] parameters); 
+    open_session_with_parameters (ConsoleKit.SessionParameter[] parameters) throws DBus.Error; 
 
     public abstract int
-    close_session(string cookie);
+    close_session(string cookie) throws DBus.Error;
 
     public abstract DBus.ObjectPath?
-    get_session_for_cookie(string cookie);
+    get_session_for_cookie(string cookie) throws DBus.Error;
     
     public abstract void
-    restart();
+    restart() throws DBus.Error;
 
     public abstract void
-    stop();
+    stop() throws DBus.Error;
 }
 
 [DBus (name = "org.gnome.SettingsDaemon")] 
@@ -120,13 +119,27 @@ namespace XSAA
         public void
         reboot()
         {
-            manager.restart();
+            try
+            {
+                manager.restart();
+            }
+            catch (DBus.Error err)
+            {
+                stderr.printf("Error on ask reboot %s\n", err.message);
+            }
         }
 
         public void
         halt()
         {
-            manager.stop();
+            try
+            {
+                manager.stop();
+            }
+            catch (DBus.Error err)
+            {
+                stderr.printf("Error on ask halt %s\n", err.message);
+            }
         }
     }
 

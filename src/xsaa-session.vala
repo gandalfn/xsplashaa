@@ -38,6 +38,7 @@ public struct ConsoleKit.SessionParameter
 
 namespace XSAA
 {
+    [DBus (name = "fr.supersonicimagine.XSAA.Manager.SessionError")]
     errordomain SessionError
     {
         COMMAND,

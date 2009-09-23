@@ -44,6 +44,7 @@ mkdir -p ${DESTDIR}/usr/share/fonts/X11/Type1
 mkdir -p ${DESTDIR}/usr/share/fonts/X11/100dpi
 mkdir -p ${DESTDIR}/var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType
 mkdir -p ${DESTDIR}/usr/share/xsplashaa/chicken-curie
+mkdir -p ${DESTDIR}/usr/share/xsplashaa/aixplorer
 mkdir -p ${DESTDIR}/usr/share/mime
 mkdir -p ${DESTDIR}/etc/xsplashaa
 mkdir -p ${DESTDIR}/etc/init.d
@@ -70,6 +71,11 @@ copy_exec_if_exist @prefix@/share/xsplashaa/chicken-curie/distrib-logo.png /usr/
 copy_exec_if_exist @prefix@/share/xsplashaa/chicken-curie/throbber-initial.png /usr/share/xsplashaa/chicken-curie
 copy_exec_if_exist @prefix@/share/xsplashaa/chicken-curie/throbber-spinner.png /usr/share/xsplashaa/chicken-curie
 copy_exec_if_exist @prefix@/share/xsplashaa/chicken-curie/throbber-finish.png /usr/share/xsplashaa/chicken-curie
+copy_exec_if_exist @prefix@/share/xsplashaa/aixplorer/logo.png /usr/share/xsplashaa/aixplorer
+copy_exec_if_exist @prefix@/share/xsplashaa/aixplorer/distrib-logo.png /usr/share/xsplashaa/aixplorer
+copy_exec_if_exist @prefix@/share/xsplashaa/aixplorer/throbber-initial.png /usr/share/xsplashaa/aixplorer
+copy_exec_if_exist @prefix@/share/xsplashaa/aixplorer/throbber-spinner.png /usr/share/xsplashaa/aixplorer
+copy_exec_if_exist @prefix@/share/xsplashaa/aixplorer/throbber-finish.png /usr/share/xsplashaa/aixplorer
 copy_exec_if_exist /usr/lib/libGL.so /usr/lib
 copy_exec_if_exist /usr/lib/xorg/protocol.txt /usr/lib/xorg
 copy_exec_if_exist /usr/lib/xorg/modules/drivers/fbdev_drv.so /usr/lib/xorg/modules/drivers

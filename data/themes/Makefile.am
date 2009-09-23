@@ -1,1 +1,1 @@
-SUBDIRS = chicken-curie
+SUBDIRS = aixplorer chicken-curie

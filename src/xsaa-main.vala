@@ -27,10 +27,10 @@ using Config;
 [DBus (name = "fr.supersonicimagine.XSAA.Manager")] 
 public interface XSAA.Manager : DBus.Object 
 { 
-    public abstract bool open_session (string user, int display, string device, bool autologin, out DBus.ObjectPath? path); 
-    public abstract void close_session(DBus.ObjectPath path);
-    public abstract void reboot();
-    public abstract void halt();
+    public abstract bool open_session (string user, int display, string device, bool autologin, out DBus.ObjectPath? path) throws DBus.Error; 
+    public abstract void close_session(DBus.ObjectPath path) throws DBus.Error;
+    public abstract void reboot() throws DBus.Error;
+    public abstract void halt() throws DBus.Error;
 }
     
 [DBus (name = "fr.supersonicimagine.XSAA.Manager.Session")] 
@@ -43,9 +43,9 @@ public interface XSAA.Session : DBus.Object
     public signal void info (string msg);
     public signal void error_msg (string msg);
 
-    public abstract void set_passwd(string pass);
-    public abstract void authenticate();
-    public abstract void launch(string cmd);
+    public abstract void set_passwd(string pass) throws DBus.Error;
+    public abstract void authenticate() throws DBus.Error;
+    public abstract void launch(string cmd) throws DBus.Error;
 }
 
 namespace XSAA
@@ -331,7 +331,14 @@ namespace XSAA
             stderr.printf("Info %s\n", msg);
             if (session != null)
             {
-                manager.close_session(path);
+                try
+                {
+                    manager.close_session(path);
+                }
+                catch (DBus.Error err)
+                {
+                    stderr.printf("%s\n", err.message);
+                }
                 session = null;
             }
             user = null;
@@ -346,12 +353,26 @@ namespace XSAA
             stderr.printf("Error msg %s\n", msg);
             if (session != null)
             {
-                manager.close_session(path);
+                try
+                {
+                    manager.close_session(path);
+                }
+                catch (DBus.Error err)
+                {
+                    stderr.printf("%s\n", err.message);
+                }
                 session = null;
             }
             user = null;
             pass = null;
-            manager.close_session(path);
+            try
+            {
+                manager.close_session(path);
+            }
+            catch (DBus.Error err)
+            {
+                stderr.printf("%s\n", err.message);
+            }
             session = null;
             splash.login_message(msg);
             splash.ask_for_login();
@@ -360,8 +381,15 @@ namespace XSAA
         private void
         on_authenticated()
         {
-            session.launch(exec);
-            splash.show_launch();
+            try
+            {
+                session.launch(exec);
+                splash.show_launch();
+            }
+            catch (DBus.Error err)
+            {
+                stderr.printf("%s\n", err.message);
+            }
         }
         
         private void
@@ -373,9 +401,16 @@ namespace XSAA
                 stderr.printf("Open session for %s\n", username);
                 user = username;
                 pass = passwd;
-                session.set_passwd(pass);
-                session.authenticate();
-                session.authenticated += on_authenticated;
+                try
+                {            
+                    session.set_passwd(pass);
+                    session.authenticate();
+                    session.authenticated += on_authenticated;
+                }
+                catch (DBus.Error err)
+                {
+                    stderr.printf("%s\n", err.message);
+                }
             }
             else
             {
