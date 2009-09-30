@@ -103,16 +103,30 @@ namespace XSAA
                     new Gdk.Pixbuf.from_file(PACKAGE_DATA_DIR + "/" + theme +
                                              "/distrib-logo.png");
                 
-                int width = geometry.width / 3 > pixbuf.get_width() ? 
+                int width, height;
+                
+                if (layout == "horizontal")
+                {
+                    width = geometry.width / 3 > pixbuf.get_width() ? 
                             pixbuf.get_width() : geometry.width / 3;
-                int height = (int)((double)width * 
+                    height = (int)((double)width * 
                                    ((double)pixbuf.get_height() / 
                                     (double)pixbuf.get_width()));
+                }
+                else 
+                {
+                    width = geometry.width / 1.5 > pixbuf.get_width() ? 
+                            pixbuf.get_width() : (int)(geometry.width / 1.5);
+                    height = (int)((double)width * 
+                                   ((double)pixbuf.get_height() / 
+                                    (double)pixbuf.get_width()));
+                }
+                
                 Gtk.Image image = 
                     new Gtk.Image.from_pixbuf(pixbuf.scale_simple(width, height, 
                                                                   Gdk.InterpType.BILINEAR));
                 image.show();
-                box.pack_start(image, false, false, 0);
+                box.pack_start(image, false, false, layout == "horizontal" ? 0 : 36);
             }
             catch (GLib.Error err)
             {
@@ -150,8 +164,8 @@ namespace XSAA
                 }
                 else 
                 {
-                    width = pixbuf.get_width(); /* > geometry.width  ? 
-                            geometry.width : pixbuf.get_width();*/
+                    width = pixbuf.get_width() > geometry.width  ? 
+                            geometry.width : pixbuf.get_width();
                     height = (int)((double)width * 
                                    ((double)pixbuf.get_height() / 
                                     (double)pixbuf.get_width()));

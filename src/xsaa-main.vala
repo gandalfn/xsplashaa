@@ -63,6 +63,7 @@ namespace XSAA
     {
         bool enable = true;
 	    bool first_start = true;
+        bool test_only = false;
         
 	    public string[] args;
         
@@ -85,20 +86,25 @@ namespace XSAA
 
         public jmp_buf env;
         
-        public Daemon(string socket_name) throws GLib.Error
+        public Daemon(string socket_name, bool test_only = false) throws GLib.Error
         {
             load_config();
 
+            this.test_only = test_only;
+            
             if (!enable)
                 throw new DaemonError.DISABLED("Use gdm instead xsplashaa");
             
             string cmd = server + " :" + number.to_string() + " " + options;
             try
             {
-                display = new Display(cmd, number);
-                display.ready += on_display_ready;
-                display.died += on_display_exit;
-                display.exited += on_display_exit;
+                if (!test_only)
+                {
+                    display = new Display(cmd, number);
+                    display.ready += on_display_ready;
+                    display.died += on_display_exit;
+                    display.exited += on_display_exit;
+                }
                 
                 socket = new Server(socket_name);
                 socket.dbus += on_dbus_ready;
@@ -161,13 +167,21 @@ namespace XSAA
         private void
         on_display_ready()
         {
-            putenv("DISPLAY=:" + number.to_string());
+            if (!test_only) 
+            {
+                putenv("DISPLAY=:" + number.to_string());
 
-            Gtk.init_check(ref args);			
-            var display = Gdk.Display.open(":" + number.to_string());
-            var manager = Gdk.DisplayManager.get();
-            manager.set_default_display(display);
-            X.set_io_error_handler(on_display_io_error);
+                Gtk.init_check(ref args);			
+                var display = Gdk.Display.open(":" + number.to_string());
+                var manager = Gdk.DisplayManager.get();
+                manager.set_default_display(display);
+                X.set_io_error_handler(on_display_io_error);
+            }
+            else
+            {
+                Gtk.init(ref args);
+            }
+            
             splash = new Splash(socket);
             splash.login += on_login_response;
             splash.restart += on_restart_request;
@@ -182,7 +196,6 @@ namespace XSAA
         private void
         on_session_ready()
         {
-            
             if (session != null) splash.hide();
         }
 
@@ -423,6 +436,7 @@ namespace XSAA
         public void
         run(bool first_start)
         {
+            if (test_only) on_display_ready();
 	        this.first_start = first_start;
             Gtk.main ();
         }
@@ -460,56 +474,87 @@ namespace XSAA
             exit (-1);
     }
     
+    const OptionEntry[] option_entries = 
+    {
+        { "test-only", 't', 0, OptionArg.NONE, ref test_only, "Test only", null },
+        { null }
+    };
+
+    static bool test_only = false;
+    
     static int 
     main (string[] args) 
     {
-        pid_t pid;
-	    pid_t ppgid;
-	    
-	    pid = getpid();
-	    ppgid = getpgid(pid);
-	    setsid();
-    	setpgid(0, ppgid);
-
-        signal(SIGTERM, SIG_IGN);
-        signal(SIGKILL, SIG_IGN);
-        int status = -1;
-        bool first_start = true;
-        while (status != 0)
+        try 
         {
-            int ret_fork = fork();
+            var opt_context = new OptionContext("- Xsplashaa");
+            opt_context.set_help_enabled(true);
+            opt_context.add_main_entries(option_entries, "xsplasaa");
+            opt_context.parse(ref args);
+        } 
+        catch (OptionError err) 
+        {
+            stderr.printf("Option parsing failed: %s\n", err.message);
+            return -1;
+        }
 
-            if (ret_fork == 0)
+        if (test_only)
+        {
+            daemon = new Daemon (SOCKET_NAME, test_only);
+            daemon.args = args;                    
+            daemon.run(true);
+            daemon = null;
+        }
+        else
+        {
+            pid_t pid;
+            pid_t ppgid;
+
+            pid = getpid();
+            ppgid = getpgid(pid);
+            setsid();
+            setpgid(0, ppgid);
+
+            signal(SIGTERM, SIG_IGN);
+            signal(SIGKILL, SIG_IGN);
+            int status = -1;
+            bool first_start = true;
+            while (status != 0)
             {
-                try 
+                int ret_fork = fork();
+
+                if (ret_fork == 0)
                 {
-                    signal(SIGSEGV, on_sig_term);
-                    signal(SIGTERM, on_sig_term);
-                    signal(SIGKILL, on_sig_term);
-                    daemon = new Daemon (SOCKET_NAME);
-                    daemon.args = args;                    
-                    daemon.run(first_start);
-                    daemon = null;
+                    try 
+                    {
+                        signal(SIGSEGV, on_sig_term);
+                        signal(SIGTERM, on_sig_term);
+                        signal(SIGKILL, on_sig_term);
+                        daemon = new Daemon (SOCKET_NAME);
+                        daemon.args = args;                    
+                        daemon.run(first_start);
+                        daemon = null;
+                    }
+                    catch (GLib.Error err)
+                    {
+                        stderr.printf("%s\n", err.message);
+                        daemon = null;
+                        return -1;
+                    }
+
+                    return 0;
                 }
-                catch (GLib.Error err)
+                else if (ret_fork == -1)
                 {
-                    stderr.printf("%s\n", err.message);
-                    daemon = null;
                     return -1;
                 }
-            
-                return 0;
-            }
-            else if (ret_fork == -1)
-            {
-                return -1;
-            }
-            else
-            {
-                int ret;
-                first_start = false;
-                wait(out ret);
-	            status = Process.exit_status(ret);
+                else
+                {
+                    int ret;
+                    first_start = false;
+                    wait(out ret);
+                    status = Process.exit_status(ret);
+                }
             }
         }
         
