@@ -252,7 +252,7 @@ namespace XSAA
             table.set_row_spacings(12);
 
             var label = new Gtk.Label("<span size='xx-large' color='" + 
-                                  text +"'>Loading  ...</span>");
+                                  text +"'>Loading...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
@@ -271,7 +271,7 @@ namespace XSAA
             }     
 
             label = new Gtk.Label("<span size='xx-large' color='" + 
-                                  text +"'>Check filesystem ...</span>");
+                                  text +"'>Checking filesystem...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
@@ -289,7 +289,7 @@ namespace XSAA
             } 
 
             label = new Gtk.Label("<span size='xx-large' color='" + 
-                                  text +"'>Start System ...</span>");
+                                  text +"'>Starting...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
@@ -370,7 +370,7 @@ namespace XSAA
             table.set_row_spacings(12);
 
             var label =  new Gtk.Label("<span size='xx-large' color='" + 
-                                       text +"'>Launch session ...</span>");
+                                       text +"'>Launching session...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
@@ -399,7 +399,7 @@ namespace XSAA
             table.set_row_spacings(12);
 
             var label =  new Gtk.Label("<span size='xx-large' color='" + 
-                                       text +"'>Shutdown in progress ...</span>");
+                                       text +"'>Shutdown in progress...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
