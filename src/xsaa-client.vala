@@ -179,7 +179,7 @@ namespace XSAA
         } 
         catch (OptionError err) 
         {
-            stderr.printf("Option parsing failed: %s\n", err.message);
+            GLib.stderr.printf("Option parsing failed: %s\n", err.message);
             return -1;
         }
 

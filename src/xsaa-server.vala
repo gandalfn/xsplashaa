@@ -84,7 +84,7 @@ namespace XSAA
                 }
                 catch (IOChannelError err)
                 {
-                    stderr.printf("Error on accept\n");
+                    GLib.stderr.printf("Error on accept\n");
                 }
             }
         }	
@@ -106,7 +106,7 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                stderr.printf("Error on read socket\n");
+                GLib.stderr.printf("Error on read socket\n");
             }
             close(client.unix_get_fd());
             
@@ -120,7 +120,7 @@ namespace XSAA
             {
                 string message = "pong";
                 if (write(client.unix_get_fd(), message, message.len() + 1) == 0)
-                    stderr.printf("Error on send pong");
+                    GLib.stderr.printf("Error on send pong");
             }
             if (buffer.contains("phase="))
             {

@@ -138,8 +138,8 @@ namespace XSAA
                 }
                 catch (GLib.Error err)
                 {
-                    stderr.printf("Error on read %s: %s", 
-                                  PACKAGE_CONFIG_FILE, err.message);
+                    GLib.stderr.printf("Error on read %s: %s", 
+                                       PACKAGE_CONFIG_FILE, err.message);
                 }
             }
         }
@@ -220,7 +220,7 @@ namespace XSAA
                 }
                 if (session == null)
                 {
-                    stderr.printf("Open session\n");
+                    GLib.stderr.printf("Open session\n");
                     if (manager.open_session (username, number, device, autologin, out path))
                     {
                         session = (XSAA.Session) conn.get_object ("fr.supersonicimagine.XSAA.Manager.Session",
@@ -233,12 +233,12 @@ namespace XSAA
                         ret = true;
                     }
                     else
-                        stderr.printf("Error on open session");
+                        GLib.stderr.printf("Error on open session");
                 }
             }
             catch (GLib.Error err)
             {
-                stderr.printf("Error on launch session: %s\n", err.message);
+                GLib.stderr.printf("Error on launch session: %s\n", err.message);
             }       
 
             return ret;
@@ -256,19 +256,33 @@ namespace XSAA
             else
             {
                 open_session(user, true);
-                
-                session.authenticate();
-                session.authenticated += on_authenticated;
+
+                try
+                {
+                    session.authenticate();
+                    session.authenticated += on_authenticated;
+                }
+                catch (GLib.Error err)
+                {
+                    GLib.stderr.printf("Error on session authenticate: %s\n", err.message);
+                }
             }
         }
 
         private void
         on_session_ended()
         {
-            stderr.printf("Session end\n");
+            GLib.stderr.printf("Session end\n");
             if (manager != null && path != null)
             {
-                manager.close_session(path);
+                try
+                {
+                    manager.close_session(path);
+                }
+                catch (GLib.Error err)
+                {
+                    GLib.stderr.printf("Error on close session: %s\n", err.message);
+                }
             }
             session = null;
             splash.show();
@@ -278,11 +292,18 @@ namespace XSAA
         private void
         on_init_shutdown()
         {
-            stderr.printf("Init shutdown\n");
+            GLib.stderr.printf("Init shutdown\n");
             change_to_display_vt();
             if (manager != null && path != null && session != null)
             {
-                manager.close_session(path);
+                try
+                {
+                    manager.close_session(path);
+                }
+                catch (GLib.Error err)
+                {
+                    GLib.stderr.printf("Error on close session: %s\n", err.message);
+                }
                 session = null;
             }
             manager = null;
@@ -304,7 +325,7 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                stderr.printf("Error on launch shutdown: %s\n", err.message);
+                GLib.stderr.printf("Error on launch shutdown: %s\n", err.message);
             }
             splash.show_shutdown();
         }
@@ -320,7 +341,7 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                stderr.printf("Error on launch shutdown: %s\n", err.message);
+                GLib.stderr.printf("Error on launch shutdown: %s\n", err.message);
             }
             splash.show_shutdown();
         }
@@ -341,7 +362,7 @@ namespace XSAA
         private void
         on_session_info(string msg)
         {
-            stderr.printf("Info %s\n", msg);
+            GLib.stderr.printf("Info %s\n", msg);
             if (session != null)
             {
                 try
@@ -350,7 +371,7 @@ namespace XSAA
                 }
                 catch (DBus.Error err)
                 {
-                    stderr.printf("%s\n", err.message);
+                    GLib.stderr.printf("%s\n", err.message);
                 }
                 session = null;
             }
@@ -363,7 +384,7 @@ namespace XSAA
         private void
         on_error_msg(string msg)
         {
-            stderr.printf("Error msg %s\n", msg);
+            GLib.stderr.printf("Error msg %s\n", msg);
             if (session != null)
             {
                 try
@@ -372,7 +393,7 @@ namespace XSAA
                 }
                 catch (DBus.Error err)
                 {
-                    stderr.printf("%s\n", err.message);
+                    GLib.stderr.printf("%s\n", err.message);
                 }
                 session = null;
             }
@@ -384,7 +405,7 @@ namespace XSAA
             }
             catch (DBus.Error err)
             {
-                stderr.printf("%s\n", err.message);
+                GLib.stderr.printf("%s\n", err.message);
             }
             session = null;
             splash.login_message(msg);
@@ -401,17 +422,17 @@ namespace XSAA
             }
             catch (DBus.Error err)
             {
-                stderr.printf("%s\n", err.message);
+                GLib.stderr.printf("%s\n", err.message);
             }
         }
         
         private void
         on_login_response(string username, string passwd)
         {
-            stderr.printf("Open session for %s\n", username);
+            GLib.stderr.printf("Open session for %s\n", username);
             if (open_session(username, false))
             {
-                stderr.printf("Open session for %s\n", username);
+                GLib.stderr.printf("Open session for %s\n", username);
                 user = username;
                 pass = passwd;
                 try
@@ -422,7 +443,7 @@ namespace XSAA
                 }
                 catch (DBus.Error err)
                 {
-                    stderr.printf("%s\n", err.message);
+                    GLib.stderr.printf("%s\n", err.message);
                 }
             }
             else
@@ -460,7 +481,7 @@ namespace XSAA
     static int
     on_display_io_error(X.Display display)
     {
-	    stderr.printf("DISPLAY Error\n");
+	    GLib.stderr.printf("DISPLAY Error\n");
 	    daemon = null;
 	    return -1;
     } 
@@ -494,16 +515,25 @@ namespace XSAA
         } 
         catch (OptionError err) 
         {
-            stderr.printf("Option parsing failed: %s\n", err.message);
+            GLib.stderr.printf("Option parsing failed: %s\n", err.message);
             return -1;
         }
 
         if (test_only)
         {
-            daemon = new Daemon (SOCKET_NAME, test_only);
-            daemon.args = args;                    
-            daemon.run(true);
-            daemon = null;
+            try 
+            {         
+                daemon = new Daemon (SOCKET_NAME, test_only);
+                daemon.args = args;                    
+                daemon.run(true);
+                daemon = null;
+            }
+            catch (GLib.Error err)
+            {
+                GLib.stderr.printf("%s\n", err.message);
+                daemon = null;
+                return -1;
+            }
         }
         else
         {
@@ -537,7 +567,7 @@ namespace XSAA
                     }
                     catch (GLib.Error err)
                     {
-                        stderr.printf("%s\n", err.message);
+                        GLib.stderr.printf("%s\n", err.message);
                         daemon = null;
                         return -1;
                     }

@@ -130,9 +130,9 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                stderr.printf("Error on loading %s: %s", 
-                              PACKAGE_DATA_DIR + "/" + theme + "/distrib-logo.png",
-                              err.message);
+                GLib.stderr.printf("Error on loading %s: %s", 
+                                   PACKAGE_DATA_DIR + "/" + theme + "/distrib-logo.png",
+                                   err.message);
             }            
 
             Gtk.Box box_info;
@@ -178,9 +178,9 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                stderr.printf("Error on loading %s: %s", 
-                              PACKAGE_DATA_DIR + "/" + theme + "/logo.png",
-                              err.message);
+                GLib.stderr.printf("Error on loading %s: %s", 
+                                   PACKAGE_DATA_DIR + "/" + theme + "/logo.png",
+                                   err.message);
             }            
 
             alignment = new Alignment(0.5f, 0.5f, 0, 0);
@@ -235,8 +235,8 @@ namespace XSAA
                 }
                 catch (GLib.Error err)
                 {
-                    stderr.printf("Error on read %s: %s", 
-                                  PACKAGE_CONFIG_FILE, err.message);
+                    GLib.stderr.printf("Error on read %s: %s", 
+                                       PACKAGE_CONFIG_FILE, err.message);
                 }
             }
         }
@@ -267,7 +267,7 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                stderr.printf("Error on loading throbber %s", err.message);
+                GLib.stderr.printf("Error on loading throbber %s", err.message);
             }     
 
             label = new Gtk.Label("<span size='xx-large' color='" + 
@@ -285,7 +285,7 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                stderr.printf("Error on loading throbber %s", err.message);
+                GLib.stderr.printf("Error on loading throbber %s", err.message);
             } 
 
             label = new Gtk.Label("<span size='xx-large' color='" + 
@@ -303,7 +303,7 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                stderr.printf("Error on loading throbber %s", err.message);
+                GLib.stderr.printf("Error on loading throbber %s", err.message);
             } 
         }
 
@@ -384,7 +384,7 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                stderr.printf("Error on loading throbber %s", err.message);
+                GLib.stderr.printf("Error on loading throbber %s", err.message);
             }
         }
 
@@ -413,7 +413,7 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                stderr.printf("Error on loading throbber %s", err.message);
+                GLib.stderr.printf("Error on loading throbber %s", err.message);
             }
         }
         
@@ -513,6 +513,13 @@ namespace XSAA
             root.set_background(color);
     	}
 
+        override void
+        hide()
+        {
+            throbber_session.finished();
+            base.hide();
+        }
+        
         public void
         show_launch()
         {
@@ -536,6 +543,8 @@ namespace XSAA
         public void
         ask_for_login()
         {
+            phase[2].finished();
+            
             var cursor = new Gdk.Cursor(Gdk.CursorType.LEFT_PTR);
             get_window().set_cursor(cursor);
             

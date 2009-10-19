@@ -101,7 +101,7 @@ namespace XSAA
 
         ~Session()
         {
-            stderr.printf("Close ck session\n");
+            GLib.stderr.printf("Close ck session\n");
             if (FileUtils.test(xauth_file, FileTest.EXISTS))
             {
                 FileUtils.remove(xauth_file);
@@ -193,7 +193,14 @@ namespace XSAA
 							                            active,
 							                            islocal};
 
-            cookie = ck_manager.open_session_with_parameters (parameters); 
+            try
+            {
+                cookie = ck_manager.open_session_with_parameters (parameters); 
+            }
+            catch (GLib.Error err)
+            {
+                GLib.stderr.printf("Error on open session\n");
+            }
         }
         
         private void
@@ -206,21 +213,21 @@ namespace XSAA
             catch (GLib.Error err)
             {
                 error_msg("Invalid user or wrong password");
-                stderr.printf("Error on open pam session\n");
+                GLib.stderr.printf("Error on open pam session\n");
                 exit(1);
             }
 
 	        if (setsid() < 0)
 	        {
                 error_msg("Error on user authentification");
-                stderr.printf("Error on change user\n");
+                GLib.stderr.printf("Error on change user\n");
                 exit(1);
 	        }
 
             if (setuid(passwd.pw_uid) < 0)
             {
                 error_msg("Error on user authentification");
-                stderr.printf("Error on change user\n");
+                GLib.stderr.printf("Error on change user\n");
                 exit(1);
             }
 
@@ -258,8 +265,8 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                stderr.printf("Error on launch killall dbus-launch: %s\n",
-                              err.message);
+                GLib.stderr.printf("Error on launch killall dbus-launch: %s\n",
+                                   err.message);
             }
         }
 
@@ -290,7 +297,7 @@ namespace XSAA
         public void
         authenticate()
         {
-            stderr.printf("Authenticate \n");
+            GLib.stderr.printf("Authenticate \n");
             authenticated();
         }
         

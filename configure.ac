@@ -1,4 +1,4 @@
-AC_INIT([xsplashaa], [0.2.5], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
+AC_INIT([xsplashaa], [0.2.6], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
 AC_CONFIG_SRCDIR(src/xsaa-main.vala)
 AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE([dist-bzip2])

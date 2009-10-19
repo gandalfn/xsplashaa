@@ -22,7 +22,7 @@
 using GLib;
 using Posix;
 using Pam;
-using Gee;
+using Vala;
 using X;
 
 namespace XSAA
@@ -48,25 +48,25 @@ namespace XSAA
             switch (msg.msg_style)
             {
                 case Pam.PROMPT_ECHO_ON:
-                    stderr.printf("Echo on message : %s\n", msg.msg);
+                    GLib.stderr.printf("Echo on message : %s\n", msg.msg);
                     break;
                 case Pam.PROMPT_ECHO_OFF:
-                    stderr.printf("Echo off message : %s\n", msg.msg);
+                    GLib.stderr.printf("Echo off message : %s\n", msg.msg);
                     string passwd = pam.passwd();
-                    stderr.printf("Passwd : %s\n", passwd);
+                    GLib.stderr.printf("Passwd : %s\n", passwd);
                     resp[i].resp = Memory.dup(passwd, (uint)passwd.len());
                     resp[i].resp_retcode = Pam.SUCCESS;
                     break;
                 case Pam.TEXT_INFO:
-                    stderr.printf("Text info message : %s", msg.msg);
+                    GLib.stderr.printf("Text info message : %s", msg.msg);
                     pam.info(msg.msg);
                     break;
                 case Pam.ERROR_MSG:
-                    stderr.printf("Error message : %s", msg.msg);
+                    GLib.stderr.printf("Error message : %s", msg.msg);
                     pam.error_msg(msg.msg);
                     break;
                 default:
-                    stderr.printf("unkown message");
+                    GLib.stderr.printf("unkown message");
                     break;
             }
         }
@@ -197,7 +197,7 @@ namespace XSAA
             {
                 string[] e = env.split("=");
                 envs.set(e[0], e[1]);
-                stderr.printf("Pam env %s=%s\n", e[0], e[1]);
+                GLib.stderr.printf("Pam env %s=%s\n", e[0], e[1]);
             }
         }
 
@@ -213,7 +213,7 @@ namespace XSAA
             }
 
             pam_handle.end(Pam.SUCCESS);
-            stderr.printf("Close pam session\n");
+            GLib.stderr.printf("Close pam session\n");
         }
         
         public void
@@ -222,7 +222,7 @@ namespace XSAA
             foreach (string key in envs.get_keys())
             {
                 setenv(key, envs.get(key), 1);
-                stderr.printf("Pam env %s=%s\n", key, envs.get(key));
+                GLib.stderr.printf("Pam env %s=%s\n", key, envs.get(key));
             }
         }
     }

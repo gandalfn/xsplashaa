@@ -109,12 +109,12 @@ namespace XSAA
         {
             if (Process.if_exited(status))
             {
-                stderr.printf("Display exited : %i", status);
+                GLib.stderr.printf("Display exited : %i", status);
                 exited();
             }
             else if (Process.if_signaled(status))
             {
-                stderr.printf("Display signaled : %i", status);
+                GLib.stderr.printf("Display signaled : %i", status);
                 died();
             }
 
@@ -147,7 +147,7 @@ namespace XSAA
 		        setenv("DISPLAY", ":" + number.to_string(), 1);
                 Process.spawn_command_line_sync("/usr/lib/ConsoleKit/ck-get-x11-server-pid", out spid);
 		        spid.strip();
-		        stderr.printf("Found X server at pid %s\n", spid);
+		        GLib.stderr.printf("Found X server at pid %s\n", spid);
                 if (spid != null)
                 {
                     pid = (Pid)spid.to_int();
@@ -156,7 +156,7 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                stderr.printf("Error on get display pid: %s\n", err.message);
+                GLib.stderr.printf("Error on get display pid: %s\n", err.message);
             }
 
             return false;
@@ -177,9 +177,9 @@ namespace XSAA
                 if (fd > 0)
                 {
                     if (ioctl(fd, KDSETMODE, KD_GRAPHICS) < 0)
-                        stderr.printf("KDSETMODE KD_GRAPHICS failed !");  
+                        GLib.stderr.printf("KDSETMODE KD_GRAPHICS failed !");  
                     if (ioctl(fd, KDSKBMODE, K_RAW) < 0)
-                        stderr.printf("KDSETMODE KD_RAW failed !"); 
+                        GLib.stderr.printf("KDSETMODE KD_RAW failed !"); 
 
                     termios tty_attr;
                     ioctl(fd, KDGKBMODE, out tty_attr);
@@ -198,7 +198,7 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                stderr.printf("Error on get display device: %s\n", err.message);
+                GLib.stderr.printf("Error on get display device: %s\n", err.message);
             }
 
             return device;

@@ -20,7 +20,7 @@
  */
 
 using GLib;
-using Gee;
+using Vala;
 using Posix;
 
 public const string PACKAGE_XAUTH_DIR = "/tmp/xsplashaa-xauth";
@@ -81,7 +81,7 @@ namespace XSAA
         private void 
         on_client_lost (DBus.Object sender, string name, string prev, string newp) 
         {
-            stderr.printf("Lost session %s\n", name);
+            GLib.stderr.printf("Lost session %s\n", name);
             sessions.remove (prev);
         }
         
@@ -96,13 +96,13 @@ namespace XSAA
                 if (autologin) service = "xsplashaa-autologin";
                     
                 var session = new Session(connection, manager, service, user, display, device);
-                stderr.printf("Open session %s\n", path);
+                GLib.stderr.printf("Open session %s\n", path);
                 connection.register_object(path, session);
                 sessions.set(path, session);
             }
             catch (GLib.Error err)
             {
-                stderr.printf("Error on create session : %s", err.message);
+                GLib.stderr.printf("Error on create session : %s", err.message);
                 return false;
             }
 
@@ -112,7 +112,7 @@ namespace XSAA
         public void
         close_session(DBus.ObjectPath? path)
         {
-            stderr.printf("Close session %s\n", path);
+            GLib.stderr.printf("Close session %s\n", path);
             sessions.remove(path);
         }
 
@@ -125,7 +125,7 @@ namespace XSAA
             }
             catch (DBus.Error err)
             {
-                stderr.printf("Error on ask reboot %s\n", err.message);
+                GLib.stderr.printf("Error on ask reboot %s\n", err.message);
             }
         }
 
@@ -138,7 +138,7 @@ namespace XSAA
             }
             catch (DBus.Error err)
             {
-                stderr.printf("Error on ask halt %s\n", err.message);
+                GLib.stderr.printf("Error on ask halt %s\n", err.message);
             }
         }
     }
@@ -163,7 +163,7 @@ namespace XSAA
         } 
         catch (OptionError err) 
         {
-            stderr.printf("Option parsing failed: %s\n", err.message);
+            GLib.stderr.printf("Option parsing failed: %s\n", err.message);
             return -1;
         }
 
@@ -171,7 +171,7 @@ namespace XSAA
         {
             if (daemon (0, 0) < 0)
             {
-                stderr.printf("Error on launch has daemon\n");
+                GLib.stderr.printf("Error on launch has daemon\n");
                 return -1;
             }
         }
