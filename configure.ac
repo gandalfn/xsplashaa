@@ -1,4 +1,4 @@
-AC_INIT([xsplashaa], [0.2.6], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
+AC_INIT([xsplashaa], [0.2.7], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
 AC_CONFIG_SRCDIR(src/xsaa-main.vala)
 AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE([dist-bzip2])
@@ -47,6 +47,7 @@ PKG_CHECK_MODULES(XSPLASHAA, [glib-2.0 >= $GLIB_REQUIRED
                               gobject-2.0 >= $GLIB_REQUIRED 
                               gtk+-2.0 >= $GTK_REQUIRED
                               dbus-glib-1
+                              hal
                               vala-1.0 >= $VALA_REQUIRED
                               ssi-gtk-extras >= $SSIGTKEXTRAS_REQUIRED])
 AC_SUBST(XSPLASHAA_CFLAGS)
@@ -90,7 +91,7 @@ AC_CONFIG_FILES([
 	data/initramfs/hooks/Makefile
 	data/initramfs/hooks/xsplashaa
 	data/initramfs/modules/Makefile
-        data/initramfs/scripts/Makefile
+    data/initramfs/scripts/Makefile
 	data/initramfs/scripts/xsplashaa
 	data/pam/Makefile
 	data/jail-mount.d/Makefile

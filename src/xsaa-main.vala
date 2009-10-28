@@ -23,6 +23,7 @@ using GLib;
 using Gtk;
 using Posix;
 using Config;
+using Hal;
 
 [DBus (name = "fr.supersonicimagine.XSAA.Manager")] 
 public interface XSAA.Manager : DBus.Object 
@@ -64,6 +65,9 @@ namespace XSAA
         bool enable = true;
 	    bool first_start = true;
         bool test_only = false;
+        bool have_keyboard = false;
+
+        uint id_idle = 0;
         
 	    public string[] args;
         
@@ -71,6 +75,8 @@ namespace XSAA
         Splash splash;
         Display display;
         DBus.Connection conn = null;
+        dynamic DBus.Object bus = null;
+        Hal.Context hal = null;
         XSAA.Manager manager = null;
         
         string server = "/usr/bin/Xorg";
@@ -216,7 +222,6 @@ namespace XSAA
                     manager = (XSAA.Manager)conn.get_object ("fr.supersonicimagine.XSAA.Manager", 
                                                              "/fr/supersonicimagine/XSAA/Manager",
                                                              "/fr/supersonicimagine/XSAA/Manager");
-
                 }
                 if (session == null)
                 {
@@ -243,12 +248,29 @@ namespace XSAA
 
             return ret;
         }
-                       
-        private void
-        on_dbus_ready()
-        {
-            device = display.get_device();
 
+        private static void
+        on_device_added(Hal.Context ctx, string udi)
+        {
+            DBus.RawError err = DBus.RawError();
+            
+            string driver = ctx.device_get_property_string(udi, "input.x11_driver", ref err);
+
+            if (driver != null)
+            {
+                var self = (Daemon)ctx.get_user_data();
+                string layout = ctx.device_get_property_string(udi, "input.xkb.layout", ref err);
+                if (layout != null && !self.have_keyboard) 
+                {
+                    self.have_keyboard = true;
+                    self.start_session();
+                }  
+            }
+        }
+
+        private void
+        start_session ()
+        {
             if (user == null || user.len() == 0)
             {
                 splash.ask_for_login();
@@ -267,6 +289,105 @@ namespace XSAA
                     GLib.stderr.printf("Error on session authenticate: %s\n", err.message);
                 }
             }
+        }
+
+        private void
+        activate_hal()
+        {
+            if (hal == null)
+            {
+                if (id_idle > 0) 
+                {
+                    Source.remove(id_idle);
+                    id_idle = 0;
+                }
+
+                GLib.stderr.printf("Found hal daemon\n");
+                
+                hal = new Hal.Context();
+                if (!hal.set_dbus_connection(conn.get_connection()))
+                {
+                    GLib.stderr.printf("Error on init hal\n");
+                }                
+                hal.set_user_data(this);
+                hal.set_device_added(on_device_added);
+
+                DBus.RawError err = DBus.RawError();
+                string[] devices = hal.find_device_by_capability("input", ref err);
+                if (!err.is_set())
+                {
+                    foreach (string dev in devices)
+                    {
+                        on_device_added(hal, dev);
+                    }
+                }
+                else
+                {
+                    GLib.stderr.printf("Error on get devices list %s\n", err.message);
+                }
+            }
+        }
+
+        private void 
+        on_list_names_reply (string[] names, GLib.Error error) 
+        {
+            foreach (string name in names) 
+            {
+                if (name == "org.freedesktop.Hal") 
+                {
+                    activate_hal();
+                    break;
+                }
+            }
+        }
+        
+        private bool 
+        on_idle_ready () 
+        {
+            if (id_idle == 0) return true;
+
+            try 
+            {
+                bus.list_names (on_list_names_reply);
+            } 
+            catch (GLib.Error e) 
+            {
+                GLib.stderr.printf ("Can't list: %s\n", e.message);
+            }
+
+            return false;
+        }
+
+        private void 
+        on_name_owner_changed (DBus.Object sender, string name, string old_owner, string new_owner) 
+        {
+            if (name == "org.freedesktop.Hal" && new_owner != "" && old_owner == "")
+            {
+                activate_hal ();
+            }
+        }
+        
+        private void
+        on_dbus_ready()
+        {
+            device = display.get_device();
+
+            try
+            {
+                if (conn == null)
+                {
+                    conn = DBus.Bus.get (DBus.BusType.SYSTEM);
+                    bus = conn.get_object ("org.freedesktop.DBus",
+                                           "/org/freedesktop/DBus",
+                                           "org.freedesktop.DBus");
+                    bus.NameOwnerChanged += on_name_owner_changed;
+                    id_idle = Idle.add(on_idle_ready);
+                }
+            }
+            catch (GLib.Error err)
+            {
+                GLib.stderr.printf("Error on get dbus connection\n");
+            }          
         }
 
         private void

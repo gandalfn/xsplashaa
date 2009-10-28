@@ -10,6 +10,7 @@ VALAFLAGS = \
     --pkg=vala-1.0 \
     --pkg=gtk+-2.0 \
     --pkg=dbus-glib-1 \
+    --pkg=hal \
     --pkg=posix \
     --pkg=posix-comp \
     --pkg=pam \
