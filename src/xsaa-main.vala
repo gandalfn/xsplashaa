@@ -52,6 +52,7 @@ public interface XSAA.Session : DBus.Object
 namespace XSAA
 {
     const string SOCKET_NAME = "/tmp/xsplashaa-socket";
+    const string SHUTDOWN_FILENAME = "/tmp/xsplashaa-shutdown";
     static Daemon? daemon = null;
     static bool shutdown = false;
     
@@ -193,6 +194,7 @@ namespace XSAA
             splash.restart += on_restart_request;
             splash.shutdown += on_shutdown_request;
             splash.show();
+            shutdown |= GLib.FileUtils.test(SHUTDOWN_FILENAME, GLib.FileTest.EXISTS);
             if (shutdown) 
                 on_init_shutdown();
 	        else if (!first_start) 
@@ -429,10 +431,21 @@ namespace XSAA
             }
             manager = null;
             conn = null;
-            splash.show();   
-            splash.show_shutdown();
             if (!shutdown && setjmp(env) == 0)
-               shutdown = true; 
+            {
+                try
+                {
+                    var file = new GLib.IOChannel.file(SHUTDOWN_FILENAME, "w");
+                    file.set_close_on_unref(true);
+                }
+                catch (GLib.Error err)
+                {
+                    GLib.stderr.printf("Error on create: %s\n", SHUTDOWN_FILENAME);
+                }  
+                shutdown = true;
+            }
+            splash.show();   
+            splash.show_shutdown();            
         }
 
         private void
