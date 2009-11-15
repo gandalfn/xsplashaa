@@ -173,6 +173,10 @@ namespace XSAA
                                                 + number.to_string(), out device);
 		        device.strip();
 
+                int vt;
+                device.scanf("/dev/tty%i", out vt);
+                device = "/dev/tty" + vt.to_string();
+                
                 int fd = open(device, O_RDWR);
                 if (fd > 0)
                 {

@@ -34,15 +34,13 @@ xsplashaa_x11_common() {
 }
 
 xsplashaa_start () {
+    pidof xsplashaa Xorg > /lib/init/rw/sendsigs.omit.d/xsplashaa
     $XSPLASHAA_SESSION_DAEMON
     $XSPLASHAA_CLIENT --dbus --socket $XSPLASHAA_SOCKET
     xsplashaa_x11_common
 }
 
 xsplashaa_stop () {
-    pidof xsplashaa-session-daemon >> /var/run/sendsigs.omit
-    pidof xsplashaa >> /var/run/sendsigs.omit
-	pidof Xorg >> /var/run/sendsigs.omit
 	$XSPLASHAA_CLIENT --close-session --socket $XSPLASHAA_SOCKET
 }
 

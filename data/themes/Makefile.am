@@ -1,1 +1,1 @@
-SUBDIRS = aixplorer chicken-curie
+SUBDIRS = aixplorer chicken-curie debian

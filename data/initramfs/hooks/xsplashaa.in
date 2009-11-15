@@ -15,6 +15,20 @@ copy_exec_if_exist ()
     fi
 }
 
+copy_themes ()
+{
+    for theme in /usr/share/xsplashaa/*
+    do
+	mkdir -p ${DESTDIR}/$theme
+	copy_exec_if_exist $theme/logo.png $theme
+	copy_exec_if_exist $theme/distrib-logo.png $theme
+	copy_exec_if_exist $theme/background.png $theme
+	copy_exec_if_exist $theme/throbber-initial.png $theme
+	copy_exec_if_exist $theme/throbber-spinner.png $theme
+	copy_exec_if_exist $theme/throbber-finish.png $theme 	
+    done
+}
+
 case $1 in
 prereqs)
 	prereqs
@@ -43,14 +57,13 @@ mkdir -p ${DESTDIR}/usr/share/fonts/X11/75dpi
 mkdir -p ${DESTDIR}/usr/share/fonts/X11/Type1
 mkdir -p ${DESTDIR}/usr/share/fonts/X11/100dpi
 mkdir -p ${DESTDIR}/var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType
-mkdir -p ${DESTDIR}/usr/share/xsplashaa/chicken-curie
-mkdir -p ${DESTDIR}/usr/share/xsplashaa/aixplorer
 mkdir -p ${DESTDIR}/usr/share/mime
 mkdir -p ${DESTDIR}/etc/xsplashaa
 mkdir -p ${DESTDIR}/etc/init.d
 mkdir -p ${DESTDIR}/etc/rc2.d
 mkdir -p ${DESTDIR}/etc/X11/xkb
 
+copy_themes
 copy_exec_if_exist /sbin/shutdown /sbin
 copy_exec_if_exist /usr/bin/Xorg /usr/bin
 copy_exec_if_exist /usr/bin/xrdb /usr/bin
@@ -66,16 +79,6 @@ then
 fi
 copy_exec_if_exist /etc/X11/xkb/base.xml /etc/X11/xkb
 copy_exec_if_exist @sysconfdir@/xsplashaa/xsplashaa.conf /etc/xsplashaa
-copy_exec_if_exist @prefix@/share/xsplashaa/chicken-curie/logo.png /usr/share/xsplashaa/chicken-curie
-copy_exec_if_exist @prefix@/share/xsplashaa/chicken-curie/distrib-logo.png /usr/share/xsplashaa/chicken-curie
-copy_exec_if_exist @prefix@/share/xsplashaa/chicken-curie/throbber-initial.png /usr/share/xsplashaa/chicken-curie
-copy_exec_if_exist @prefix@/share/xsplashaa/chicken-curie/throbber-spinner.png /usr/share/xsplashaa/chicken-curie
-copy_exec_if_exist @prefix@/share/xsplashaa/chicken-curie/throbber-finish.png /usr/share/xsplashaa/chicken-curie
-copy_exec_if_exist @prefix@/share/xsplashaa/aixplorer/logo.png /usr/share/xsplashaa/aixplorer
-copy_exec_if_exist @prefix@/share/xsplashaa/aixplorer/distrib-logo.png /usr/share/xsplashaa/aixplorer
-copy_exec_if_exist @prefix@/share/xsplashaa/aixplorer/throbber-initial.png /usr/share/xsplashaa/aixplorer
-copy_exec_if_exist @prefix@/share/xsplashaa/aixplorer/throbber-spinner.png /usr/share/xsplashaa/aixplorer
-copy_exec_if_exist @prefix@/share/xsplashaa/aixplorer/throbber-finish.png /usr/share/xsplashaa/aixplorer
 copy_exec_if_exist /usr/lib/libGL.so /usr/lib
 copy_exec_if_exist /usr/lib/xorg/protocol.txt /usr/lib/xorg
 copy_exec_if_exist /usr/lib/xorg/modules/drivers/fbdev_drv.so /usr/lib/xorg/modules/drivers

@@ -169,7 +169,7 @@ namespace XSAA
 
         if (!no_daemon) 
         {
-            if (daemon (0, 0) < 0)
+            if (Posix.daemon (0, 0) < 0)
             {
                 GLib.stderr.printf("Error on launch has daemon\n");
                 return -1;

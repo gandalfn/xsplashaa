@@ -1,4 +1,4 @@
-AC_INIT([xsplashaa], [0.2.8], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
+AC_INIT([xsplashaa], [0.2.9], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
 AC_CONFIG_SRCDIR(src/xsaa-main.vala)
 AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE([dist-bzip2])
@@ -97,6 +97,7 @@ AC_CONFIG_FILES([
 	data/jail-mount.d/Makefile
 	data/themes/Makefile
 	data/themes/aixplorer/Makefile
-	data/themes/chicken-curie/Makefile])
+	data/themes/chicken-curie/Makefile
+	data/themes/debian/Makefile])
 
 AC_OUTPUT

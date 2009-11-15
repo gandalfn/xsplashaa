@@ -501,16 +501,51 @@ namespace XSAA
         realize ()
         {
             base.realize();
-            
-            Gdk.Color color;
 
-            Gdk.Color.parse(bg, out color);
-            modify_bg(StateType.NORMAL, color);
-            notebook.modify_bg(StateType.NORMAL, color);
+            if (!FileUtils.test(PACKAGE_DATA_DIR + "/" + theme + "/background.png",
+                                FileTest.EXISTS))
+            {
+                Gdk.Color color;
 
-            var screen = get_window().get_screen();
-            var root = screen.get_root_window();
-            root.set_background(color);
+                Gdk.Color.parse(bg, out color);
+                modify_bg(StateType.NORMAL, color);
+                notebook.modify_bg(StateType.NORMAL, color);
+
+                var screen = get_window().get_screen();
+                var root = screen.get_root_window();
+                root.set_background(color);
+            }
+            else
+            {
+                try
+                {
+                    Gdk.Pixbuf pixbuf = 
+                        new Gdk.Pixbuf.from_file(PACKAGE_DATA_DIR + "/" + 
+                                                 theme + "/background.png");
+
+                    Gdk.Pixmap pixmap = new Gdk.Pixmap(window, allocation.width, 
+                                                       allocation.height, -1);
+                    Gdk.Pixbuf scale = 
+                        pixbuf.scale_simple(allocation.width, allocation.height,
+                                            Gdk.InterpType.BILINEAR);
+                    
+                    pixmap.draw_rectangle (style.bg_gc[Gtk.StateType.NORMAL], 
+                                           true, 0, 0, 
+                                           allocation.width, allocation.height);
+                    pixmap.draw_pixbuf (style.black_gc, scale, 0, 0, 0, 0, 
+                                        allocation.width, allocation.height,
+                                        Gdk.RgbDither.MAX, 0, 0);
+                    Gtk.Style style = new Gtk.Style();
+                    style.bg_pixmap[Gtk.StateType.NORMAL] = pixmap;
+                    this.style = style;
+                }
+                catch (GLib.Error err)
+                {
+                    GLib.stderr.printf("Error on loading %s: %s", 
+                                       PACKAGE_DATA_DIR + "/" + theme + "/background.png",
+                                       err.message);
+                } 
+            }
     	}
 
         override void
