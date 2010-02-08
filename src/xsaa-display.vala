@@ -38,9 +38,9 @@ namespace XSAA
         Pid pid = (Pid)0;
         int number;
         
-        signal void ready();
-        signal void exited();
-        signal void died();
+        public signal void ready();
+        public signal void exited();
+        public signal void died();
         
         public Display(string cmd, int number) throws DisplayError
         {

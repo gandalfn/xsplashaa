@@ -85,9 +85,9 @@ namespace XSAA
             try
             {
                 pam = new PamSession(service, user, display, xauth_file, device);
-                pam.passwd += on_ask_passwd;
-                pam.info += on_info;
-                pam.error_msg += on_error_msg;
+                pam.passwd.connect(on_ask_passwd);
+                pam.info.connect(on_info);
+                pam.error_msg.connect(on_error_msg);
             }
             catch (PamError err)
             {

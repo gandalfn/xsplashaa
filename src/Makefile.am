@@ -10,7 +10,8 @@ VALAFLAGS = \
     --pkg=vala-1.0 \
     --pkg=gtk+-2.0 \
     --pkg=dbus-glib-1 \
-    --pkg=hal \
+    --pkg=gudev-1.0 \
+    --pkg=gee-1.0 \
     --pkg=posix \
     --pkg=posix-comp \
     --pkg=pam \
@@ -36,6 +37,7 @@ xsplashaa_SOURCES = \
 	xsaa-display.vala \
 	xsaa-throbber.vala \
 	xsaa-splash.vala \
+	xsaa-input-device.vala \
 	xsaa-main.vala
 
 xsplashaa_VALAFLAGS = \

@@ -23,7 +23,6 @@ using GLib;
 using Gtk;
 using Posix;
 using Config;
-using Hal;
 
 [DBus (name = "fr.supersonicimagine.XSAA.Manager")] 
 public interface XSAA.Manager : DBus.Object 
@@ -64,20 +63,20 @@ namespace XSAA
     public class Daemon : GLib.Object
     {
         bool enable = true;
-	    bool first_start = true;
+	bool first_start = true;
         bool test_only = false;
         bool have_keyboard = false;
 
         uint id_idle = 0;
         
-	    public string[] args;
+	public string[] args;
         
         Server socket;
         Splash splash;
         Display display;
         DBus.Connection conn = null;
         dynamic DBus.Object bus = null;
-        Hal.Context hal = null;
+        XSAA.InputDevice input = null;
         XSAA.Manager manager = null;
         
         string server = "/usr/bin/Xorg";
@@ -108,16 +107,16 @@ namespace XSAA
                 if (!test_only)
                 {
                     display = new Display(cmd, number);
-                    display.ready += on_display_ready;
-                    display.died += on_display_exit;
-                    display.exited += on_display_exit;
+                    display.ready.connect(on_display_ready);
+                    display.died.connect(on_display_exit);
+                    display.exited.connect(on_display_exit);
                 }
                 
                 socket = new Server(socket_name);
-                socket.dbus += on_dbus_ready;
-                socket.session += on_session_ready;
-                socket.close_session += on_init_shutdown;
-                socket.quit += on_quit;
+                socket.dbus.connect(on_dbus_ready);
+                socket.session.connect(on_session_ready);
+                socket.close_session.connect(on_init_shutdown);
+                socket.quit.connect(on_quit);
             }
             catch (GLib.Error err)
             {
@@ -190,9 +189,9 @@ namespace XSAA
             }
             
             splash = new Splash(socket);
-            splash.login += on_login_response;
-            splash.restart += on_restart_request;
-            splash.shutdown += on_shutdown_request;
+            splash.login.connect(on_login_response);
+            splash.restart.connect(on_restart_request);
+            splash.shutdown.connect(on_shutdown_request);
             splash.show();
             shutdown |= GLib.FileUtils.test(SHUTDOWN_FILENAME, GLib.FileTest.EXISTS);
             if (shutdown) 
@@ -233,10 +232,10 @@ namespace XSAA
                         session = (XSAA.Session) conn.get_object ("fr.supersonicimagine.XSAA.Manager.Session",
                                                                   path,
                                                                   "fr.supersonicimagine.XSAA.Manager.Session");
-                        session.died += on_session_ended;
-                        session.exited += on_session_ended;
-                        session.info += on_session_info;
-                        session.error_msg += on_error_msg;
+                        session.died.connect(on_session_ended);
+                        session.exited.connect(on_session_ended);
+                        session.info.connect(on_session_info);
+                        session.error_msg.connect(on_error_msg);
                         ret = true;
                     }
                     else
@@ -251,22 +250,13 @@ namespace XSAA
             return ret;
         }
 
-        private static void
-        on_device_added(Hal.Context ctx, string udi)
+        private void
+        on_keyboard_added()
         {
-            DBus.RawError err = DBus.RawError();
-            
-            string driver = ctx.device_get_property_string(udi, "input.x11_driver", ref err);
-
-            if (driver != null)
+            if (!have_keyboard) 
             {
-                var self = (Daemon)ctx.get_user_data();
-                string layout = ctx.device_get_property_string(udi, "input.xkb.layout", ref err);
-                if (layout != null && !self.have_keyboard) 
-                {
-                    self.have_keyboard = true;
-                    self.start_session();
-                }  
+                have_keyboard = true;
+                start_session();
             }
         }
 
@@ -284,7 +274,7 @@ namespace XSAA
                 try
                 {
                     session.authenticate();
-                    session.authenticated += on_authenticated;
+                    session.authenticated.connect(on_authenticated);
                 }
                 catch (GLib.Error err)
                 {
@@ -294,9 +284,9 @@ namespace XSAA
         }
 
         private void
-        activate_hal()
+        activate_input()
         {
-            if (hal == null)
+            if (input == null)
             {
                 if (id_idle > 0) 
                 {
@@ -304,29 +294,18 @@ namespace XSAA
                     id_idle = 0;
                 }
 
-                GLib.stderr.printf("Found hal daemon\n");
-                
-                hal = new Hal.Context();
-                if (!hal.set_dbus_connection(conn.get_connection()))
+                GLib.stderr.printf("Connect to udev\n");
+		
+                input = new XSAA.InputDevice (conn, number);
+                if (input == null)
                 {
-                    GLib.stderr.printf("Error on init hal\n");
-                }                
-                hal.set_user_data(this);
-                hal.set_device_added(on_device_added);
-
-                DBus.RawError err = DBus.RawError();
-                string[] devices = hal.find_device_by_capability("input", ref err);
-                if (!err.is_set())
-                {
-                    foreach (string dev in devices)
-                    {
-                        on_device_added(hal, dev);
-                    }
+                    GLib.stderr.printf("Error on create input device\n");
                 }
-                else
-                {
-                    GLib.stderr.printf("Error on get devices list %s\n", err.message);
-                }
+		else
+		{
+                    input.keyboard_added.connect(on_keyboard_added);
+                    input.start ();
+		}
             }
         }
 
@@ -335,9 +314,9 @@ namespace XSAA
         {
             foreach (string name in names) 
             {
-                if (name == "org.freedesktop.Hal") 
+                if (name == "org.x.config.display" + number.to_string()) 
                 {
-                    activate_hal();
+                    activate_input();
                     break;
                 }
             }
@@ -363,9 +342,9 @@ namespace XSAA
         private void 
         on_name_owner_changed (DBus.Object sender, string name, string old_owner, string new_owner) 
         {
-            if (name == "org.freedesktop.Hal" && new_owner != "" && old_owner == "")
+            if (name == "org.x.config.display" + number.to_string() && new_owner != "" && old_owner == "")
             {
-                activate_hal ();
+                activate_input ();
             }
         }
         
@@ -573,7 +552,7 @@ namespace XSAA
                 {            
                     session.set_passwd(pass);
                     session.authenticate();
-                    session.authenticated += on_authenticated;
+                    session.authenticated.connect(on_authenticated);
                 }
                 catch (DBus.Error err)
                 {
@@ -683,7 +662,8 @@ namespace XSAA
             signal(SIGKILL, SIG_IGN);
             int status = -1;
             bool first_start = true;
-            while (status != 0)
+	    int nb_start = 0;
+            while (status != 0 && nb_start < 5)
             {
                 int ret_fork = fork();
 
@@ -716,6 +696,7 @@ namespace XSAA
                 {
                     int ret;
                     first_start = false;
+		    nb_start++;
                     wait(out ret);
                     status = Process.exit_status(ret);
                 }

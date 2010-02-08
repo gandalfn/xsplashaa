@@ -21,22 +21,10 @@ namespace Posix
 	}
 	
     [CCode (cheader_filename = "sys/un.h", cname = "struct sockaddr_un", free_function="g_free")]
-	public struct sockaddr_un : sockaddr {
+	public struct sockaddr_un : Posix.sockaddr {
 	    public int sun_family;
 	    public char sun_path[108];
 	}
-
-    [CCode (cheader_filename = "sys/socket.h", sentinel = "")]
-	public int accept (int sockfd, ...);
-
-    [CCode (cheader_filename = "sys/socket.h", sentinel = "")]
-	public int connect (int sockfd, ...);
-
-    [CCode (cheader_filename = "sys/socket.h")]
-	public int listen (int sockfd, int backlog);
-
-    [CCode (cheader_filename = "signal.h")]
-    public sighandler_t SIG_IGN;
 
     [CCode (cheader_filename = "stdlib.h")]
     public int putenv(string env);

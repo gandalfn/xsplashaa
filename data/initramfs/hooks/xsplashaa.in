@@ -15,17 +15,30 @@ copy_exec_if_exist ()
     fi
 }
 
+copy_share_x11 ()
+{
+    for d in $(find /usr/share/X11 -type d)
+    do
+	    mkdir -p ${DESTDIR}/$d
+    done
+    for f in $(find /usr/share/X11 -type f)
+    do
+        d=$(dirname $f)
+	    copy_exec_if_exist $f $d 
+    done
+}
+
 copy_themes ()
 {
     for theme in /usr/share/xsplashaa/*
     do
-	mkdir -p ${DESTDIR}/$theme
-	copy_exec_if_exist $theme/logo.png $theme
-	copy_exec_if_exist $theme/distrib-logo.png $theme
-	copy_exec_if_exist $theme/background.png $theme
-	copy_exec_if_exist $theme/throbber-initial.png $theme
-	copy_exec_if_exist $theme/throbber-spinner.png $theme
-	copy_exec_if_exist $theme/throbber-finish.png $theme 	
+	    mkdir -p ${DESTDIR}/$theme
+	    copy_exec_if_exist $theme/logo.png $theme
+	    copy_exec_if_exist $theme/distrib-logo.png $theme
+	    copy_exec_if_exist $theme/background.png $theme
+	    copy_exec_if_exist $theme/throbber-initial.png $theme
+	    copy_exec_if_exist $theme/throbber-spinner.png $theme
+	    copy_exec_if_exist $theme/throbber-finish.png $theme 	
     done
 }
 
@@ -64,6 +77,7 @@ mkdir -p ${DESTDIR}/etc/rc2.d
 mkdir -p ${DESTDIR}/etc/X11/xkb
 
 copy_themes
+copy_share_x11
 copy_exec_if_exist /sbin/shutdown /sbin
 copy_exec_if_exist /usr/bin/Xorg /usr/bin
 copy_exec_if_exist /usr/bin/xrdb /usr/bin

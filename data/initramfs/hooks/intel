@@ -2,7 +2,7 @@
 # initramfs hook for intel
 
 MINKVER="2.6.17"
-PREREQ=""
+PREREQ="xsplashaa"
 
 # Output pre-requisites
 prereqs()

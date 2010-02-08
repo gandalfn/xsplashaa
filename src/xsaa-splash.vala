@@ -48,17 +48,17 @@ namespace XSAA
         string text = "#7BC4F5";
         float yposition = 0.5f;
 
-        signal void login(string username, string passwd);
-        signal void restart();
-        signal void shutdown();
+        public signal void login(string username, string passwd);
+        public signal void restart();
+        public signal void shutdown();
         
         public Splash(Server server)
         {
             socket = server;
-            socket.phase += on_phase_changed;
-            socket.pulse += on_start_pulse;
-            socket.progress += on_progress;
-            socket.progress_orientation += on_progress_orientation;
+            socket.phase.connect(on_phase_changed);
+            socket.pulse.connect(on_start_pulse);
+            socket.progress.connect(on_progress);
+            socket.progress_orientation.connect(on_progress_orientation);
         }
         
         construct
@@ -74,7 +74,7 @@ namespace XSAA
 
             fullscreen();
             
-            destroy += Gtk.main_quit;
+            destroy.connect(Gtk.main_quit);
 
             var alignment = new Alignment(0.5f, yposition, 0, 0);
             alignment.show();
@@ -350,12 +350,12 @@ namespace XSAA
 
             var button = new Gtk.Button.with_label("Restart");
             button.show();
-            button.clicked += on_restart_clicked;
+            button.clicked.connect(on_restart_clicked);
             button_box.pack_start(button, false, false, 0);
 
             button = new Gtk.Button.with_label("Shutdown");
             button.show();
-            button.clicked += on_shutdown_clicked;
+            button.clicked.connect(on_shutdown_clicked);
             button_box.pack_start(button, false, false, 0);
         }
 
@@ -470,7 +470,7 @@ namespace XSAA
                 entry_prompt.activate -= on_login_enter;
                 entry_prompt.set_visibility(false);
                 entry_prompt.set_text("");
-                entry_prompt.activate += on_passwd_enter;
+                entry_prompt.activate.connect(on_passwd_enter);
                 label_prompt.set_markup("<span size='xx-large' color='" + 
                                         text +"'>Password :</span>");
                 label_message.set_text("");
@@ -591,7 +591,7 @@ namespace XSAA
             entry_prompt.set_sensitive(true);
             entry_prompt.set_visibility(true);
             entry_prompt.set_text("");
-            entry_prompt.activate += on_login_enter;
+            entry_prompt.activate.connect(on_login_enter);
             if (id_pulse > 0) Source.remove(id_pulse);
             id_pulse = 0;
             progress.hide();

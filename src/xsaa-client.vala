@@ -110,7 +110,7 @@ namespace XSAA
     {
         MainLoop loop = new MainLoop(null, false);
 
-        client.in += on_pong;
+        client.in.connect(on_pong);
         client.send("ping");
         loop.run();
 

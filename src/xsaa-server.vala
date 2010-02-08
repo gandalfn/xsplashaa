@@ -29,14 +29,14 @@ namespace XSAA
     {
         private static int BUFFER_LENGTH = 200;
 
-        signal void phase(int val);
-        signal void progress(int val);
-        signal void progress_orientation(ProgressBarOrientation orientation);
-        signal void dbus();
-        signal void session();
-        signal void pulse();
-        signal void close_session();
-        signal void quit();
+        public signal void phase(int val);
+        public signal void progress(int val);
+        public signal void progress_orientation(ProgressBarOrientation orientation);
+        public signal void dbus();
+        public signal void session();
+        public signal void pulse();
+        public signal void close_session();
+        public signal void quit();
         
         public Server(string socket_name) throws SocketError
         {
@@ -60,7 +60,7 @@ namespace XSAA
 	        
 	        chmod (socket_name, 0666);
 	        
-	        in += on_client_connect;
+	        in.connect(on_client_connect);
         }
         
         ~Server()
