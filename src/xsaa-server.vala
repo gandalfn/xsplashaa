@@ -1,6 +1,6 @@
 /* xsaa-server.vala
  *
- * Copyright (C) 2009  Nicolas Bruguier
+ * Copyright (C) 2009-2010  Nicolas Bruguier
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -37,37 +37,37 @@ namespace XSAA
         public signal void pulse();
         public signal void close_session();
         public signal void quit();
-        
+
         public Server(string socket_name) throws SocketError
         {
             unlink(socket_name);
 
             base(socket_name);
-            
+
             fcntl(fd, F_SETFD, FD_CLOEXEC);
-            
+
             if (bind(fd, ref saddr, 110) != 0)
-	        {
-	            this.unref();
-				throw new SocketError.CREATE("error on bind socket");
-	        }
-	        
-	        if (listen (fd, 5) != 0)
-	        {
-	            this.unref();
-				throw new SocketError.CREATE("error on listen socket");
-	        }
-	        
-	        chmod (socket_name, 0666);
-	        
-	        in.connect(on_client_connect);
+            {
+                this.unref();
+                throw new SocketError.CREATE("error on bind socket");
+            }
+
+            if (listen (fd, 5) != 0)
+            {
+                this.unref();
+                throw new SocketError.CREATE("error on listen socket");
+            }
+
+            chmod (socket_name, 0666);
+
+            in.connect(on_client_connect);
         }
-        
+
         ~Server()
         {
             unlink(filename);
         }
- 
+
         private void 
         on_client_connect ()
         {
@@ -87,14 +87,14 @@ namespace XSAA
                     GLib.stderr.printf("Error on accept\n");
                 }
             }
-        }	
-        
+        }
+
         private bool 
         on_client_message (IOChannel client, IOCondition condition)
         {
             char[] buffer = new char[BUFFER_LENGTH];
             size_t bytes_read = 0;
-            
+
             try
             {
                 client.read_chars(buffer, out bytes_read);
@@ -109,10 +109,10 @@ namespace XSAA
                 GLib.stderr.printf("Error on read socket\n");
             }
             close(client.unix_get_fd());
-            
+
             return false;
         }
-        
+
         private void 
         handle_client_message(IOChannel client, string buffer)
         {
@@ -161,5 +161,5 @@ namespace XSAA
                 quit();
             }
         }
-   }
+    }
 }

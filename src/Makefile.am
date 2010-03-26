@@ -3,14 +3,13 @@ INCLUDES = \
     --include $(CONFIG_HEADER) \
     -DPACKAGE_CONFIG_FILE=\""$(sysconfdir)/xsplashaa/xsplashaa.conf"\" \
     -DPACKAGE_DATA_DIR=\""$(datadir)/xsplashaa"\"
-    
+
 VALAFLAGS = \
     --vapidir=${top_srcdir}/vapi \
     --pkg=config \
     --pkg=vala-1.0 \
     --pkg=gtk+-2.0 \
     --pkg=dbus-glib-1 \
-    --pkg=gudev-1.0 \
     --pkg=gee-1.0 \
     --pkg=posix \
     --pkg=posix-comp \
@@ -20,42 +19,51 @@ VALAFLAGS = \
     --pkg=ssi-timeline \
     --pkg=ssi-vala-widgets
 
-bin_PROGRAMS = xsplashaa xsplashaa-client xsplashaa-session-daemon
+if ENABLE_HAL
+VALAFLAGS += \
+     --pkg=hal \
+     -D USE_HAL
+else
+VALAFLAGS += \
+    --pkg=gudev-1.0
+endif
 
 noinst_LTLIBRARIES = libxsaa-private.la
 
+bin_PROGRAMS = xsplashaa xsplashaa-client xsplashaa-session-daemon
+
 libxsaa_private_la_VALAFLAGS = \
     --header=xsaa-private.h \
-   	--library=xsaa-private \
-   	--vapi=xsaa-private.vapi
+    --library=xsaa-private \
+    --vapi=xsaa-private.vapi
 
 libxsaa_private_la_SOURCES = \
-   	xsaa-socket.vala
+    xsaa-socket.vala
 
 xsplashaa_SOURCES = \
-	xsaa-server.vala \
-	xsaa-display.vala \
-	xsaa-throbber.vala \
-	xsaa-splash.vala \
-	xsaa-input-device.vala \
-	xsaa-main.vala
+    xsaa-server.vala \
+    xsaa-display.vala \
+    xsaa-throbber.vala \
+    xsaa-splash.vala \
+    xsaa-input-device.vala \
+    xsaa-main.vala
 
 xsplashaa_VALAFLAGS = \
     --vapidir=. \
     --pkg=xsaa-private
-    
+
 xsplashaa_LDADD = \
-	$(XSPLASHAA_LIBS) libxsaa-private.la
+    $(XSPLASHAA_LIBS) libxsaa-private.la
 
 xsplashaa_client_SOURCES = \
-  	xsaa-client.vala
+    xsaa-client.vala
 
 xsplashaa_client_VALAFLAGS = \
     --vapidir=. \
     --pkg=xsaa-private
 
 xsplashaa_client_LDADD = \
-	$(XSPLASHAA_LIBS) libxsaa-private.la
+    $(XSPLASHAA_LIBS) libxsaa-private.la
 
 xsplashaa_session_daemon_SOURCES = \
     xsaa-pam.vala \
@@ -63,7 +71,7 @@ xsplashaa_session_daemon_SOURCES = \
     xsaa-session-daemon.vala
 
 xsplashaa_session_daemon_LDADD = \
-	$(XSPLASHAA_LIBS) -lpam
+    $(XSPLASHAA_LIBS) -lpam
 
 EXTRA_DIST = \
     xsaa-private.h \
@@ -79,6 +87,6 @@ EXTRA_DIST = \
 
 CLEANFILES = \
     $(EXTRA_DIST)
-    
+
 DISTCLEANFILES = \
     $(EXTRA_DIST)

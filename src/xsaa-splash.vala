@@ -1,6 +1,6 @@
 /* xsaa-splash.vala
  *
- * Copyright (C) 2009  Nicolas Bruguier
+ * Copyright (C) 2009-2010  Nicolas Bruguier
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -51,7 +51,7 @@ namespace XSAA
         public signal void login(string username, string passwd);
         public signal void restart();
         public signal void shutdown();
-        
+
         public Splash(Server server)
         {
             socket = server;
@@ -60,11 +60,11 @@ namespace XSAA
             socket.progress.connect(on_progress);
             socket.progress_orientation.connect(on_progress_orientation);
         }
-        
+
         construct
         {
             load_config();
-            
+
             Gdk.Screen screen = Gdk.Screen.get_default();
             Gdk.Rectangle geometry;
             screen.get_monitor_geometry(0, out geometry);
@@ -73,7 +73,7 @@ namespace XSAA
             set_default_size(geometry.width, geometry.height);
 
             fullscreen();
-            
+
             destroy.connect(Gtk.main_quit);
 
             var alignment = new Alignment(0.5f, yposition, 0, 0);
@@ -102,9 +102,9 @@ namespace XSAA
                 Gdk.Pixbuf pixbuf = 
                     new Gdk.Pixbuf.from_file(PACKAGE_DATA_DIR + "/" + theme +
                                              "/distrib-logo.png");
-                
+
                 int width, height;
-                
+
                 if (layout == "horizontal")
                 {
                     width = geometry.width / 3 > pixbuf.get_width() ? 
@@ -121,7 +121,7 @@ namespace XSAA
                                    ((double)pixbuf.get_height() / 
                                     (double)pixbuf.get_width()));
                 }
-                
+
                 Gtk.Image image = 
                     new Gtk.Image.from_pixbuf(pixbuf.scale_simple(width, height, 
                                                                   Gdk.InterpType.BILINEAR));
@@ -133,7 +133,7 @@ namespace XSAA
                 GLib.stderr.printf("Error on loading %s: %s", 
                                    PACKAGE_DATA_DIR + "/" + theme + "/distrib-logo.png",
                                    err.message);
-            }            
+            }
 
             Gtk.Box box_info;
             if (layout == "horizontal")
@@ -146,7 +146,7 @@ namespace XSAA
             }
             box_info.show();
             box.pack_start(box_info, false, false, 0);
-            
+
             try
             {
                 Gdk.Pixbuf pixbuf = 
@@ -181,18 +181,18 @@ namespace XSAA
                 GLib.stderr.printf("Error on loading %s: %s", 
                                    PACKAGE_DATA_DIR + "/" + theme + "/logo.png",
                                    err.message);
-            }            
+            }
 
             alignment = new Alignment(0.5f, 0.5f, 0, 0);
             alignment.show();
             box_info.pack_start(alignment, true, true, 0);
-            
+
             notebook = new SlideNotebook();
             notebook.show();
             alignment.add(notebook);
             notebook.set_show_tabs(false);
             notebook.set_show_border(false);
-    
+
             construct_loading_page();
 
             construct_login_page();
@@ -200,7 +200,7 @@ namespace XSAA
             construct_launch_session_page();
 
             construct_shutdown_page();
-            
+
             var table_progress = new Gtk.Table(5, 1, false);
             table_progress.show();
             table_progress.set_border_width(24);
@@ -213,8 +213,8 @@ namespace XSAA
             table_progress.attach(progress, 2, 3, 0, 1, 
                                   AttachOptions.EXPAND | AttachOptions.FILL, 
                                   0, 0, 0);
-                        
-    	    on_start_pulse();
+
+            on_start_pulse();
         }
 
         private void
@@ -268,7 +268,7 @@ namespace XSAA
             catch (GLib.Error err)
             {
                 GLib.stderr.printf("Error on loading throbber %s", err.message);
-            }     
+            }
 
             label = new Gtk.Label("<span size='xx-large' color='" + 
                                   text +"'>Checking filesystem...</span>");
@@ -276,7 +276,7 @@ namespace XSAA
             label.set_alignment(0.0f, 0.5f);
             label.show();
             table.attach_defaults(label, 0, 1, 1, 2);
-            
+
             try
             {
                 phase[1] = new Throbber(theme, 83);
@@ -286,7 +286,7 @@ namespace XSAA
             catch (GLib.Error err)
             {
                 GLib.stderr.printf("Error on loading throbber %s", err.message);
-            } 
+            }
 
             label = new Gtk.Label("<span size='xx-large' color='" + 
                                   text +"'>Starting...</span>");
@@ -304,7 +304,7 @@ namespace XSAA
             catch (GLib.Error err)
             {
                 GLib.stderr.printf("Error on loading throbber %s", err.message);
-            } 
+            }
         }
 
         private void
@@ -416,7 +416,7 @@ namespace XSAA
                 GLib.stderr.printf("Error on loading throbber %s", err.message);
             }
         }
-        
+
         private void
         on_phase_changed(int new_phase)
         {
@@ -436,7 +436,7 @@ namespace XSAA
             progress.pulse();
             return true;
         }
-        
+
         private void
         on_start_pulse()
         {
@@ -453,7 +453,7 @@ namespace XSAA
             id_pulse = 0;
             progress.set_fraction((double)val / (double)100);
         }
-        
+
         private void
         on_progress_orientation(ProgressBarOrientation orientation)
         {
@@ -476,7 +476,7 @@ namespace XSAA
                 label_message.set_text("");
             }
         }
-        
+
         private void
         on_passwd_enter()
         {
@@ -528,7 +528,7 @@ namespace XSAA
                     Gdk.Pixbuf scale = 
                         pixbuf.scale_simple(allocation.width, allocation.height,
                                             Gdk.InterpType.BILINEAR);
-                    
+
                     pixmap.draw_rectangle (style.bg_gc[Gtk.StateType.NORMAL], 
                                            true, 0, 0, 
                                            allocation.width, allocation.height);
@@ -546,7 +546,7 @@ namespace XSAA
                                        err.message);
                 } 
             }
-    	}
+        }
 
         override void
         hide()
@@ -554,7 +554,7 @@ namespace XSAA
             throbber_session.finished();
             base.hide();
         }
-        
+
         public void
         show_launch()
         {
@@ -563,7 +563,7 @@ namespace XSAA
             notebook.set_current_page(2);
             throbber_session.start();
         }
-        
+
         public void
         show_shutdown()
         {
@@ -579,10 +579,10 @@ namespace XSAA
         ask_for_login()
         {
             phase[2].finished();
-            
+
             var cursor = new Gdk.Cursor(Gdk.CursorType.LEFT_PTR);
             get_window().set_cursor(cursor);
-            
+
             notebook.set_current_page(1);
             label_prompt.set_markup("<span size='xx-large' color='" + 
                                      text +"'>Login :</span>");

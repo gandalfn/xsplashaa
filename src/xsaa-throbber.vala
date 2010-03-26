@@ -1,6 +1,6 @@
 /* xsaa-throbber.vala
  *
- * Copyright (C) 2009  Nicolas Bruguier
+ * Copyright (C) 2009-2010  Nicolas Bruguier
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -50,7 +50,7 @@ namespace XSAA
 
             uint size = initial.get_width() > initial.get_height() ?
                         initial.get_width() : initial.get_height();
-            
+
             int nb_steps = (spinner.get_height() * spinner.get_width()) / (int)size ;
 
             pixbufs = new Gdk.Pixbuf[nb_steps];
@@ -80,7 +80,7 @@ namespace XSAA
                 id_timeout = Timeout.add(interval, on_timer);
             }
         }
-        
+
         public void
         stop()
         {
@@ -97,7 +97,7 @@ namespace XSAA
             stop();
             set_from_pixbuf(finish);
         }
-        
+
         private bool
         on_timer()
         {

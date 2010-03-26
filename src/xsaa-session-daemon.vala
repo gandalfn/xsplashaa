@@ -1,6 +1,6 @@
 /* xsaa-session-daemon.vala
  *
- * Copyright (C) 2009  Nicolas Bruguier
+ * Copyright (C) 2009-2010  Nicolas Bruguier
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -33,7 +33,7 @@ public interface ConsoleKit.Session : DBus.Object
 
 [DBus (name = "org.freedesktop.ConsoleKit.Manager")] 
 public interface ConsoleKit.Manager : DBus.Object 
-{ 
+{
     public abstract string 
     open_session_with_parameters (ConsoleKit.SessionParameter[] parameters) throws DBus.Error; 
 
@@ -42,7 +42,7 @@ public interface ConsoleKit.Manager : DBus.Object
 
     public abstract DBus.ObjectPath?
     get_session_for_cookie(string cookie) throws DBus.Error;
-    
+
     public abstract void
     restart() throws DBus.Error;
 
@@ -65,7 +65,7 @@ namespace XSAA
         private DBus.Connection connection;
         public Map <string, Session> sessions;
         private ConsoleKit.Manager manager;
-        
+
         public SessionManager(DBus.Connection conn, dynamic DBus.Object bus)
         {
             connection = conn;
@@ -84,7 +84,7 @@ namespace XSAA
             GLib.stderr.printf("Lost session %s\n", name);
             sessions.remove (prev);
         }
-        
+
         public bool
         open_session(string user, int display, string device, bool autologin, out DBus.ObjectPath? path)
         {
@@ -94,7 +94,7 @@ namespace XSAA
             {
                 string service = "xsplashaa";
                 if (autologin) service = "xsplashaa-autologin";
-                    
+
                 var session = new Session(connection, manager, service, user, display, device);
                 GLib.stderr.printf("Open session %s\n", path);
                 connection.register_object(path, session);
@@ -150,24 +150,24 @@ namespace XSAA
     };
 
     static bool no_daemon = false;
-    
-    static int 
+
+    static int
     main (string[] args) 
     {
-        try 
+        try
         {
             var opt_context = new OptionContext("- Xsplashaa session daemon");
             opt_context.set_help_enabled(true);
             opt_context.add_main_entries(option_entries, "xsplasaa-session-daemon");
             opt_context.parse(ref args);
-        } 
+        }
         catch (OptionError err) 
         {
             GLib.stderr.printf("Option parsing failed: %s\n", err.message);
             return -1;
         }
 
-        if (!no_daemon) 
+        if (!no_daemon)
         {
             if (Posix.daemon (0, 0) < 0)
             {
@@ -175,14 +175,14 @@ namespace XSAA
                 return -1;
             }
         }
-        
-		try 
+
+        try
         {
             loop = new MainLoop(null, false);
-            
+
             var conn = DBus.Bus.get (DBus.BusType.SYSTEM);
-            
-		    dynamic DBus.Object bus = conn.get_object ("org.freedesktop.DBus",
+
+            dynamic DBus.Object bus = conn.get_object ("org.freedesktop.DBus",
                                                        "/org/freedesktop/DBus",
                                                        "org.freedesktop.DBus");
 
@@ -205,7 +205,7 @@ namespace XSAA
             message("%s\n", err.message);
             return -1;
         }
-        
-		return 0;
-	}
+
+        return 0;
+    }
 }

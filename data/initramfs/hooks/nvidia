@@ -28,20 +28,20 @@ esac
 
 . /usr/share/initramfs-tools/hook-functions
 
-if [ -e /usr/lib/nvidia-current/xorg/nvidia_drv.so ]; then
+if [ -e /usr/lib/xorg/modules/drivers/nvidia_drv.so ]; then
     mkdir -p ${DESTDIR}/usr/lib/xorg/modules/drivers
     mkdir -p ${DESTDIR}/usr/lib/xorg/modules/extensions
     mkdir -p ${DESTDIR}/usr/lib/tls
     mkdir -p ${DESTDIR}/usr/share/xserver-xorg/pci
 
     # Copy needed files
-    copy_exec_if_exist /usr/lib/nvidia-current/xorg/nvidia_drv.so /usr/lib/xorg/modules/drivers
-    copy_exec_if_exist /usr/lib/nvidia-current/tls/libnvidia-tls.so.1 /usr/lib/tls
+    copy_exec_if_exist /usr/lib/xorg/modules/drivers/nvidia_drv.so /usr/lib/xorg/modules/drivers
+    copy_exec_if_exist /usr/lib/tls/libnvidia-tls.so.1 /usr/lib/tls
     copy_exec_if_exist /usr/share/xserver-xorg/pci/nv.ids /usr/share/xserver-xorg/pci
-    copy_exec_if_exist /usr/lib/nvidia-current/libGL.so /usr/lib
-    copy_exec_if_exist /usr/lib/nvidia-current/libGLcore.so.1 /usr/lib
-    copy_exec_if_exist /usr/lib/nvidia-current/libcuda.so /usr/lib
-    copy_exec_if_exist /usr/lib/nvidia-current/libnvidia-cfg.so /usr/lib
-    copy_exec_if_exist /usr/lib/nvidia-current/libXvMCNVIDIA.so /usr/lib
-    copy_exec_if_exist /usr/lib/nvidia-current/xorg/libglx.so /usr/lib/xorg/modules/extensions
+    copy_exec_if_exist /usr/lib/libGL.so /usr/lib
+    copy_exec_if_exist /usr/lib/libGLcore.so.1 /usr/lib
+    copy_exec_if_exist /usr/lib/libcuda.so /usr/lib
+    copy_exec_if_exist /usr/lib/libnvidia-cfg.so /usr/lib
+    copy_exec_if_exist /usr/lib/libXvMCNVIDIA.so /usr/lib
+    copy_exec_if_exist /usr/lib/xorg/modules/extensions/libglx.so /usr/lib/xorg/modules/extensions
 fi

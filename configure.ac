@@ -1,4 +1,4 @@
-AC_INIT([xsplashaa], [0.4.0], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
+AC_INIT([xsplashaa], [0.4.1], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
 AC_CONFIG_SRCDIR(src/xsaa-main.vala)
 AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE([dist-bzip2])
@@ -22,8 +22,8 @@ dnl Packages version required
 dnl ****************************************************************************
 GLIB_REQUIRED=2.12.0
 GTK_REQUIRED=2.10.0
-VALA_REQUIRED=0.7.5
-SSIGTKEXTRAS_REQUIRED=0.2.0
+VALA_REQUIRED=0.7.10
+SSIGTKEXTRAS_REQUIRED=0.5.0
 
 dnl ****************************************************************************
 dnl Check for vala
@@ -47,10 +47,23 @@ PKG_CHECK_MODULES(XSPLASHAA, [glib-2.0 >= $GLIB_REQUIRED
                               gobject-2.0 >= $GLIB_REQUIRED 
                               gtk+-2.0 >= $GTK_REQUIRED
                               dbus-glib-1
-                              gudev-1.0
                               vala-1.0 >= $VALA_REQUIRED
                               gee-1.0
                               ssi-gtk-extras >= $SSIGTKEXTRAS_REQUIRED])
+
+dnl ****************************************************************************
+dnl Check for gudev
+dnl ****************************************************************************
+PKG_CHECK_MODULES(XSPLASHAA_UDEV, [gudev], [have_gudev="yes"], [have_gudev="no"])
+if test x"$have_gudev" = xyes; then
+    XSPLASHAA_CFLAGS="$XSPLASHAA_CFLAGS $XSPLASHAA_UDEV_CFLAGS"
+    XSPLASHAA_LIBS="$XSPLASHAA_LIBS $XSPLASHAA_UDEV_LIBS"
+else
+    PKG_CHECK_MODULES(XSPLASHAA_HAL, [hal])
+    XSPLASHAA_CFLAGS="$XSPLASHAA_CFLAGS $XSPLASHAA_HAL_CFLAGS"
+    XSPLASHAA_LIBS="$XSPLASHAA_LIBS $XSPLASHAA_HAL_LIBS"
+fi
+AM_CONDITIONAL(ENABLE_HAL, [test x$have_gudev = xno])
 AC_SUBST(XSPLASHAA_CFLAGS)
 AC_SUBST(XSPLASHAA_LIBS)
 

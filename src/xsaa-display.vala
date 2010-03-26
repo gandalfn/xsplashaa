@@ -1,6 +1,6 @@
 /* xsaa-display.vala
  *
- * Copyright (C) 2009  Nicolas Bruguier
+ * Copyright (C) 2009-2010  Nicolas Bruguier
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -30,28 +30,28 @@ namespace XSAA
         COMMAND,
         LAUNCH
     }
-    
+
     class Display : GLib.Object
     {
         uint sig_handled = 0;
         static bool is_ready = false;
         Pid pid = (Pid)0;
         int number;
-        
+
         public signal void ready();
         public signal void exited();
         public signal void died();
-        
+
         public Display(string cmd, int number) throws DisplayError
         {
             this.number = number;
-            
+
             if (sig_handled == 0)
             {
                 if (!get_running_pid())
                 {
                     string[] argvp;
-                        
+
                     try
                     {
                         Shell.parse_argv(cmd, out argvp);
@@ -61,7 +61,7 @@ namespace XSAA
                         throw new DisplayError.COMMAND("Invalid %s command !!", 
                                                        cmd);
                     }
-                    
+
                     sig_handled = Idle.add(on_wait_is_ready);
                     signal(SIGUSR1, on_sig_usr1);    
 
@@ -71,7 +71,7 @@ namespace XSAA
                                             SpawnFlags.SEARCH_PATH |
                                             SpawnFlags.DO_NOT_REAP_CHILD, 
                                             on_child_setup, out pid);
-                        ChildWatch.add((Pid)pid, on_child_watch);        
+                        ChildWatch.add((Pid)pid, on_child_watch);
                     }
                     catch (SpawnError err)
                     {
@@ -80,12 +80,12 @@ namespace XSAA
                         signal(SIGUSR1, SIG_IGN);
                         throw new DisplayError.LAUNCH(err.message);
                     }
-                }    
-            	else
-		        {
+                }
+                else
+                {
                     sig_handled = Idle.add(on_wait_is_ready);
-		            is_ready = true;
-		        }
+                    is_ready = true;
+                }
             }
         }
 
@@ -93,7 +93,7 @@ namespace XSAA
         {
             if ((int)pid > 0) kill((pid_t)pid, SIGTERM);
         }
-        
+
         private void
         on_child_setup()
         {
@@ -121,7 +121,7 @@ namespace XSAA
             Process.close_pid(pid);
             this.pid = (Pid)0;
         }
-        
+
         private bool
         on_wait_is_ready()
         {
@@ -141,13 +141,13 @@ namespace XSAA
         get_running_pid()
         {
             string spid = null;
-            
+
             try
             {
-		        setenv("DISPLAY", ":" + number.to_string(), 1);
+                setenv("DISPLAY", ":" + number.to_string(), 1);
                 Process.spawn_command_line_sync("/usr/lib/ConsoleKit/ck-get-x11-server-pid", out spid);
-		        spid.strip();
-		        GLib.stderr.printf("Found X server at pid %s\n", spid);
+                spid.strip();
+                GLib.stderr.printf("Found X server at pid %s\n", spid);
                 if (spid != null)
                 {
                     pid = (Pid)spid.to_int();
@@ -166,17 +166,17 @@ namespace XSAA
         get_device()
         {
             string device = null;
-            
+
             try
             {
                 Process.spawn_command_line_sync("/usr/lib/ConsoleKit/ck-get-x11-display-device --display=:" 
                                                 + number.to_string(), out device);
-		        device.strip();
+                device.strip();
 
                 int vt;
                 device.scanf("/dev/tty%i", out vt);
                 device = "/dev/tty" + vt.to_string();
-                
+
                 int fd = open(device, O_RDWR);
                 if (fd > 0)
                 {
@@ -196,7 +196,7 @@ namespace XSAA
                     cfsetispeed(tty_attr, 9600);
                     cfsetospeed(tty_attr, 9600);
                     tcsetattr(fd, TCSANOW, tty_attr);
-                    
+
                     close(fd);
                 }
             }

@@ -17,7 +17,7 @@ namespace X
         public string data;
         
         [CCode (cheader_filename = "X11/Xauth.h", cname="XauReadAuth")]
-        public static weak Auth? read(FileStream f);
+        public static unowned Auth? read(FileStream f);
         [CCode (cheader_filename = "X11/Xauth.h", cname="XauWriteAuth", instance_pos=-1)]
         public int write(FileStream f);
         [CCode (cheader_filename = "X11/Xauth.h", cname="XauDisposeAuth")]

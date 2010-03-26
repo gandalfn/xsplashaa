@@ -1,6 +1,6 @@
 /* xsaa-session.vala
  *
- * Copyright (C) 2009  Nicolas Bruguier
+ * Copyright (C) 2009-2010  Nicolas Bruguier
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -67,21 +67,21 @@ namespace XSAA
         public signal void authenticated();
         public signal void info (string msg);
         public signal void error_msg (string msg);
-        
+
         public Session(DBus.Connection conn, ConsoleKit.Manager manager, 
                        string service, string user, int display, string device) throws SessionError
         {
             ck_manager = manager;
-            
+
             passwd = getpwnam(user);
             if (passwd == null)
             {
                 this.unref();
                 throw new SessionError.USER("%s doesn't exist!", user);
             }
-            
+
             generate_xauth(user, display);
-            
+
             try
             {
                 pam = new PamSession(service, user, display, xauth_file, device);
@@ -112,7 +112,7 @@ namespace XSAA
                 kill((pid_t)pid, SIGKILL);
             pid = (Pid)0;
         }
-        
+
         private void
         generate_xauth(string user, int display) throws SessionError
         {
@@ -158,7 +158,7 @@ namespace XSAA
                 throw new SessionError.XAUTH("Error on generate " + xauth_file);
             }
         }
-        
+
         private void
         register()
         {
@@ -171,27 +171,27 @@ namespace XSAA
             display_val.set_string(display_num);
             ConsoleKit.SessionParameter x11display = 
                 ConsoleKit.SessionParameter("x11-display", display_val);
-            
+
             Value display_dev_val = Value (typeof(string));
             display_dev_val.set_string(device_num);
             ConsoleKit.SessionParameter x11displaydev = 
                 ConsoleKit.SessionParameter("x11-display-device", display_dev_val);
-            
-	        Value is_local_val = Value (typeof(bool));
+
+            Value is_local_val = Value (typeof(bool));
             is_local_val.set_boolean(true);
             ConsoleKit.SessionParameter islocal = 
                 ConsoleKit.SessionParameter("is-local", is_local_val);
 
-	        Value is_active = Value (typeof(bool));
+            Value is_active = Value (typeof(bool));
             is_active.set_boolean(true);
             ConsoleKit.SessionParameter active = 
                 ConsoleKit.SessionParameter("active", is_active);
 
             ConsoleKit.SessionParameter[] parameters = {unixuser,
                                                         x11display,
-							                            x11displaydev,
-							                            active,
-							                            islocal};
+                                                        x11displaydev,
+                                                        active,
+                                                        islocal};
 
             try
             {
@@ -202,7 +202,7 @@ namespace XSAA
                 GLib.stderr.printf("Error on open session\n");
             }
         }
-        
+
         private void
         on_child_setup()
         {
@@ -217,12 +217,12 @@ namespace XSAA
                 exit(1);
             }
 
-	        if (setsid() < 0)
-	        {
+            if (setsid() < 0)
+            {
                 error_msg("Error on user authentification");
                 GLib.stderr.printf("Error on change user\n");
                 exit(1);
-	        }
+            }
 
             if (setuid(passwd.pw_uid) < 0)
             {
@@ -236,11 +236,11 @@ namespace XSAA
             setenv("XAUTHORITY", xauth_file, 1);
             setenv("XDG_SESSION_COOKIE", cookie, 1);
             setenv("DISPLAY", display_num, 1);
-            
+
             int fd = open ("/dev/null", O_RDONLY);
             dup2 (fd, 0);
             close (fd);
-	
+
             fd = open(passwd.pw_dir + "/.xsession-errors", 
                       O_TRUNC | O_CREAT | O_WRONLY, 0644);
             dup2 (fd, 1);
@@ -275,7 +275,7 @@ namespace XSAA
         {
             return pass;
         }
-        
+
         private void
         on_info(string text)
         {
@@ -300,14 +300,14 @@ namespace XSAA
             GLib.stderr.printf("Authenticate \n");
             authenticated();
         }
-        
+
         public void
         launch(string cmd) throws SessionError
         {
             string[] argvp;
 
             register();
-            
+
             try
             {
                 Shell.parse_argv(cmd, out argvp);
@@ -317,14 +317,14 @@ namespace XSAA
                 throw new SessionError.COMMAND("Invalid %s command !!", 
                                                cmd);
             }
-               
+
             try
             {
                 Process.spawn_async(null, argvp, null, 
                                     SpawnFlags.SEARCH_PATH |
                                     SpawnFlags.DO_NOT_REAP_CHILD, 
                                     on_child_setup, out pid);
-                ChildWatch.add((Pid)pid, on_child_watch);        
+                ChildWatch.add((Pid)pid, on_child_watch);
             }
             catch (GLib.Error err)
             {

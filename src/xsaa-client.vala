@@ -1,6 +1,6 @@
 /* xsaa-client.vala
  *
- * Copyright (C) 2009  Nicolas Bruguier
+ * Copyright (C) 2009-2010  Nicolas Bruguier
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -29,19 +29,19 @@ namespace XSAA
         public Client(string socket_name) throws SocketError
         {
             base(socket_name);
-            
+
             fcntl(fd, O_NONBLOCK);
 
             if (Posix.connect(fd, ref saddr, 110) != 0)
-	        {
-	            this.unref();
-				throw new SocketError.CREATE("error on connect %s", 
+            {
+                this.unref();
+                throw new SocketError.CREATE("error on connect %s", 
                                              socket_name);
-	        }
+            }
         }
     }
 
-    
+
     const OptionEntry[] option_entries = 
     {
         { "ping", 'p', 0, OptionArg.NONE, ref ping, "Ping", null },
@@ -70,7 +70,7 @@ namespace XSAA
     static bool left_to_right = false;
     static string socket_name;
     static Client client;
-    
+
     static int
     handle_quit()
     {
@@ -93,7 +93,7 @@ namespace XSAA
     handle_dbus()
     {
         client.send("dbus");
-        
+
         return 0;
     }
 
@@ -101,7 +101,7 @@ namespace XSAA
     handle_session()
     {
         client.send("session");
-        
+
         return 0;
     }
 
@@ -117,12 +117,12 @@ namespace XSAA
         return 0;
     }
 
-    
+
     static int
     handle_phase()
     {
         client.send("phase=" + (phase - 1).to_string());
-        
+
         return 0;
     }
 
@@ -130,7 +130,7 @@ namespace XSAA
     handle_progress()
     {
         client.send("progress=" + progress.to_string());
-        
+
         return 0;
     }
 
@@ -138,7 +138,7 @@ namespace XSAA
     handle_right_to_left()
     {
         client.send("right-to-left");
-        
+
         return 0;
     }
 
@@ -146,7 +146,7 @@ namespace XSAA
     handle_left_to_right()
     {
         client.send("left-to-right");
-        
+
         return 0;
     }
 
@@ -154,7 +154,7 @@ namespace XSAA
     handle_pulse()
     {
         client.send("pulse");
-        
+
         return 0;
     }
 
@@ -162,7 +162,7 @@ namespace XSAA
     handle_close_session()
     {
         client.send("close-session");
-        
+
         return 0;
     }
 
@@ -170,7 +170,7 @@ namespace XSAA
     main (string[] args) 
     {
         socket_name = "/tmp/xsplashaa-socket";
-	    try 
+        try 
         {
             var opt_context = new OptionContext("- Xsplashaa client");
             opt_context.set_help_enabled(true);
@@ -212,7 +212,7 @@ namespace XSAA
             return handle_left_to_right();
         else if (close_session)
             return handle_close_session();
-        
-		return -1;
-	}
+
+        return -1;
+    }
 }

@@ -1,6 +1,6 @@
 /* xsaa-socket.vala
  *
- * Copyright (C) 2009  Nicolas Bruguier
+ * Copyright (C) 2009-2010  Nicolas Bruguier
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -28,20 +28,20 @@ namespace XSAA
     public errordomain SocketError
     {
         INVALID_NAME,
-		CREATE
+        CREATE
     }
 
     public class Socket : GLib.Object
     {
         private static int BUFFER_LENGTH = 200;
-        
+
         protected string filename;
         protected int fd = 0;
         protected sockaddr_un saddr;
         protected IOChannel ioc;
 
         public signal void @in();
-        
+
         public Socket(string socket_name) throws SocketError
         {
             int state = 1;
@@ -49,7 +49,7 @@ namespace XSAA
             if (socket_name.len() == 0)
             {
                 this.unref();
-				throw new SocketError.INVALID_NAME("error socket name is empty");
+                throw new SocketError.INVALID_NAME("error socket name is empty");
             }
             filename = socket_name;
             
@@ -57,7 +57,7 @@ namespace XSAA
             if (fd < 0)
             {
                 this.unref();
-				throw new SocketError.CREATE("error on create socket %s", 
+                throw new SocketError.CREATE("error on create socket %s", 
                                              socket_name);
             }
 
@@ -65,7 +65,7 @@ namespace XSAA
                            &state, sizeof(int)) != 0)
             {
                 this.unref();
-				throw new SocketError.CREATE("error on setsockopt socket %s", 
+                throw new SocketError.CREATE("error on setsockopt socket %s", 
                                              socket_name);
             }
 
@@ -76,14 +76,14 @@ namespace XSAA
             try
             {
                 ioc = new IOChannel.unix_new(fd);
-	            ioc.set_encoding(null);
-	            ioc.set_buffered(false);
+                ioc.set_encoding(null);
+                ioc.set_buffered(false);
                 ioc.add_watch(IOCondition.IN, on_in_data);
             }
             catch (GLib.Error err)
             {
                 this.unref();
-				throw new SocketError.CREATE("error on create stream %s", 
+                throw new SocketError.CREATE("error on create stream %s", 
                                              err.message);
             }
         }
@@ -97,10 +97,10 @@ namespace XSAA
         on_in_data(IOChannel client, IOCondition condition)
         {
             in();
-            
+
             return true;
         }
-        
+
         public bool
         send(string message)
         {
@@ -112,7 +112,7 @@ namespace XSAA
         {
             char[] buffer = new char[BUFFER_LENGTH];
             size_t bytes_read = 0;
-            
+
             try
             {
                 ioc.read_chars(buffer, out bytes_read);
@@ -132,5 +132,3 @@ namespace XSAA
         }
     }
 }
-
-        

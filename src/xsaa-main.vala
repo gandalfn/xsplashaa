@@ -1,6 +1,6 @@
 /* xsaa-main.vala
  *
- * Copyright (C) 2009  Nicolas Bruguier
+ * Copyright (C) 2009-2010  Nicolas Bruguier
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,13 +26,13 @@ using Config;
 
 [DBus (name = "fr.supersonicimagine.XSAA.Manager")] 
 public interface XSAA.Manager : DBus.Object 
-{ 
+{
     public abstract bool open_session (string user, int display, string device, bool autologin, out DBus.ObjectPath? path) throws DBus.Error; 
     public abstract void close_session(DBus.ObjectPath path) throws DBus.Error;
     public abstract void reboot() throws DBus.Error;
     public abstract void halt() throws DBus.Error;
 }
-    
+
 [DBus (name = "fr.supersonicimagine.XSAA.Manager.Session")] 
 public interface XSAA.Session : DBus.Object 
 { 
@@ -54,23 +54,23 @@ namespace XSAA
     const string SHUTDOWN_FILENAME = "/tmp/xsplashaa-shutdown";
     static Daemon? daemon = null;
     static bool shutdown = false;
-    
+
     errordomain DaemonError
     {
         DISABLED
     }
-    
+
     public class Daemon : GLib.Object
     {
         bool enable = true;
-	bool first_start = true;
+        bool first_start = true;
         bool test_only = false;
         bool have_keyboard = false;
 
         uint id_idle = 0;
-        
-	public string[] args;
-        
+
+        public string[] args;
+
         Server socket;
         Splash splash;
         Display display;
@@ -78,7 +78,7 @@ namespace XSAA
         dynamic DBus.Object bus = null;
         XSAA.InputDevice input = null;
         XSAA.Manager manager = null;
-        
+
         string server = "/usr/bin/Xorg";
         int number = 0;
         string device = "/dev/tty1";
@@ -91,16 +91,16 @@ namespace XSAA
         XSAA.Session session = null;
 
         public jmp_buf env;
-        
+
         public Daemon(string socket_name, bool test_only = false) throws GLib.Error
         {
             load_config();
 
             this.test_only = test_only;
-            
+
             if (!enable)
                 throw new DaemonError.DISABLED("Use gdm instead xsplashaa");
-            
+
             string cmd = server + " :" + number.to_string() + " " + options;
             try
             {
@@ -111,7 +111,7 @@ namespace XSAA
                     display.died.connect(on_display_exit);
                     display.exited.connect(on_display_exit);
                 }
-                
+
                 socket = new Server(socket_name);
                 socket.dbus.connect(on_dbus_ready);
                 socket.session.connect(on_session_ready);
@@ -151,7 +151,7 @@ namespace XSAA
         }
 
         ~Daemon()
-	    {
+        {
             if (manager != null && path != null)
             {
                 manager.close_session(path);
@@ -159,7 +159,7 @@ namespace XSAA
             }
 
             manager = null;
-	    }
+        }
 
         private void
         change_to_display_vt()
@@ -169,7 +169,7 @@ namespace XSAA
             device.scanf("/dev/tty%i", out vt);
             change_vt(vt);
         }
-        
+
         private void
         on_display_ready()
         {
@@ -177,7 +177,7 @@ namespace XSAA
             {
                 putenv("DISPLAY=:" + number.to_string());
 
-                Gtk.init_check(ref args);			
+                Gtk.init_check(ref args);
                 var display = Gdk.Display.open(":" + number.to_string());
                 var manager = Gdk.DisplayManager.get();
                 manager.set_default_display(display);
@@ -187,7 +187,7 @@ namespace XSAA
             {
                 Gtk.init(ref args);
             }
-            
+
             splash = new Splash(socket);
             splash.login.connect(on_login_response);
             splash.restart.connect(on_restart_request);
@@ -196,7 +196,7 @@ namespace XSAA
             shutdown |= GLib.FileUtils.test(SHUTDOWN_FILENAME, GLib.FileTest.EXISTS);
             if (shutdown) 
                 on_init_shutdown();
-	        else if (!first_start) 
+            else if (!first_start) 
                 on_dbus_ready();
         }
 
@@ -210,14 +210,14 @@ namespace XSAA
         open_session(string username, bool autologin)
         {
             bool ret = false;
-            
+
             try
             {
                 if (conn == null)
                 {
                     conn = DBus.Bus.get (DBus.BusType.SYSTEM);
                 }
-                
+
                 if (manager == null)
                 {
                     manager = (XSAA.Manager)conn.get_object ("fr.supersonicimagine.XSAA.Manager", 
@@ -245,7 +245,7 @@ namespace XSAA
             catch (GLib.Error err)
             {
                 GLib.stderr.printf("Error on launch session: %s\n", err.message);
-            }       
+            }
 
             return ret;
         }
@@ -295,17 +295,17 @@ namespace XSAA
                 }
 
                 GLib.stderr.printf("Connect to udev\n");
-		
-                input = new XSAA.InputDevice (conn, number);
-                if (input == null)
+
+                try
                 {
-                    GLib.stderr.printf("Error on create input device\n");
-                }
-		else
-		{
+                    input = new XSAA.InputDevice (conn, number);
                     input.keyboard_added.connect(on_keyboard_added);
                     input.start ();
-		}
+                }
+                catch (Error err)
+                {
+                    GLib.stderr.printf("Error on create input device : %s\n", err.message);
+                }
             }
         }
 
@@ -314,14 +314,18 @@ namespace XSAA
         {
             foreach (string name in names) 
             {
-                if (name == "org.x.config.display" + number.to_string()) 
+#if USE_HAL
+                if (name == "org.freedesktop.Hal")
+#else
+                if (name == "org.x.config.display" + number.to_string())
+#endif
                 {
                     activate_input();
                     break;
                 }
             }
         }
-        
+
         private bool 
         on_idle_ready () 
         {
@@ -330,7 +334,7 @@ namespace XSAA
             try 
             {
                 bus.list_names (on_list_names_reply);
-            } 
+            }
             catch (GLib.Error e) 
             {
                 GLib.stderr.printf ("Can't list: %s\n", e.message);
@@ -342,12 +346,16 @@ namespace XSAA
         private void 
         on_name_owner_changed (DBus.Object sender, string name, string old_owner, string new_owner) 
         {
+#if USE_HAL
+            if (name == "org.freedesktop.Hal" && new_owner != "" && old_owner == "")
+#else
             if (name == "org.x.config.display" + number.to_string() && new_owner != "" && old_owner == "")
+#endif
             {
                 activate_input ();
             }
         }
-        
+
         private void
         on_dbus_ready()
         {
@@ -368,7 +376,7 @@ namespace XSAA
             catch (GLib.Error err)
             {
                 GLib.stderr.printf("Error on get dbus connection\n");
-            }          
+            }
         }
 
         private void
@@ -423,8 +431,8 @@ namespace XSAA
                 }  
                 shutdown = true;
             }
-            splash.show();   
-            splash.show_shutdown();            
+            splash.show();
+            splash.show_shutdown();
         }
 
         private void
@@ -442,7 +450,7 @@ namespace XSAA
             }
             splash.show_shutdown();
         }
-        
+
         private void
         on_shutdown_request()
         {
@@ -470,7 +478,7 @@ namespace XSAA
         on_quit()
         {
             Gtk.main_quit();
-        }       
+        }
 
         private void
         on_session_info(string msg)
@@ -493,7 +501,7 @@ namespace XSAA
             splash.login_message(msg);
             splash.ask_for_login();
         }
-        
+
         private void
         on_error_msg(string msg)
         {
@@ -538,7 +546,7 @@ namespace XSAA
                 GLib.stderr.printf("%s\n", err.message);
             }
         }
-        
+
         private void
         on_login_response(string username, string passwd)
         {
@@ -566,12 +574,12 @@ namespace XSAA
                 splash.ask_for_login();
             }
         }
-        
+
         public void
         run(bool first_start)
         {
             if (test_only) on_display_ready();
-	        this.first_start = first_start;
+            this.first_start = first_start;
             Gtk.main ();
         }
     }
@@ -590,13 +598,13 @@ namespace XSAA
             close(fd);
         }
     }
-        
+
     static int
     on_display_io_error(X.Display display)
     {
-	    GLib.stderr.printf("DISPLAY Error\n");
-	    daemon = null;
-	    return -1;
+        GLib.stderr.printf("DISPLAY Error\n");
+        daemon = null;
+        return -1;
     } 
 
     static void
@@ -607,7 +615,7 @@ namespace XSAA
         else
             exit (-1);
     }
-    
+
     const OptionEntry[] option_entries = 
     {
         { "test-only", 't', 0, OptionArg.NONE, ref test_only, "Test only", null },
@@ -615,7 +623,7 @@ namespace XSAA
     };
 
     static bool test_only = false;
-    
+
     static int 
     main (string[] args) 
     {
@@ -634,10 +642,10 @@ namespace XSAA
 
         if (test_only)
         {
-            try 
-            {         
+            try
+            {
                 daemon = new Daemon (SOCKET_NAME, test_only);
-                daemon.args = args;                    
+                daemon.args = args;
                 daemon.run(true);
                 daemon = null;
             }
@@ -662,20 +670,20 @@ namespace XSAA
             signal(SIGKILL, SIG_IGN);
             int status = -1;
             bool first_start = true;
-	    int nb_start = 0;
+            int nb_start = 0;
             while (status != 0 && nb_start < 5)
             {
                 int ret_fork = fork();
 
                 if (ret_fork == 0)
                 {
-                    try 
+                    try
                     {
                         signal(SIGSEGV, on_sig_term);
                         signal(SIGTERM, on_sig_term);
                         signal(SIGKILL, on_sig_term);
                         daemon = new Daemon (SOCKET_NAME);
-                        daemon.args = args;                    
+                        daemon.args = args;
                         daemon.run(first_start);
                         daemon = null;
                     }
@@ -696,13 +704,13 @@ namespace XSAA
                 {
                     int ret;
                     first_start = false;
-		    nb_start++;
+                    nb_start++;
                     wait(out ret);
                     status = Process.exit_status(ret);
                 }
             }
         }
-        
+
         return 0;
      }
 }

@@ -1,6 +1,6 @@
 /* xsaa-pam.vala
  *
- * Copyright (C) 2009  Nicolas Bruguier
+ * Copyright (C) 2009-2010  Nicolas Bruguier
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -41,7 +41,7 @@ namespace XSAA
     {
         unowned PamSession pam = (PamSession)appdata_ptr;
         resp = new Response[num_msg];
-        
+
         for (int i = 0; i < num_msg; i++)
         {
             unowned Message msg = messages[i];
@@ -70,7 +70,7 @@ namespace XSAA
                     break;
             }
         }
-        
+
         return Pam.SUCCESS;
     }
 
@@ -86,11 +86,11 @@ namespace XSAA
         public signal string passwd();
         public signal void info(string text);
         public signal void error_msg(string text);
-        
+
         public PamSession(string service, string username, int display, string xauth_file, string device) throws PamError
         {
             user = username;
-            
+
             conv = Pam.Conv();
             conv.conv = (void*)on_pam_conversation;
             conv.appdata_ptr = this;
@@ -128,7 +128,7 @@ namespace XSAA
                 pam_xauth.name = auth.name;
                 pam_xauth.datalen = auth.data_length;
                 pam_xauth.data = auth.data;
-				auth.dispose();
+                auth.dispose();
                 if (pam_handle.set_item(XAUTHDATA, ref pam_xauth) != Pam.SUCCESS)
                 {
                     this.unref();
@@ -159,7 +159,7 @@ namespace XSAA
             {
                 throw new PamError.AUTHORIZE("User is not authorized to log in");
             }
-            
+
             if (pam_handle.acct_mgmt(0) != Pam.SUCCESS)
             {
                 throw new PamError.AUTHORIZE("User is not authorized to log in");
@@ -215,7 +215,7 @@ namespace XSAA
             pam_handle.end(Pam.SUCCESS);
             GLib.stderr.printf("Close pam session\n");
         }
-        
+
         public void
         set_env()
         {
