@@ -31,12 +31,12 @@ done
 
 if [ $SPLASH = "true" ]; then
 	mkdir -p $JAIL
-	cp -a /etc $JAIL
-	cp -a /bin $JAIL
-	cp -a /sbin $JAIL
-	cp -a /lib $JAIL
-	cp -a /lib64 $JAIL
-	cp -a /usr $JAIL
+	cp -a /etc $JAIL &
+	cp -a /bin $JAIL &
+	cp -a /sbin $JAIL &
+	cp -a /lib $JAIL &
+	cp -a /lib64 $JAIL &
+	cp -a /usr $JAIL &
 	mkdir -p $JAIL/dev
 	mount /dev $JAIL/dev -o bind
 	mkdir -p $JAIL/sys
@@ -45,7 +45,8 @@ if [ $SPLASH = "true" ]; then
 	mount -t proc none $JAIL/proc
 	mkdir -p $JAIL/tmp
 	mkdir -p $JAIL/var/lib/xkb
-	cp -a /var/lib/defoma $JAIL/var/lib/defoma
+	cp -a /var/lib/defoma $JAIL/var/lib/defoma &
+	wait
 
 cat > $JAIL/bin/launch-xsplashaa << EOF
 #!/bin/sh

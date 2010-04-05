@@ -35,6 +35,7 @@ xsplashaa_x11_common() {
 
 xsplashaa_start () {
     pidof xsplashaa Xorg > /lib/init/rw/sendsigs.omit.d/xsplashaa
+    pidof dbus-daemon > /lib/init/rw/sendsigs.omit.d/xsplashaa-dbus
     $XSPLASHAA_SESSION_DAEMON
     $XSPLASHAA_CLIENT --dbus --socket $XSPLASHAA_SOCKET
     xsplashaa_x11_common
