@@ -34,5 +34,7 @@ namespace X
 
     [CCode (cheader_filename = "X11/X.h", cname="XSetIOErrorHandler")]
     public static int set_io_error_handler(IOErrorHandler handler);
+
+    public const X.Atom XA_INTEGER;
 }
 

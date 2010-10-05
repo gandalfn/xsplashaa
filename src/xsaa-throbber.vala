@@ -19,12 +19,6 @@
  * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
-using GLib;
-using Gdk;
-using Gtk;
-using Posix;
-using Config;
-
 namespace XSAA
 {
     class Throbber : Gtk.Image
@@ -39,14 +33,10 @@ namespace XSAA
         
         public Throbber (string name, uint interval) throws GLib.Error
         {
-            Gdk.Pixbuf spinner = new Gdk.Pixbuf.from_file(PACKAGE_DATA_DIR + 
-                                                          "/" + name + 
-                                                          "/throbber-spinner.png");
+            Gdk.Pixbuf spinner = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + name + "/throbber-spinner.png");
 
-            initial = new Gdk.Pixbuf.from_file(PACKAGE_DATA_DIR + "/" + 
-                                               name + "/throbber-initial.png");
-            finish = new Gdk.Pixbuf.from_file(PACKAGE_DATA_DIR + "/" + name + 
-                                              "/throbber-finish.png");
+            initial = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + name + "/throbber-initial.png");
+            finish = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + name + "/throbber-finish.png");
 
             uint size = initial.get_width() > initial.get_height() ?
                         initial.get_width() : initial.get_height();
@@ -77,7 +67,7 @@ namespace XSAA
         {
             if (id_timeout == 0)
             {
-                id_timeout = Timeout.add(interval, on_timer);
+                id_timeout = GLib.Timeout.add(interval, on_timer);
             }
         }
 
@@ -86,7 +76,7 @@ namespace XSAA
         {
             if (id_timeout != 0)
             {
-                Source.remove(id_timeout);
+                GLib.Source.remove(id_timeout);
                 id_timeout = 0;
             }
         }

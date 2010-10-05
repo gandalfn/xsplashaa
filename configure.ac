@@ -10,7 +10,7 @@ dnl Check for build
 dnl ****************************************************************************
 AC_PROG_CC
 AM_PROG_CC_C_O
-AC_DISABLE_STATIC
+dnl AC_DISABLE_STATIC
 
 dnl ****************************************************************************
 dnl Check for libtool
@@ -22,7 +22,7 @@ dnl Packages version required
 dnl ****************************************************************************
 GLIB_REQUIRED=2.12.0
 GTK_REQUIRED=2.10.0
-VALA_REQUIRED=0.7.10
+VALA_REQUIRED=0.10.0
 SSIGTKEXTRAS_REQUIRED=0.5.0
 
 dnl ****************************************************************************
@@ -47,25 +47,25 @@ PKG_CHECK_MODULES(XSPLASHAA, [glib-2.0 >= $GLIB_REQUIRED
                               gobject-2.0 >= $GLIB_REQUIRED 
                               gtk+-2.0 >= $GTK_REQUIRED
                               dbus-glib-1
-                              vala-1.0 >= $VALA_REQUIRED
-                              gee-1.0
-                              ssi-gtk-extras >= $SSIGTKEXTRAS_REQUIRED])
+                              vala-0.10 >= $VALA_REQUIRED])
 
-dnl ****************************************************************************
-dnl Check for gudev
-dnl ****************************************************************************
-PKG_CHECK_MODULES(XSPLASHAA_UDEV, [gudev], [have_gudev="yes"], [have_gudev="no"])
-if test x"$have_gudev" = xyes; then
-    XSPLASHAA_CFLAGS="$XSPLASHAA_CFLAGS $XSPLASHAA_UDEV_CFLAGS"
-    XSPLASHAA_LIBS="$XSPLASHAA_LIBS $XSPLASHAA_UDEV_LIBS"
-else
-    PKG_CHECK_MODULES(XSPLASHAA_HAL, [hal])
-    XSPLASHAA_CFLAGS="$XSPLASHAA_CFLAGS $XSPLASHAA_HAL_CFLAGS"
-    XSPLASHAA_LIBS="$XSPLASHAA_LIBS $XSPLASHAA_HAL_LIBS"
-fi
-AM_CONDITIONAL(ENABLE_HAL, [test x$have_gudev = xno])
+PKG_CHECK_MODULES(XSPLASHAA_SESSION_DAEMON, [glib-2.0 >= $GLIB_REQUIRED,
+                                             gobject-2.0 >= $GLIB_REQUIRED
+                                             dbus-glib-1
+                                             vala-0.10 >= $VALA_REQUIRED
+                                             xau])
+
+PKG_CHECK_MODULES(XSPLASHAA_CLIENT, [glib-2.0 >= $GLIB_REQUIRED,
+                                     gobject-2.0 >= $GLIB_REQUIRED])
+
 AC_SUBST(XSPLASHAA_CFLAGS)
 AC_SUBST(XSPLASHAA_LIBS)
+
+AC_SUBST(XSPLASHAA_SESSION_DAEMON_CFLAGS)
+AC_SUBST(XSPLASHAA_SESSION_DAEMON_LIBS)
+
+AC_SUBST(XSPLASHAA_CLIENT_CFLAGS)
+AC_SUBST(XSPLASHAA_CLIENT_LIBS)
 
 dnl ****************************************************************************
 dnl Check for chroot-dir
@@ -89,29 +89,30 @@ AC_SUBST(initdir)
 
 AC_CONFIG_FILES([
     Makefile
-	src/Makefile
-	po/Makefile.in
-	data/Makefile
-	data/xsplashaa.desktop
-	data/dbus/Makefile
-	data/dbus/fr.supersonicimagine.XSAA.Manager.service
-	data/init/Makefile
-	data/init/splash-functions
-	data/init/xsplashaa-functions
-	data/init/xsplashaa
-	data/init/xsplashaa-phase2
-	data/init/xsplashaa-phase3
-	data/initramfs/Makefile
-	data/initramfs/hooks/Makefile
-	data/initramfs/hooks/xsplashaa
-	data/initramfs/modules/Makefile
+    src/Makefile
+    po/Makefile.in
+    data/Makefile
+    data/xsplashaa.desktop
+    data/dbus/Makefile
+    data/dbus/fr.supersonicimagine.XSAA.Manager.service
+    data/init/Makefile
+    data/init/splash-functions
+    data/init/xsplashaa-functions
+    data/init/xsplashaa
+    data/init/xsplashaa-phase2
+    data/init/xsplashaa-phase3
+    data/initramfs/Makefile
+    data/initramfs/hooks/Makefile
+    data/initramfs/hooks/xsplashaa
+    data/initramfs/modules/Makefile
     data/initramfs/scripts/Makefile
-	data/initramfs/scripts/xsplashaa
-	data/pam/Makefile
-	data/jail-mount.d/Makefile
-	data/themes/Makefile
-	data/themes/aixplorer/Makefile
-	data/themes/chicken-curie/Makefile
-	data/themes/debian/Makefile])
+    data/initramfs/scripts/xsplashaa
+    data/pam/Makefile
+    data/jail-mount.d/Makefile
+    data/themes/Makefile
+    data/themes/aixplorer/Makefile
+    data/themes/chicken-curie/Makefile
+    data/themes/debian/Makefile
+    data/themes/donut-doopler/Makefile])
 
 AC_OUTPUT

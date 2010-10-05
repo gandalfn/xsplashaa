@@ -19,10 +19,6 @@
  * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
-using GLib;
-using Vala;
-using Posix;
-
 public const string PACKAGE_XAUTH_DIR = "/tmp/xsplashaa-xauth";
 
 [DBus (name = "org.freedesktop.ConsoleKit.Session")] 
@@ -63,7 +59,7 @@ namespace XSAA
     public class SessionManager : GLib.Object
     {
         private DBus.Connection connection;
-        public Map <string, Session> sessions;
+        public Vala.Map <string, Session> sessions;
         private ConsoleKit.Manager manager;
 
         public SessionManager(DBus.Connection conn, dynamic DBus.Object bus)
@@ -74,8 +70,8 @@ namespace XSAA
                                                            "/org/freedesktop/ConsoleKit/Manager",
                                                            "/org/freedesktop/ConsoleKit/Manager");
 
-            sessions = new HashMap <string, Session> (GLib.str_hash, GLib.str_equal);
-            bus.NameOwnerChanged += on_client_lost;
+            sessions = new Vala.HashMap <string, Session> (GLib.str_hash, GLib.str_equal);
+            bus.NameOwnerChanged.connect (on_client_lost);
         }
 
         private void 

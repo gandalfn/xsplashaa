@@ -19,11 +19,6 @@
  * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
-using GLib;
-using Gtk;
-using Posix;
-using DBus;
-
 public struct ConsoleKit.SessionParameter
 {
     public string key;
@@ -55,8 +50,8 @@ namespace XSAA
         private string display_num;
         private string device_num;
 
-        private Pid pid = (Pid)0;
-        unowned Passwd passwd;
+        private GLib.Pid pid = (Pid)0;
+        unowned Posix.Passwd passwd;
         private string pass = null;
         private PamSession pam;
         private string xauth_file;
@@ -73,10 +68,9 @@ namespace XSAA
         {
             ck_manager = manager;
 
-            passwd = getpwnam(user);
+            passwd = Posix.getpwnam(user);
             if (passwd == null)
             {
-                this.unref();
                 throw new SessionError.USER("%s doesn't exist!", user);
             }
 
@@ -91,7 +85,6 @@ namespace XSAA
             }
             catch (PamError err)
             {
-                this.unref();
                 throw new SessionError.USER("Error on create pam session");
             }
 
@@ -109,7 +102,7 @@ namespace XSAA
             if (cookie != null)
                 ck_manager.close_session(cookie);
             if (pid != (Pid)0)
-                kill((pid_t)pid, SIGKILL);
+                Posix.kill((Posix.pid_t)pid, Posix.SIGKILL);
             pid = (Pid)0;
         }
 
@@ -134,11 +127,11 @@ namespace XSAA
 
             auth.family = X.FamilyLocal;
             auth.address = "localhost";
-            auth.address_length = (ushort)"localhost".len();
+            auth.address_length = (ushort)"localhost".length;
             auth.number = display.to_string();
-            auth.number_length = (ushort)display.to_string().len();
+            auth.number_length = (ushort)display.to_string().length;
             auth.name = "MIT-MAGIC-COOKIE-1";
-            auth.name_length = (ushort)"MIT-MAGIC-COOKIE-1".len();
+            auth.name_length = (ushort)"MIT-MAGIC-COOKIE-1".length;
 
             auth.data = "";
 
@@ -153,7 +146,7 @@ namespace XSAA
             auth.write(f);
             f.flush();
             
-            if (chown(xauth_file, passwd.pw_uid, passwd.pw_gid) < 0)
+            if (Posix.chown(xauth_file, passwd.pw_uid, passwd.pw_gid) < 0)
             {
                 throw new SessionError.XAUTH("Error on generate " + xauth_file);
             }
@@ -214,38 +207,38 @@ namespace XSAA
             {
                 error_msg("Invalid user or wrong password");
                 GLib.stderr.printf("Error on open pam session\n");
-                exit(1);
+                Posix.exit(1);
             }
 
-            if (setsid() < 0)
+            if (Posix.setsid() < 0)
             {
                 error_msg("Error on user authentification");
                 GLib.stderr.printf("Error on change user\n");
-                exit(1);
+                Posix.exit(1);
             }
 
-            if (setuid(passwd.pw_uid) < 0)
+            if (Posix.setuid(passwd.pw_uid) < 0)
             {
                 error_msg("Error on user authentification");
                 GLib.stderr.printf("Error on change user\n");
-                exit(1);
+                Posix.exit(1);
             }
 
             pam.set_env();
 
-            setenv("XAUTHORITY", xauth_file, 1);
-            setenv("XDG_SESSION_COOKIE", cookie, 1);
-            setenv("DISPLAY", display_num, 1);
+            Posix.setenv("XAUTHORITY", xauth_file, 1);
+            Posix.setenv("XDG_SESSION_COOKIE", cookie, 1);
+            Posix.setenv("DISPLAY", display_num, 1);
 
-            int fd = open ("/dev/null", O_RDONLY);
-            dup2 (fd, 0);
-            close (fd);
+            int fd = Posix.open ("/dev/null", Posix.O_RDONLY);
+            Posix.dup2 (fd, 0);
+            Posix.close (fd);
 
-            fd = open(passwd.pw_dir + "/.xsession-errors", 
-                      O_TRUNC | O_CREAT | O_WRONLY, 0644);
-            dup2 (fd, 1);
-            dup2 (fd, 2);
-            close (fd);
+            fd = Posix.open(passwd.pw_dir + "/.xsession-errors", 
+                            Posix.O_TRUNC | Posix.O_CREAT | Posix.O_WRONLY, 0644);
+            Posix.dup2 (fd, 1);
+            Posix.dup2 (fd, 2);
+            Posix.close (fd);
         }
 
         private void

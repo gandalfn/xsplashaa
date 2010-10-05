@@ -19,12 +19,6 @@
  * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
-using GLib;
-using Posix;
-using Pam;
-using Vala;
-using X;
-
 namespace XSAA
 {
     errordomain PamError
@@ -37,14 +31,14 @@ namespace XSAA
     }
 
     static int
-    on_pam_conversation(int num_msg, [CCode (array_length = false)]Message[] messages, out Response* resp, void* appdata_ptr)
+    on_pam_conversation(int num_msg, [CCode (array_length = false)]Pam.Message[] messages, out Pam.Response* resp, void* appdata_ptr)
     {
         unowned PamSession pam = (PamSession)appdata_ptr;
-        resp = new Response[num_msg];
+        resp = new Pam.Response[num_msg];
 
         for (int i = 0; i < num_msg; i++)
         {
-            unowned Message msg = messages[i];
+            unowned Pam.Message msg = messages[i];
             switch (msg.msg_style)
             {
                 case Pam.PROMPT_ECHO_ON:
@@ -54,7 +48,7 @@ namespace XSAA
                     GLib.stderr.printf("Echo off message : %s\n", msg.msg);
                     string passwd = pam.passwd();
                     GLib.stderr.printf("Passwd : %s\n", passwd);
-                    resp[i].resp = Memory.dup(passwd, (uint)passwd.len());
+                    resp[i].resp = Memory.dup(passwd, (uint)passwd.length);
                     resp[i].resp_retcode = Pam.SUCCESS;
                     break;
                 case Pam.TEXT_INFO:
@@ -81,7 +75,7 @@ namespace XSAA
         bool openned = false;
         Pam.Handle pam_handle = null;
         Pam.Conv conv;
-        public Map <string, string> envs;
+        public Vala.Map <string, string> envs;
 
         public signal string passwd();
         public signal void info(string text);
@@ -97,25 +91,21 @@ namespace XSAA
 
             if (Pam.start(service, username, conv, out pam_handle) != Pam.SUCCESS)
             {
-                this.unref();
                 throw new PamError.START("Error on pam start");
             }
 
-            if (pam_handle.set_item(TTY, device) != Pam.SUCCESS)
+            if (pam_handle.set_item(Pam.TTY, device) != Pam.SUCCESS)
             {
-                this.unref();
                 throw new PamError.START("Error on set tty");
             }
 
-            if (pam_handle.set_item(RHOST, "localhost") != Pam.SUCCESS)
+            if (pam_handle.set_item(Pam.RHOST, "localhost") != Pam.SUCCESS)
             {
-                this.unref();
                 throw new PamError.START("Error on set rhost");
             }
 
-            if (pam_handle.set_item(XDISPLAY, ":"+display.to_string()) != Pam.SUCCESS)
+            if (pam_handle.set_item(Pam.XDISPLAY, ":"+display.to_string()) != Pam.SUCCESS)
             {
-                this.unref();
                 throw new PamError.START("Error on set display");
             }
 
@@ -129,15 +119,14 @@ namespace XSAA
                 pam_xauth.datalen = auth.data_length;
                 pam_xauth.data = auth.data;
                 auth.dispose();
-                if (pam_handle.set_item(XAUTHDATA, ref pam_xauth) != Pam.SUCCESS)
+                if (pam_handle.set_item(Pam.XAUTHDATA, &pam_xauth) != Pam.SUCCESS)
                 {
-                    this.unref();
                     throw new PamError.START("Error on set xauth");
                 }
             }
 
-            unowned Passwd passwd = getpwnam(user);
-            envs = new HashMap <string, string> (GLib.str_hash, GLib.str_equal);
+            unowned Posix.Passwd passwd = Posix.getpwnam(user);
+            envs = new Vala.HashMap <string, string> (GLib.str_hash, GLib.str_equal);
 
             envs.set("USER", passwd.pw_name);
             envs.set("USERNAME", passwd.pw_name);
@@ -154,7 +143,7 @@ namespace XSAA
                 throw new PamError.AUTHENTICATE("Error on authenticate");
             }
 
-            unowned Passwd passwd = getpwnam(user);
+            unowned Posix.Passwd passwd = Posix.getpwnam(user);
             if (passwd == null)
             {
                 throw new PamError.AUTHORIZE("User is not authorized to log in");
@@ -171,27 +160,27 @@ namespace XSAA
             }
             openned = true;
 
-            if (pam_handle.setcred(ESTABLISH_CRED) != Pam.SUCCESS)
+            if (pam_handle.setcred(Pam.ESTABLISH_CRED) != Pam.SUCCESS)
             {
                 throw new PamError.CREDENTIALS("User is not authorized to log in");
             }
             accredited = true;
 
-            if (setgid(passwd.pw_gid) < 0)
+            if (Posix.setgid(passwd.pw_gid) < 0)
             {
                 throw new PamError.CREDENTIALS("User is not authorized to log in");
             }
 
-            if (initgroups (user, passwd.pw_gid) < 0) 
+            if (Posix.initgroups (user, passwd.pw_gid) < 0) 
             {
                 throw new PamError.CREDENTIALS("User is not authorized to log in");
             }
 
-            setenv("USER", passwd.pw_name, 1);
-            setenv("USERNAME", passwd.pw_name, 1);
-            setenv("LOGNAME", passwd.pw_name, 1);
-            setenv("HOME", passwd.pw_dir, 1);
-            setenv("SHELL", passwd.pw_shell, 1);
+            Posix.setenv("USER", passwd.pw_name, 1);
+            Posix.setenv("USERNAME", passwd.pw_name, 1);
+            Posix.setenv("LOGNAME", passwd.pw_name, 1);
+            Posix.setenv("HOME", passwd.pw_dir, 1);
+            Posix.setenv("SHELL", passwd.pw_shell, 1);
 
             foreach (string env in pam_handle.getenvlist())
             {
@@ -209,7 +198,7 @@ namespace XSAA
             }
             if (accredited)
             {
-                pam_handle.setcred(DELETE_CRED);
+                pam_handle.setcred(Pam.DELETE_CRED);
             }
 
             pam_handle.end(Pam.SUCCESS);
@@ -221,7 +210,7 @@ namespace XSAA
         {
             foreach (string key in envs.get_keys())
             {
-                setenv(key, envs.get(key), 1);
+                Posix.setenv(key, envs.get(key), 1);
                 GLib.stderr.printf("Pam env %s=%s\n", key, envs.get(key));
             }
         }

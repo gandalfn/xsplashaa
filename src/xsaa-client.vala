@@ -19,9 +19,6 @@
  * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
-using GLib;
-using Posix;
-
 namespace XSAA
 {
     public class Client : Socket
@@ -30,11 +27,10 @@ namespace XSAA
         {
             base(socket_name);
 
-            fcntl(fd, O_NONBLOCK);
+            Posix.fcntl(fd, Posix.O_NONBLOCK);
 
-            if (Posix.connect(fd, ref saddr, 110) != 0)
+            if (Posix.connect(fd, &saddr, 110) != 0)
             {
-                this.unref();
                 throw new SocketError.CREATE("error on connect %s", 
                                              socket_name);
             }
@@ -85,7 +81,7 @@ namespace XSAA
         string message;
         if (client.recv(out message))
         {
-            exit(0);
+            Posix.exit(0);
         }
     }
 

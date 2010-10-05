@@ -19,12 +19,6 @@
  * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
-using GLib;
-using Gtk;
-using Posix;
-using Config;
-using SSI;
-
 namespace XSAA
 {
     public class Splash : Gtk.Window
@@ -34,7 +28,7 @@ namespace XSAA
         Throbber throbber_session;
         Throbber throbber_shutdown;
         int current_phase = 0;
-        ProgressBar progress;
+        Gtk.ProgressBar progress;
         SlideNotebook notebook;
         Gtk.Label label_prompt;
         Gtk.Entry entry_prompt;
@@ -76,7 +70,7 @@ namespace XSAA
 
             destroy.connect(Gtk.main_quit);
 
-            var alignment = new Alignment(0.5f, yposition, 0, 0);
+            var alignment = new Gtk.Alignment(0.5f, yposition, 0, 0);
             alignment.show();
             add(alignment);
 
@@ -100,8 +94,7 @@ namespace XSAA
             try
             {
                 Gdk.Pixbuf pixbuf = 
-                    new Gdk.Pixbuf.from_file(PACKAGE_DATA_DIR + "/" + theme +
-                                             "/distrib-logo.png");
+                    new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + theme + "/distrib-logo.png");
 
                 int width, height;
 
@@ -131,7 +124,7 @@ namespace XSAA
             catch (GLib.Error err)
             {
                 GLib.stderr.printf("Error on loading %s: %s", 
-                                   PACKAGE_DATA_DIR + "/" + theme + "/distrib-logo.png",
+                                   Config.PACKAGE_DATA_DIR + "/" + theme + "/distrib-logo.png",
                                    err.message);
             }
 
@@ -149,9 +142,7 @@ namespace XSAA
 
             try
             {
-                Gdk.Pixbuf pixbuf = 
-                    new Gdk.Pixbuf.from_file(PACKAGE_DATA_DIR + "/" + theme +
-                                             "/logo.png");
+                Gdk.Pixbuf pixbuf = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + theme + "/logo.png");
                 int width, height;
                 
                 if (layout == "horizontal")
@@ -178,12 +169,10 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                GLib.stderr.printf("Error on loading %s: %s", 
-                                   PACKAGE_DATA_DIR + "/" + theme + "/logo.png",
-                                   err.message);
+                GLib.stderr.printf("Error on loading %s: %s", Config.PACKAGE_DATA_DIR + "/" + theme + "/logo.png", err.message);
             }
 
-            alignment = new Alignment(0.5f, 0.5f, 0, 0);
+            alignment = new Gtk.Alignment(0.5f, 0.5f, 0, 0);
             alignment.show();
             box_info.pack_start(alignment, true, true, 0);
 
@@ -208,10 +197,9 @@ namespace XSAA
             table_progress.set_row_spacings(12);
             vbox.pack_start(table_progress, false, false, 12);
 
-            progress = new ProgressBar();
+            progress = new Gtk.ProgressBar();
             progress.show();
-            table_progress.attach(progress, 2, 3, 0, 1, 
-                                  AttachOptions.EXPAND | AttachOptions.FILL, 
+            table_progress.attach(progress, 2, 3, 0, 1, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 
                                   0, 0, 0);
 
             on_start_pulse();
@@ -220,13 +208,12 @@ namespace XSAA
         private void
         load_config()
         {
-            if (FileUtils.test(PACKAGE_CONFIG_FILE, FileTest.EXISTS))
+            if (FileUtils.test(Config.PACKAGE_CONFIG_FILE, FileTest.EXISTS))
             {
                 try
                 {
                     KeyFile config = new KeyFile();
-                    config.load_from_file(PACKAGE_CONFIG_FILE, 
-                                          KeyFileFlags.NONE);
+                    config.load_from_file(Config.PACKAGE_CONFIG_FILE, KeyFileFlags.NONE);
                     theme = config.get_string("splash", "theme");
                     layout = config.get_string("splash", "layout");
                     bg = config.get_string("splash", "background");
@@ -235,8 +222,7 @@ namespace XSAA
                 }
                 catch (GLib.Error err)
                 {
-                    GLib.stderr.printf("Error on read %s: %s", 
-                                       PACKAGE_CONFIG_FILE, err.message);
+                    GLib.stderr.printf("Error on read %s: %s", Config.PACKAGE_CONFIG_FILE, err.message);
                 }
             }
         }
@@ -310,7 +296,7 @@ namespace XSAA
         private void
         construct_login_page()
         {
-            var alignment = new Alignment(0.5f, 1.0f, 0, 0);
+            var alignment = new Gtk.Alignment(0.5f, 1.0f, 0, 0);
             alignment.show();
             notebook.append_page(alignment, null);
 
@@ -342,7 +328,7 @@ namespace XSAA
             label_message.show();
             table.attach_defaults(label_message, 0, 4, 1, 2);
 
-            var button_box = new HButtonBox();
+            var button_box = new Gtk.HButtonBox();
             button_box.show();
             button_box.set_spacing(12);
             button_box.set_layout(Gtk.ButtonBoxStyle.END);
@@ -442,20 +428,20 @@ namespace XSAA
         {
             if (id_pulse == 0)
             {
-                id_pulse = Timeout.add(83, on_pulse);
+                id_pulse = GLib.Timeout.add(83, on_pulse);
             }
         }
 
         private void
         on_progress(int val)
         {
-            if (id_pulse > 0) Source.remove(id_pulse);
+            if (id_pulse > 0) GLib.Source.remove(id_pulse);
             id_pulse = 0;
             progress.set_fraction((double)val / (double)100);
         }
 
         private void
-        on_progress_orientation(ProgressBarOrientation orientation)
+        on_progress_orientation(Gtk.ProgressBarOrientation orientation)
         {
             progress.set_orientation(orientation);
         }
@@ -464,10 +450,11 @@ namespace XSAA
         on_login_enter()
         {
             username = entry_prompt.get_text();
-            if (username.len() > 0)
+            GLib.stderr.printf ("Login %s\n", username);
+            if (username.length > 0)
             {
                 set_focus(entry_prompt);
-                entry_prompt.activate -= on_login_enter;
+                entry_prompt.activate.disconnect (on_login_enter);
                 entry_prompt.set_visibility(false);
                 entry_prompt.set_text("");
                 entry_prompt.activate.connect(on_passwd_enter);
@@ -481,7 +468,8 @@ namespace XSAA
         on_passwd_enter()
         {
             entry_prompt.set_sensitive(false);
-            entry_prompt.activate -= on_passwd_enter;
+            entry_prompt.activate.disconnect (on_passwd_enter);
+	    GLib.stderr.printf ("Login %s\n", username);
             login(username, entry_prompt.get_text());
         }
 
@@ -502,14 +490,13 @@ namespace XSAA
         {
             base.realize();
 
-            if (!FileUtils.test(PACKAGE_DATA_DIR + "/" + theme + "/background.png",
-                                FileTest.EXISTS))
+            if (!FileUtils.test(Config.PACKAGE_DATA_DIR + "/" + theme + "/background.png", FileTest.EXISTS))
             {
                 Gdk.Color color;
 
                 Gdk.Color.parse(bg, out color);
-                modify_bg(StateType.NORMAL, color);
-                notebook.modify_bg(StateType.NORMAL, color);
+                modify_bg(Gtk.StateType.NORMAL, color);
+                notebook.modify_bg(Gtk.StateType.NORMAL, color);
 
                 var screen = get_window().get_screen();
                 var root = screen.get_root_window();
@@ -519,18 +506,12 @@ namespace XSAA
             {
                 try
                 {
-                    Gdk.Pixbuf pixbuf = 
-                        new Gdk.Pixbuf.from_file(PACKAGE_DATA_DIR + "/" + 
-                                                 theme + "/background.png");
+                    Gdk.Pixbuf pixbuf = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + theme + "/background.png");
 
-                    Gdk.Pixmap pixmap = new Gdk.Pixmap(window, allocation.width, 
-                                                       allocation.height, -1);
-                    Gdk.Pixbuf scale = 
-                        pixbuf.scale_simple(allocation.width, allocation.height,
-                                            Gdk.InterpType.BILINEAR);
+                    Gdk.Pixmap pixmap = new Gdk.Pixmap(window, allocation.width, allocation.height, -1);
+                    Gdk.Pixbuf scale = pixbuf.scale_simple(allocation.width, allocation.height, Gdk.InterpType.BILINEAR);
 
-                    pixmap.draw_rectangle (style.bg_gc[Gtk.StateType.NORMAL], 
-                                           true, 0, 0, 
+                    pixmap.draw_rectangle (style.bg_gc[Gtk.StateType.NORMAL], true, 0, 0, 
                                            allocation.width, allocation.height);
                     pixmap.draw_pixbuf (style.black_gc, scale, 0, 0, 0, 0, 
                                         allocation.width, allocation.height,
@@ -541,8 +522,8 @@ namespace XSAA
                 }
                 catch (GLib.Error err)
                 {
-                    GLib.stderr.printf("Error on loading %s: %s", 
-                                       PACKAGE_DATA_DIR + "/" + theme + "/background.png",
+                    GLib.stderr.printf("Error on loading %s: %s",
+                                       Config.PACKAGE_DATA_DIR + "/" + theme + "/background.png",
                                        err.message);
                 } 
             }
@@ -592,7 +573,7 @@ namespace XSAA
             entry_prompt.set_visibility(true);
             entry_prompt.set_text("");
             entry_prompt.activate.connect(on_login_enter);
-            if (id_pulse > 0) Source.remove(id_pulse);
+            if (id_pulse > 0) GLib.Source.remove(id_pulse);
             id_pulse = 0;
             progress.hide();
         }

@@ -42,7 +42,11 @@ xsplashaa_start () {
 }
 
 xsplashaa_stop () {
-	$XSPLASHAA_CLIENT --close-session --socket $XSPLASHAA_SOCKET
+    $XSPLASHAA_CLIENT --close-session --socket $XSPLASHAA_SOCKET
+}
+
+xsplashaa_quit () {
+    $XSPLASHAA_CLIENT --quit --socket $XSPLASHAA_SOCKET
 }
 
 xsplashaaa_set_phase() {

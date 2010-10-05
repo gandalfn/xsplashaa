@@ -4,11 +4,8 @@ autostartdir = $(sysconfdir)/xdg/autostart
 
 autostart_DATA = \
     xsplashaa.desktop
-    
-xsplashaaconfdir = $(sysconfdir)/xsplashaa
 
-xsplashaaconf_SCRIPTS = \
-    Xsession
+xsplashaaconfdir = $(sysconfdir)/xsplashaa
 
 xsplashaaconf_DATA = \
     xsplashaa.conf

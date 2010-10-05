@@ -123,7 +123,7 @@ namespace XSAA
             GLib.List<Tuple?> list = new GLib.List<Tuple?> ();
 
             message.set_no_reply (false);
-            message.init_append(iter);
+            message.iter_init_append(iter);
 
             if (iter.open_container (DBus.RawType.ARRAY, "s", iterChild))
             {
@@ -237,7 +237,7 @@ namespace XSAA
                                              iterChild))
                     {
                         Tuple t = Tuple ();
-                        t.key = key.offset("x11_options.".len ());
+                        t.key = key.offset("x11_options.".length);
                         t.val = device.get_property(key);
                         list.prepend(t);
                         iterChild.append_basic (DBus.RawType.STRING, 
@@ -282,7 +282,7 @@ namespace XSAA
                                                         "org.x.config", "remove");
                 message.set_no_reply (false);
                 DBus.RawMessageIter iter = DBus.RawMessageIter ();
-                message.init_append(iter);
+                message.iter_init_append(iter);
                 uint32 v = devices[dev_name];
                 iter.append_basic (DBus.RawType.UINT32, &v);
                 DBus.RawError err = DBus.RawError ();
@@ -338,6 +338,8 @@ namespace XSAA
                 throw new InputError.GET_LIST_DEVICES("Error on get devices list %s", err.message);
             }
 #else
+	    keyboard_added ();
+	    return;
             this.client.uevent.connect (on_udev_event);
 
             foreach (Device device in this.client.query_by_subsystem ("input"))

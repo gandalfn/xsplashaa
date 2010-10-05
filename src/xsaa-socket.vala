@@ -20,7 +20,6 @@
  */
 
 using GLib;
-using Gtk;
 using Posix;
 
 namespace XSAA
@@ -37,7 +36,7 @@ namespace XSAA
 
         protected string filename;
         protected int fd = 0;
-        protected sockaddr_un saddr;
+        protected Posix.SockAddrUn saddr;
         protected IOChannel ioc;
 
         public signal void @in();
@@ -46,9 +45,8 @@ namespace XSAA
         {
             int state = 1;
 
-            if (socket_name.len() == 0)
+            if (socket_name.length == 0)
             {
-                this.unref();
                 throw new SocketError.INVALID_NAME("error socket name is empty");
             }
             filename = socket_name;
@@ -56,22 +54,19 @@ namespace XSAA
             fd = socket(PF_UNIX, SOCK_STREAM, 0);
             if (fd < 0)
             {
-                this.unref();
                 throw new SocketError.CREATE("error on create socket %s", 
                                              socket_name);
             }
 
-            if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, 
-                           &state, sizeof(int)) != 0)
+            if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, out state, sizeof(int)) != 0)
             {
-                this.unref();
                 throw new SocketError.CREATE("error on setsockopt socket %s", 
                                              socket_name);
             }
 
-            saddr = sockaddr_un();
+            saddr = Posix.SockAddrUn();
             saddr.sun_family = AF_UNIX;
-            memcpy(saddr.sun_path, socket_name, socket_name.len());
+            memcpy(saddr.sun_path, socket_name, socket_name.length);
 
             try
             {
@@ -82,7 +77,6 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                this.unref();
                 throw new SocketError.CREATE("error on create stream %s", 
                                              err.message);
             }
@@ -104,7 +98,7 @@ namespace XSAA
         public bool
         send(string message)
         {
-            return write (fd, message, message.len() + 1) > 0;
+            return write (fd, message, message.length + 1) > 0;
         }
 
         public bool

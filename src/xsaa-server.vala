@@ -19,10 +19,6 @@
  * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
-using GLib;
-using Gtk;
-using Posix;
-
 namespace XSAA
 {
     public class Server : Socket
@@ -31,7 +27,7 @@ namespace XSAA
 
         public signal void phase(int val);
         public signal void progress(int val);
-        public signal void progress_orientation(ProgressBarOrientation orientation);
+        public signal void progress_orientation(Gtk.ProgressBarOrientation orientation);
         public signal void dbus();
         public signal void session();
         public signal void pulse();
@@ -40,38 +36,36 @@ namespace XSAA
 
         public Server(string socket_name) throws SocketError
         {
-            unlink(socket_name);
+            Posix.unlink(socket_name);
 
             base(socket_name);
 
-            fcntl(fd, F_SETFD, FD_CLOEXEC);
+            Posix.fcntl(fd, Posix.F_SETFD, Posix.FD_CLOEXEC);
 
-            if (bind(fd, ref saddr, 110) != 0)
+            if (Posix.bind(fd, &saddr, 110) != 0)
             {
-                this.unref();
                 throw new SocketError.CREATE("error on bind socket");
             }
 
-            if (listen (fd, 5) != 0)
+            if (Posix.listen (fd, 5) != 0)
             {
-                this.unref();
                 throw new SocketError.CREATE("error on listen socket");
             }
 
-            chmod (socket_name, 0666);
+            Posix.chmod (socket_name, 0666);
 
             in.connect(on_client_connect);
         }
 
         ~Server()
         {
-            unlink(filename);
+            Posix.unlink(filename);
         }
 
         private void 
         on_client_connect ()
         {
-            int client = accept(fd, null, 0);
+            int client = Posix.accept(fd, null, 0);
             if (client > 0)
             {
                 try
@@ -108,7 +102,7 @@ namespace XSAA
             {
                 GLib.stderr.printf("Error on read socket\n");
             }
-            close(client.unix_get_fd());
+            Posix.close(client.unix_get_fd());
 
             return false;
         }
@@ -119,7 +113,7 @@ namespace XSAA
             if (buffer == "ping")
             {
                 string message = "pong";
-                if (write(client.unix_get_fd(), message, message.len() + 1) == 0)
+                if (Posix.write(client.unix_get_fd(), message, message.length + 1) == 0)
                     GLib.stderr.printf("Error on send pong");
             }
             if (buffer.contains("phase="))
@@ -134,11 +128,11 @@ namespace XSAA
             }
             if (buffer == "left-to-right")
             {
-                progress_orientation(ProgressBarOrientation.LEFT_TO_RIGHT);
+                progress_orientation(Gtk.ProgressBarOrientation.LEFT_TO_RIGHT);
             }
             if (buffer == "right-to-left")
             {
-                progress_orientation(ProgressBarOrientation.RIGHT_TO_LEFT);
+                progress_orientation(Gtk.ProgressBarOrientation.RIGHT_TO_LEFT);
             }
             if (buffer == "pulse")
             {

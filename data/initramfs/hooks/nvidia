@@ -36,7 +36,7 @@ if [ -e /usr/lib/xorg/modules/drivers/nvidia_drv.so ]; then
 
     # Copy needed files
     copy_exec_if_exist /usr/lib/xorg/modules/drivers/nvidia_drv.so /usr/lib/xorg/modules/drivers
-    copy_exec_if_exist /usr/lib/tls/libnvidia-tls.so.1 /usr/lib/tls
+    copy_exec_if_exist /usr/lib/tls/libnvidia-tls.so.256.53 /usr/lib/tls
     copy_exec_if_exist /usr/share/xserver-xorg/pci/nv.ids /usr/share/xserver-xorg/pci
     copy_exec_if_exist /usr/lib/libGL.so /usr/lib
     copy_exec_if_exist /usr/lib/libGLcore.so.1 /usr/lib

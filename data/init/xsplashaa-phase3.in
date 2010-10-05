@@ -1,13 +1,16 @@
-#! /bin/sh
+#!/bin/sh -e
 #
 ### BEGIN INIT INFO
 # Provides:          xsplashaa-phase3
-# Required-Start:    $local_fs
+# Required-Start:    $local_fs xsplashaa-phase2
 # Required-Stop:
+# Should-Start:      xsplashaa-phase2
 # Default-Start:     S
 # Default-Stop:
 # Short-Description: Set Xsplashaa Phase 3
 ### END INIT INFO
+
+. /lib/lsb/init-functions
 
 if [ -r "@initdir@/xsplashaa-functions" ]; then
     . "@initdir@/xsplashaa-functions"
@@ -23,7 +26,10 @@ set -e
 
 case "$1" in
   start)
-	$XSPLASHAA_CLIENT --phase=3 --socket $XSPLASHAA_SOCKET
+	log_action_begin_msg "Setting xsplashaa phase 3 "
+	STATUS=0
+	$XSPLASHAA_CLIENT --phase=3 --socket $XSPLASHAA_SOCKET || STATUS=$?
+	log_action_end_msg $STATUS
 	;;
   stop)
 	;;

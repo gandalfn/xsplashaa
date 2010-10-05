@@ -19,11 +19,6 @@
  * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
-using GLib;
-using Gtk;
-using Posix;
-using Config;
-
 [DBus (name = "fr.supersonicimagine.XSAA.Manager")] 
 public interface XSAA.Manager : DBus.Object 
 {
@@ -65,9 +60,6 @@ namespace XSAA
         bool enable = true;
         bool first_start = true;
         bool test_only = false;
-        bool have_keyboard = false;
-
-        uint id_idle = 0;
 
         public string[] args;
 
@@ -75,8 +67,6 @@ namespace XSAA
         Splash splash;
         Display display;
         DBus.Connection conn = null;
-        dynamic DBus.Object bus = null;
-        XSAA.InputDevice input = null;
         XSAA.Manager manager = null;
 
         string server = "/usr/bin/Xorg";
@@ -90,7 +80,7 @@ namespace XSAA
         DBus.ObjectPath path = null;
         XSAA.Session session = null;
 
-        public jmp_buf env;
+        public Posix.jmp_buf env;
 
         public Daemon(string socket_name, bool test_only = false) throws GLib.Error
         {
@@ -128,13 +118,12 @@ namespace XSAA
         private void
         load_config()
         {
-            if (FileUtils.test(PACKAGE_CONFIG_FILE, FileTest.EXISTS))
+            if (FileUtils.test(Config.PACKAGE_CONFIG_FILE, FileTest.EXISTS))
             {
                 try
                 {
                     KeyFile config = new KeyFile();
-                    config.load_from_file(PACKAGE_CONFIG_FILE, 
-                                          KeyFileFlags.NONE);
+                    config.load_from_file(Config.PACKAGE_CONFIG_FILE, KeyFileFlags.NONE);
                     enable = config.get_boolean("general", "enable");
                     server = config.get_string("display", "server");
                     number = config.get_integer("display", "number");
@@ -144,8 +133,7 @@ namespace XSAA
                 }
                 catch (GLib.Error err)
                 {
-                    GLib.stderr.printf("Error on read %s: %s", 
-                                       PACKAGE_CONFIG_FILE, err.message);
+                    GLib.stderr.printf("Error on read %s: %s", Config.PACKAGE_CONFIG_FILE, err.message);
                 }
             }
         }
@@ -157,8 +145,13 @@ namespace XSAA
                 manager.close_session(path);
                 session = null;
             }
-
+            if (display != null)
+            {
+                display.kill ();
+            }
             manager = null;
+            display = null;
+            GLib.stderr.printf ("Destroy xsplashaa daemon\n");
         }
 
         private void
@@ -175,7 +168,7 @@ namespace XSAA
         {
             if (!test_only) 
             {
-                putenv("DISPLAY=:" + number.to_string());
+                Posix.putenv("DISPLAY=:" + number.to_string());
 
                 Gtk.init_check(ref args);
                 var display = Gdk.Display.open(":" + number.to_string());
@@ -251,24 +244,16 @@ namespace XSAA
         }
 
         private void
-        on_keyboard_added()
-        {
-            if (!have_keyboard) 
-            {
-                have_keyboard = true;
-                start_session();
-            }
-        }
-
-        private void
         start_session ()
         {
-            if (user == null || user.len() == 0)
+            if (user == null || user.length == 0)
             {
+                GLib.stderr.printf ("Ask for login\n");
                 splash.ask_for_login();
             }
             else
             {
+                GLib.stderr.printf ("Open session for use %s\n", user);
                 open_session(user, true);
 
                 try
@@ -284,99 +269,18 @@ namespace XSAA
         }
 
         private void
-        activate_input()
-        {
-            if (input == null)
-            {
-                if (id_idle > 0) 
-                {
-                    Source.remove(id_idle);
-                    id_idle = 0;
-                }
-
-                GLib.stderr.printf("Connect to udev\n");
-
-                try
-                {
-                    input = new XSAA.InputDevice (conn, number);
-                    input.keyboard_added.connect(on_keyboard_added);
-                    input.start ();
-                }
-                catch (Error err)
-                {
-                    GLib.stderr.printf("Error on create input device : %s\n", err.message);
-                }
-            }
-        }
-
-        private void 
-        on_list_names_reply (string[] names, GLib.Error error) 
-        {
-            foreach (string name in names) 
-            {
-#if USE_HAL
-                if (name == "org.freedesktop.Hal")
-#else
-                if (name == "org.x.config.display" + number.to_string())
-#endif
-                {
-                    activate_input();
-                    break;
-                }
-            }
-        }
-
-        private bool 
-        on_idle_ready () 
-        {
-            if (id_idle == 0) return true;
-
-            try 
-            {
-                bus.list_names (on_list_names_reply);
-            }
-            catch (GLib.Error e) 
-            {
-                GLib.stderr.printf ("Can't list: %s\n", e.message);
-            }
-
-            return false;
-        }
-
-        private void 
-        on_name_owner_changed (DBus.Object sender, string name, string old_owner, string new_owner) 
-        {
-#if USE_HAL
-            if (name == "org.freedesktop.Hal" && new_owner != "" && old_owner == "")
-#else
-            if (name == "org.x.config.display" + number.to_string() && new_owner != "" && old_owner == "")
-#endif
-            {
-                activate_input ();
-            }
-        }
-
-        private void
         on_dbus_ready()
         {
-            device = display.get_device();
+            int fd = Posix.open("/var/log/xsplashaa.log", Posix.O_TRUNC | Posix.O_CREAT | Posix.O_WRONLY, 0644);
 
-            try
-            {
-                if (conn == null)
-                {
-                    conn = DBus.Bus.get (DBus.BusType.SYSTEM);
-                    bus = conn.get_object ("org.freedesktop.DBus",
-                                           "/org/freedesktop/DBus",
-                                           "org.freedesktop.DBus");
-                    bus.NameOwnerChanged += on_name_owner_changed;
-                    id_idle = Idle.add(on_idle_ready);
-                }
-            }
-            catch (GLib.Error err)
-            {
-                GLib.stderr.printf("Error on get dbus connection\n");
-            }
+            Posix.dup2 (fd, 1);
+            Posix.dup2 (fd, 2);
+            Posix.close (fd);
+            GLib.stderr.printf ("Open display device\n");
+            device = display.get_device();
+            GLib.stderr.printf ("Start session\n");
+
+            start_session();
         }
 
         private void
@@ -418,11 +322,11 @@ namespace XSAA
             }
             manager = null;
             conn = null;
-            if (!shutdown && setjmp(env) == 0)
+            if (!shutdown && Posix.setjmp(env) == 0)
             {
                 try
                 {
-                    var file = new GLib.IOChannel.file(SHUTDOWN_FILENAME, "w");
+                    IOChannel file = new IOChannel.file(SHUTDOWN_FILENAME, "w");
                     file.set_close_on_unref(true);
                 }
                 catch (GLib.Error err)
@@ -440,7 +344,7 @@ namespace XSAA
         {
             try
             {
-                Process.spawn_command_line_async("shutdown -r now");
+                manager.reboot();
                 manager = null;
                 conn = null;
             }
@@ -456,7 +360,7 @@ namespace XSAA
         {
             try
             {
-                Process.spawn_command_line_async("shutdown -h now");
+                manager.halt();
                 manager = null;
                 conn = null;
             }
@@ -471,13 +375,14 @@ namespace XSAA
         on_display_exit()
         {
             Gtk.main_quit();
-            exit(-1);
+            Posix.exit(-1);
         }
 
         private void
         on_quit()
         {
             Gtk.main_quit();
+            GLib.stderr.printf ("Quit requested\n");
         }
 
         private void
@@ -589,13 +494,13 @@ namespace XSAA
     {
         int fd, rc;
         
-        fd = open ("/dev/tty" + vt.to_string(), O_WRONLY | O_NOCTTY, 0);
+        fd = Posix.open ("/dev/tty" + vt.to_string(), Posix.O_WRONLY | Posix.O_NOCTTY, 0);
         if (fd > 0)
         {
-            rc = ioctl (fd, VT_ACTIVATE, vt);
-            rc = ioctl (fd, VT_WAITACTIVE, vt);
+            rc = Posix.ioctl (fd, Posix.VT_ACTIVATE, vt);
+            rc = Posix.ioctl (fd, Posix.VT_WAITACTIVE, vt);
 
-            close(fd);
+            Posix.close(fd);
         }
     }
 
@@ -611,27 +516,29 @@ namespace XSAA
     on_sig_term(int signum)
     {
         if (shutdown && daemon != null)
-            longjmp(daemon.env, 1);
+            Posix.longjmp(daemon.env, 1);
         else
-            exit (-1);
+            Posix.exit (-1);
     }
 
     const OptionEntry[] option_entries = 
     {
         { "test-only", 't', 0, OptionArg.NONE, ref test_only, "Test only", null },
+        { "no-daemonize", 'd', 0, OptionArg.NONE, ref no_daemon, "Do not run xsplashaa as a daemonn", null },
         { null }
     };
 
     static bool test_only = false;
+    static bool no_daemon = false;
 
     static int 
     main (string[] args) 
     {
         try 
         {
-            var opt_context = new OptionContext("- Xsplashaa");
+            OptionContext opt_context = new OptionContext("- Xsplashaa");
             opt_context.set_help_enabled(true);
-            opt_context.add_main_entries(option_entries, "xsplasaa");
+            opt_context.add_main_entries(option_entries, "xsplashaa");
             opt_context.parse(ref args);
         } 
         catch (OptionError err) 
@@ -658,30 +565,45 @@ namespace XSAA
         }
         else
         {
-            pid_t pid;
-            pid_t ppgid;
+            if (!no_daemon)
+            {
+                if (Posix.daemon (0, 0) < 0)
+                {
+                    GLib.stderr.printf("Error on launch has daemon\n");
+                    return -1;
+                }
+            }
 
-            pid = getpid();
-            ppgid = getpgid(pid);
-            setsid();
-            setpgid(0, ppgid);
+            int fd = Posix.open("/tmp/xsplashaa.log", Posix.O_TRUNC | Posix.O_CREAT | Posix.O_WRONLY, 0644);
 
-            signal(SIGTERM, SIG_IGN);
-            signal(SIGKILL, SIG_IGN);
+            Posix.dup2 (fd, 1);
+            Posix.dup2 (fd, 2);
+            Posix.close (fd);
+
+            Posix.pid_t pid;
+            Posix.pid_t ppgid;
+
+            pid = Posix.getpid();
+            ppgid = Posix.getpgid(pid);
+            Posix.setsid();
+            Posix.setpgid(0, ppgid);
+
+            Posix.signal(Posix.SIGTERM, Posix.SIG_IGN);
+            Posix.signal(Posix.SIGKILL, Posix.SIG_IGN);
             int status = -1;
             bool first_start = true;
             int nb_start = 0;
             while (status != 0 && nb_start < 5)
             {
-                int ret_fork = fork();
+                int ret_fork = Posix.fork();
 
                 if (ret_fork == 0)
                 {
                     try
                     {
-                        signal(SIGSEGV, on_sig_term);
-                        signal(SIGTERM, on_sig_term);
-                        signal(SIGKILL, on_sig_term);
+                        Posix.signal(Posix.SIGSEGV, on_sig_term);
+                        Posix.signal(Posix.SIGTERM, on_sig_term);
+                        Posix.signal(Posix.SIGKILL, on_sig_term);
                         daemon = new Daemon (SOCKET_NAME);
                         daemon.args = args;
                         daemon.run(first_start);
@@ -705,8 +627,9 @@ namespace XSAA
                     int ret;
                     first_start = false;
                     nb_start++;
-                    wait(out ret);
+                    Posix.wait(out ret);
                     status = Process.exit_status(ret);
+                    GLib.stderr.printf ("Child daemon exited with status %i\n", status);
                 }
             }
         }

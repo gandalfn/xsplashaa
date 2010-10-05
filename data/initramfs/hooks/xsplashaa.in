@@ -1,10 +1,10 @@
 #!/bin/sh
 
-PREREQ=""
+PREREQ="udev"
 
 prereqs()
 {
-	echo "$PREREQ"
+    echo "$PREREQ"
 }
 
 copy_exec_if_exist ()
@@ -19,12 +19,12 @@ copy_share_x11 ()
 {
     for d in $(find /usr/share/X11 -type d)
     do
-	    mkdir -p ${DESTDIR}/$d
+        mkdir -p ${DESTDIR}/$d
     done
-    for f in $(find /usr/share/X11 -type f)
+    for f in $(find /usr/share/X11 -type f ! -name "*fonts*")
     do
         d=$(dirname $f)
-	    copy_exec_if_exist $f $d 
+        copy_exec_if_exist $f $d 
     done
 }
 
@@ -32,21 +32,21 @@ copy_themes ()
 {
     for theme in /usr/share/xsplashaa/*
     do
-	    mkdir -p ${DESTDIR}/$theme
-	    copy_exec_if_exist $theme/logo.png $theme
-	    copy_exec_if_exist $theme/distrib-logo.png $theme
-	    copy_exec_if_exist $theme/background.png $theme
-	    copy_exec_if_exist $theme/throbber-initial.png $theme
-	    copy_exec_if_exist $theme/throbber-spinner.png $theme
-	    copy_exec_if_exist $theme/throbber-finish.png $theme 	
+        mkdir -p ${DESTDIR}/$theme
+        copy_exec_if_exist $theme/logo.png $theme
+        copy_exec_if_exist $theme/distrib-logo.png $theme
+        copy_exec_if_exist $theme/background.png $theme
+        copy_exec_if_exist $theme/throbber-initial.png $theme
+        copy_exec_if_exist $theme/throbber-spinner.png $theme
+        copy_exec_if_exist $theme/throbber-finish.png $theme
     done
 }
 
 case $1 in
 prereqs)
-	prereqs
-	exit 0
-	;;
+    prereqs
+    exit 0
+    ;;
 esac
 
 [ -x @prefix@/bin/xsplashaa ] || exit 0
@@ -54,8 +54,10 @@ esac
 . @prefix@/share/initramfs-tools/hook-functions
 
 mkdir -p ${DESTDIR}/sbin
+mkdir -p ${DESTDIR}/bin
 mkdir -p ${DESTDIR}/usr/bin
-mkdir -p ${DESTDIR}/usr/lib/ConsoleKit
+mkdir -p ${DESTDIR}/usr/sbin
+#mkdir -p ${DESTDIR}/usr/lib/ConsoleKit
 mkdir -p ${DESTDIR}/usr/lib/pango/1.6.0/modules/
 mkdir -p ${DESTDIR}/usr/lib/pango/1.6.0/module-files.d/
 mkdir -p ${DESTDIR}/usr/lib/gtk-2.0/2.10.0/loaders/
@@ -79,11 +81,13 @@ mkdir -p ${DESTDIR}/etc/X11/xkb
 copy_themes
 copy_share_x11
 copy_exec_if_exist /sbin/shutdown /sbin
+copy_exec_if_exist /bin/cp /bin
+copy_exec_if_exist /usr/sbin/chroot /usr/sbin
 copy_exec_if_exist /usr/bin/Xorg /usr/bin
 copy_exec_if_exist /usr/bin/xrdb /usr/bin
 copy_exec_if_exist /usr/bin/xkbcomp /usr/bin
 copy_exec_if_exist /usr/bin/setxkbmap /usr/bin
-copy_exec_if_exist @prefix@/bin/xsplashaa /usr/bin
+copy_exec_if_exist /usr/bin/xsplashaa /usr/bin
 copy_exec_if_exist /etc/passwd /etc
 copy_exec_if_exist /etc/shadow /etc
 copy_exec_if_exist /etc/group /etc
@@ -92,12 +96,15 @@ then
     copy_exec_if_exist /etc/X11/xorg.conf /etc/X11
 fi
 copy_exec_if_exist /etc/X11/xkb/base.xml /etc/X11/xkb
-copy_exec_if_exist @sysconfdir@/xsplashaa/xsplashaa.conf /etc/xsplashaa
+copy_exec_if_exist /etc/xsplashaa/xsplashaa.conf /etc/xsplashaa
 copy_exec_if_exist /usr/lib/libGL.so /usr/lib
 copy_exec_if_exist /usr/lib/xorg/protocol.txt /usr/lib/xorg
 copy_exec_if_exist /usr/lib/xorg/modules/drivers/fbdev_drv.so /usr/lib/xorg/modules/drivers
 copy_exec_if_exist /usr/lib/xorg/modules/drivers/vesa_drv.so /usr/lib/xorg/modules/drivers
 copy_exec_if_exist /usr/lib/xorg/modules/linux/libfbdevhw.so /usr/lib/xorg/modules/linux
+copy_exec_if_exist /usr/lib/xorg/modules/input/evdev_drv.so /usr/lib/xorg/modules/input
+copy_exec_if_exist /usr/lib/xorg/modules/input/synaptics_drv.so /usr/lib/xorg/modules/input
+copy_exec_if_exist /usr/lib/xorg/modules/input/wacom_drv.so /usr/lib/xorg/modules/input
 copy_exec_if_exist /usr/lib/xorg/modules/extensions/libextmod.so /usr/lib/xorg/modules/extensions
 copy_exec_if_exist /usr/lib/xorg/modules/extensions/libdbe.so /usr/lib/xorg/modules/extensions
 copy_exec_if_exist /usr/lib/xorg/modules/extensions/libdri2.so /usr/lib/xorg/modules/extensions
@@ -138,8 +145,8 @@ copy_exec_if_exist /usr/share/fonts/X11/Type1/fonts.alias /usr/share/fonts/X11/T
 copy_exec_if_exist /usr/share/fonts/X11/Type1/fonts.dir /usr/share/fonts/X11/Type1
 copy_exec_if_exist /var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType/fonts.alias /var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType
 copy_exec_if_exist /var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType/fonts.dir /var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType
-copy_exec_if_exist /usr/lib/ConsoleKit/ck-get-x11-display-device /usr/lib/ConsoleKit
-copy_exec_if_exist /usr/lib/ConsoleKit/ck-get-x11-server-pid /usr/lib/ConsoleKit
+#copy_exec_if_exist /usr/lib/ConsoleKit/ck-get-x11-display-device /usr/lib/ConsoleKit
+#copy_exec_if_exist /usr/lib/ConsoleKit/ck-get-x11-server-pid /usr/lib/ConsoleKit
 copy_exec_if_exist /usr/share/mime/XMLnamespaces /usr/share/mime
 copy_exec_if_exist /usr/share/mime/globs /usr/share/mime
 copy_exec_if_exist /usr/share/mime/icons /usr/share/mime

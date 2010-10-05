@@ -1,9 +1,8 @@
-#! /bin/sh
+#!/bin/sh
 #
 ### BEGIN INIT INFO
 # Provides:          xsplashaa
-# Should-Start:      console-screen acpid dbus hal network-manager
-# Required-Start:    $local_fs $remote_fs dbus hal
+# Required-Start:    $local_fs $remote_fs dbus
 # Required-Stop:     $local_fs $remote_fs
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
@@ -11,6 +10,10 @@
 # Description:       Debian init script for the Xorg graphical boot
 ### END INIT INFO
 #
+
+set -e
+
+. /lib/lsb/init-functions
 
 if [ -r "@initdir@/xsplashaa-functions" ]; then
     . "@initdir@/xsplashaa-functions"
@@ -26,15 +29,21 @@ set -e
 
 case "$1" in
   start)
+	log_action_begin_msg "Start xsplashaa "
+	STATUS=0
    	if xsplashaa_is_started; then
 	    xsplashaa_jail_mounts
 	    xsplashaa_start
 	fi
+	log_action_end_msg $STATUS
 	;;
   stop)
-    if xsplashaa_is_started; then
-        xsplashaa_stop
+	log_action_begin_msg "Stop xsplashaa "
+	STATUS=0
+    	if xsplashaa_is_started; then
+        	xsplashaa_stop
 	fi
+	log_action_end_msg $STATUS
 	;;
   *)
 	N=/etc/init.d/$NAME

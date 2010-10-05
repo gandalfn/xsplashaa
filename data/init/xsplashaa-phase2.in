@@ -1,13 +1,16 @@
-#! /bin/sh
+#!/bin/sh -e
 #
 ### BEGIN INIT INFO
 # Provides:          xsplashaa-phase2
-# Required-Start:    mountkernfs
+# Required-Start:
 # Required-Stop:
+# Should-Start:      mountkernfs udev mountdevusbfs
 # Default-Start:     S
 # Default-Stop:
 # Short-Description: Set Xsplashaa Phase 2
 ### END INIT INFO
+
+. /lib/lsb/init-functions
 
 if [ -r "@initdir@/xsplashaa-functions" ]; then
     . "@initdir@/xsplashaa-functions"
@@ -23,7 +26,10 @@ set -e
 
 case "$1" in
   start)
-	$XSPLASHAA_CLIENT --phase=2 --socket $XSPLASHAA_SOCKET
+	log_action_begin_msg "Setting xsplashaa phase 2 "
+	STATUS=0
+	$XSPLASHAA_CLIENT --phase=2 --socket $XSPLASHAA_SOCKET || STATUS=$?
+	log_action_end_msg $STATUS
 	;;
   stop)
 	;;
