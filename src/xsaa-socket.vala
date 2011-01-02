@@ -119,7 +119,7 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                GLib.stderr.printf("Error on read socket\n");
+                GLib.critical ("error on read socket");
             }
 
             return false;

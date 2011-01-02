@@ -42,25 +42,24 @@ namespace XSAA
             switch (msg.msg_style)
             {
                 case Pam.PROMPT_ECHO_ON:
-                    GLib.stderr.printf("Echo on message : %s\n", msg.msg);
+                    GLib.message ("echo on message : %s", msg.msg);
                     break;
                 case Pam.PROMPT_ECHO_OFF:
-                    GLib.stderr.printf("Echo off message : %s\n", msg.msg);
+                    GLib.message ("echo off message : %s", msg.msg);
                     string passwd = pam.passwd();
-                    GLib.stderr.printf("Passwd : %s\n", passwd);
                     resp[i].resp = Memory.dup(passwd, (uint)passwd.length);
                     resp[i].resp_retcode = Pam.SUCCESS;
                     break;
                 case Pam.TEXT_INFO:
-                    GLib.stderr.printf("Text info message : %s", msg.msg);
+                    GLib.message ("text info message : %s", msg.msg);
                     pam.info(msg.msg);
                     break;
                 case Pam.ERROR_MSG:
-                    GLib.stderr.printf("Error message : %s", msg.msg);
+                    GLib.message ("error message : %s", msg.msg);
                     pam.error_msg(msg.msg);
                     break;
                 default:
-                    GLib.stderr.printf("unkown message");
+                    GLib.message ("unkown message");
                     break;
             }
         }
@@ -166,12 +165,17 @@ namespace XSAA
             }
             accredited = true;
 
+            if (Posix.initgroups (user, passwd.pw_gid) < 0) 
+            {
+                throw new PamError.CREDENTIALS("User is not authorized to log in");
+            }
+
             if (Posix.setgid(passwd.pw_gid) < 0)
             {
                 throw new PamError.CREDENTIALS("User is not authorized to log in");
             }
 
-            if (Posix.initgroups (user, passwd.pw_gid) < 0) 
+            if (Posix.setuid(passwd.pw_uid) < 0)
             {
                 throw new PamError.CREDENTIALS("User is not authorized to log in");
             }
@@ -186,7 +190,6 @@ namespace XSAA
             {
                 string[] e = env.split("=");
                 envs.set(e[0], e[1]);
-                GLib.stderr.printf("Pam env %s=%s\n", e[0], e[1]);
             }
         }
 
@@ -202,7 +205,13 @@ namespace XSAA
             }
 
             pam_handle.end(Pam.SUCCESS);
-            GLib.stderr.printf("Close pam session\n");
+            GLib.debug ("close pam session");
+        }
+
+        public void
+        add_env (string inKey, string inValue)
+        {
+            envs.set(inKey, inValue);
         }
 
         public void
@@ -211,7 +220,7 @@ namespace XSAA
             foreach (string key in envs.get_keys())
             {
                 Posix.setenv(key, envs.get(key), 1);
-                GLib.stderr.printf("Pam env %s=%s\n", key, envs.get(key));
+                GLib.debug ("pam env %s=%s", key, envs.get(key));
             }
         }
     }

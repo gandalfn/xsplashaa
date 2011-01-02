@@ -1,6 +1,9 @@
 [CCode (cprefix = "", lower_case_cprefix = "")]
 namespace Posix
 {
+    [CCode (cheader_filename = "math.h")]
+    public const double M_PI;
+
     [CCode (cheader_filename = "asm/ioctls.h")]
     public const int TIOCNOTTY;
 
@@ -38,6 +41,9 @@ namespace Posix
 
     [CCode (cheader_filename = "stdlib.h")]
     public int putenv(string env);
+
+    [CCode (cheader_filename = "stdlib.h")]
+    public int unsetenv(string name);
 
     [CCode (cheader_filename = "stdlib.h")]
     public int setenv(string name, string val, int overwrite);

@@ -36,6 +36,8 @@ namespace XSAA
 
         public Server(string socket_name) throws SocketError
         {
+            GLib.debug ("create server: %s", socket_name);
+
             Posix.unlink(socket_name);
 
             base(socket_name);
@@ -65,11 +67,15 @@ namespace XSAA
         private void 
         on_client_connect ()
         {
+            GLib.debug ("client connected");
+
             int client = Posix.accept(fd, null, 0);
             if (client > 0)
             {
                 try
                 {
+                    GLib.debug ("accept client connection");
+
                     IOChannel ioc = new IOChannel.unix_new(client);
                     ioc.set_encoding(null);
                     ioc.set_buffered(false);
@@ -78,7 +84,7 @@ namespace XSAA
                 }
                 catch (IOChannelError err)
                 {
-                    GLib.stderr.printf("Error on accept\n");
+                    GLib.critical ("error on accept");
                 }
             }
         }
@@ -86,6 +92,8 @@ namespace XSAA
         private bool 
         on_client_message (IOChannel client, IOCondition condition)
         {
+            GLib.debug ("received client message");
+
             char[] buffer = new char[BUFFER_LENGTH];
             size_t bytes_read = 0;
 
@@ -100,7 +108,7 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                GLib.stderr.printf("Error on read socket\n");
+                GLib.critical ("error on read socket");
             }
             Posix.close(client.unix_get_fd());
 
@@ -110,48 +118,60 @@ namespace XSAA
         private void 
         handle_client_message(IOChannel client, string buffer)
         {
+            GLib.debug ("handle client message");
+
             if (buffer == "ping")
             {
+                GLib.message ("received ping message");
                 string message = "pong";
                 if (Posix.write(client.unix_get_fd(), message, message.length + 1) == 0)
-                    GLib.stderr.printf("Error on send pong");
+                    GLib.critical ("error on send pong");
             }
             if (buffer.contains("phase="))
             {
                 int val = buffer.split("=")[1].to_int();
+                GLib.message ("received phase message: %i", val);
                 phase(val);
             }
             if (buffer.contains("progress="))
             {
                 int val = buffer.split("=")[1].to_int();
+                GLib.message ("received progress message: %i", val);
                 progress(val);
             }
             if (buffer == "left-to-right")
             {
+                GLib.message ("received left-to-right message");
                 progress_orientation(Gtk.ProgressBarOrientation.LEFT_TO_RIGHT);
             }
             if (buffer == "right-to-left")
             {
+                GLib.message ("received right-to-left message");
                 progress_orientation(Gtk.ProgressBarOrientation.RIGHT_TO_LEFT);
             }
             if (buffer == "pulse")
             {
+                GLib.message ("received pulse message");
                 pulse();
             }
             if (buffer == "dbus")
             {
+                GLib.message ("received dbus message");
                 dbus();
             }
             if (buffer == "session")
             {
+                GLib.message ("received session message");
                 session();
             }
             if (buffer == "close-session")
             {
+                GLib.message ("received close session message");
                 close_session();
             }
             if (buffer == "quit")
             {
+                GLib.message ("received quit message");
                 quit();
             }
         }

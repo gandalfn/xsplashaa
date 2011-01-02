@@ -33,7 +33,7 @@ public interface ConsoleKit.Manager : DBus.Object
     public abstract string 
     open_session_with_parameters (ConsoleKit.SessionParameter[] parameters) throws DBus.Error; 
 
-    public abstract int
+    public abstract bool
     close_session(string cookie) throws DBus.Error;
 
     public abstract DBus.ObjectPath?
@@ -77,7 +77,6 @@ namespace XSAA
         private void 
         on_client_lost (DBus.Object sender, string name, string prev, string newp) 
         {
-            GLib.stderr.printf("Lost session %s\n", name);
             sessions.remove (prev);
         }
 
@@ -92,13 +91,13 @@ namespace XSAA
                 if (autologin) service = "xsplashaa-autologin";
 
                 var session = new Session(connection, manager, service, user, display, device);
-                GLib.stderr.printf("Open session %s\n", path);
+                GLib.message ("open session %s", path);
                 connection.register_object(path, session);
                 sessions.set(path, session);
             }
             catch (GLib.Error err)
             {
-                GLib.stderr.printf("Error on create session : %s", err.message);
+                GLib.critical ("error on create session : %s", err.message);
                 return false;
             }
 
@@ -108,33 +107,35 @@ namespace XSAA
         public void
         close_session(DBus.ObjectPath? path)
         {
-            GLib.stderr.printf("Close session %s\n", path);
+            GLib.debug ("close session %s", path);
             sessions.remove(path);
         }
 
         public void
         reboot()
         {
+            GLib.debug ("reboot");
             try
             {
                 manager.restart();
             }
             catch (DBus.Error err)
             {
-                GLib.stderr.printf("Error on ask reboot %s\n", err.message);
+                GLib.critical ("error on ask reboot %s", err.message);
             }
         }
 
         public void
         halt()
         {
+            GLib.debug ("halt");
             try
             {
                 manager.stop();
             }
             catch (DBus.Error err)
             {
-                GLib.stderr.printf("Error on ask halt %s\n", err.message);
+                GLib.critical ("error on ask halt %s", err.message);
             }
         }
     }
@@ -150,6 +151,10 @@ namespace XSAA
     static int
     main (string[] args) 
     {
+        GLib.Log.set_default_handler (Log.syslog_log_handler);
+
+        GLib.debug ("start");
+
         try
         {
             var opt_context = new OptionContext("- Xsplashaa session daemon");
@@ -159,7 +164,7 @@ namespace XSAA
         }
         catch (OptionError err) 
         {
-            GLib.stderr.printf("Option parsing failed: %s\n", err.message);
+            GLib.critical ("option parsing failed: %s", err.message);
             return -1;
         }
 
@@ -167,7 +172,7 @@ namespace XSAA
         {
             if (Posix.daemon (0, 0) < 0)
             {
-                GLib.stderr.printf("Error on launch has daemon\n");
+                GLib.critical ("error on launch has daemon");
                 return -1;
             }
         }
@@ -198,9 +203,11 @@ namespace XSAA
         }
         catch (GLib.Error err)
         {
-            message("%s\n", err.message);
+            GLib.critical ("%s", err.message);
             return -1;
         }
+
+        GLib.debug ("end");
 
         return 0;
     }

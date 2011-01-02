@@ -25,6 +25,8 @@ namespace XSAA
     {
         public Client(string socket_name) throws SocketError
         {
+            GLib.debug ("Create client on %s", socket_name);
+
             base(socket_name);
 
             Posix.fcntl(fd, Posix.O_NONBLOCK);
@@ -70,6 +72,8 @@ namespace XSAA
     static int
     handle_quit()
     {
+        GLib.debug ("send quit");
+
         client.send("quit");
 
         return 0;
@@ -78,6 +82,8 @@ namespace XSAA
     static void
     on_pong()
     {
+        GLib.debug ("pong received");
+
         string message;
         if (client.recv(out message))
         {
@@ -88,6 +94,8 @@ namespace XSAA
     static int
     handle_dbus()
     {
+        GLib.debug ("send dbus message");
+
         client.send("dbus");
 
         return 0;
@@ -96,6 +104,8 @@ namespace XSAA
     static int
     handle_session()
     {
+        GLib.debug ("send session message");
+
         client.send("session");
 
         return 0;
@@ -117,6 +127,8 @@ namespace XSAA
     static int
     handle_phase()
     {
+        GLib.debug ("send phase %i message", phase);
+
         client.send("phase=" + (phase - 1).to_string());
 
         return 0;
@@ -125,6 +137,8 @@ namespace XSAA
     static int
     handle_progress()
     {
+        GLib.debug ("send progress %i message", progress);
+
         client.send("progress=" + progress.to_string());
 
         return 0;
@@ -133,6 +147,8 @@ namespace XSAA
     static int
     handle_right_to_left()
     {
+        GLib.debug ("send right to left message");
+
         client.send("right-to-left");
 
         return 0;
@@ -141,6 +157,8 @@ namespace XSAA
     static int
     handle_left_to_right()
     {
+        GLib.debug ("send left to right message");
+
         client.send("left-to-right");
 
         return 0;
@@ -149,6 +167,8 @@ namespace XSAA
     static int
     handle_pulse()
     {
+        GLib.debug ("send pulse message");
+
         client.send("pulse");
 
         return 0;
@@ -157,6 +177,8 @@ namespace XSAA
     static int
     handle_close_session()
     {
+        GLib.debug ("send close session message");
+
         client.send("close-session");
 
         return 0;
@@ -165,6 +187,8 @@ namespace XSAA
     static int 
     main (string[] args) 
     {
+        GLib.Log.set_default_handler (Log.syslog_log_handler);
+
         socket_name = "/tmp/xsplashaa-socket";
         try 
         {
@@ -175,7 +199,7 @@ namespace XSAA
         } 
         catch (OptionError err) 
         {
-            GLib.stderr.printf("Option parsing failed: %s\n", err.message);
+            GLib.warning ("option parsing failed: %s", err.message);
             return -1;
         }
 

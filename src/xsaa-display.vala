@@ -42,6 +42,7 @@ namespace XSAA
 
         public Display(string cmd, int number) throws DisplayError
         {
+            GLib.debug ("create display %i: %s", number, cmd);
             this.number = number;
 
             if (sig_handled == 0)
@@ -65,6 +66,7 @@ namespace XSAA
 
                     try
                     {
+                        GLib.message ("launch display command: %s", cmd);
                         Process.spawn_async(null, argvp, null, 
                                             SpawnFlags.SEARCH_PATH |
                                             SpawnFlags.DO_NOT_REAP_CHILD, 
@@ -89,12 +91,15 @@ namespace XSAA
         
         ~Display ()
         {
+            GLib.debug ("destroy display");
+
             kill ();
         }
 
         private void
         on_child_setup()
         {
+            GLib.debug ("display child setup");
             Posix.signal(Posix.SIGUSR1, Posix.SIG_IGN);
             Posix.signal(Posix.SIGINT, Posix.SIG_IGN);
             Posix.signal(Posix.SIGTTIN, Posix.SIG_IGN);
@@ -104,16 +109,18 @@ namespace XSAA
         private void
         on_child_watch(Pid pid, int status)
         {
+            GLib.debug ("display child watch %lu: %i", pid, status);
+
             if (child_watch != 0)
             {
                 if (Process.if_exited(status))
                 {
-                    GLib.stderr.printf("Display exited : %i\n", status);
+                    GLib.message ("display exited : %i", status);
                     exited();
                 }
                 else if (Process.if_signaled(status))
                 {
-                    GLib.stderr.printf("Display signaled : %i\n", status);
+                    GLib.message ("display signaled : %i", status);
                     died();
                 }
 
@@ -136,7 +143,10 @@ namespace XSAA
         on_sig_usr1(int signum)
         {
             if (signum == Posix.SIGUSR1)
+            {
+                GLib.debug ("received display is ready");
                 is_ready = true;
+            }
         }
 
         private bool
@@ -160,7 +170,7 @@ namespace XSAA
                 ucr_len == sizeof (Posix.UCred))
             {
                 pid = ucr.pid;
-                GLib.stderr.printf("Found running display : %i\n", pid);
+                GLib.message ("found running display : %lu", pid);
             }
 
             return pid > 0;
@@ -198,14 +208,14 @@ namespace XSAA
 
                 device = "/dev/tty" + vt.to_string();
 
-                GLib.stderr.printf ("Open device %s\n", device);
+                GLib.message ("open display device %s", device);
                 int fd = Posix.open(device, Posix.O_RDWR);
                 if (fd > 0)
                 {
                     if (Posix.ioctl(fd, Posix.KDSETMODE, Posix.KD_GRAPHICS) < 0)
-                        GLib.stderr.printf("KDSETMODE KD_GRAPHICS failed !");  
+                        GLib.critical ("KDSETMODE KD_GRAPHICS failed !");  
                     if (Posix.ioctl(fd, Posix.KDSKBMODE, Posix.K_RAW) < 0)
-                        GLib.stderr.printf("KDSETMODE KD_RAW failed !"); 
+                        GLib.critical ("KDSETMODE KD_RAW failed !"); 
 
                     Posix.termios? tty_attr = Posix.termios ();
                     Posix.ioctl(fd, Posix.KDGKBMODE, tty_attr);
@@ -222,6 +232,10 @@ namespace XSAA
                     Posix.close(fd);
                 }
             }
+            else
+            {
+                GLib.critical ("cannot open display :%i", number);
+            }
 
             return device;
         }
@@ -233,7 +247,7 @@ namespace XSAA
                 GLib.Source.remove (child_watch);
             if ((int)pid > 0)
             {
-                GLib.stderr.printf ("Killing Xorg %i\n", (int)pid);
+                GLib.debug ("killing display server %lu", pid);
                 Posix.kill((Posix.pid_t)pid, Posix.SIGTERM);
             }
         }

@@ -66,6 +66,8 @@ namespace XSAA
         public Session(DBus.Connection conn, ConsoleKit.Manager manager, 
                        string service, string user, int display, string device) throws SessionError
         {
+            GLib.debug ("create ck session");
+
             ck_manager = manager;
 
             passwd = Posix.getpwnam(user);
@@ -94,7 +96,8 @@ namespace XSAA
 
         ~Session()
         {
-            GLib.stderr.printf("Close ck session\n");
+            GLib.debug ("destroy ck session");
+
             if (FileUtils.test(xauth_file, FileTest.EXISTS))
             {
                 FileUtils.remove(xauth_file);
@@ -109,6 +112,8 @@ namespace XSAA
         private void
         generate_xauth(string user, int display) throws SessionError
         {
+            GLib.debug ("generate xauth for user %s and display %i", user, display);
+
             if (!FileUtils.test(PACKAGE_XAUTH_DIR, FileTest.EXISTS | FileTest.IS_DIR))
             {
                 DirUtils.create(PACKAGE_XAUTH_DIR, 0777);
@@ -155,6 +160,8 @@ namespace XSAA
         private void
         register()
         {
+            GLib.debug ("register");
+
             Value user_val = Value (typeof(int));
             user_val.set_int((int)passwd.pw_uid);
             ConsoleKit.SessionParameter unixuser = 
@@ -175,15 +182,15 @@ namespace XSAA
             ConsoleKit.SessionParameter islocal = 
                 ConsoleKit.SessionParameter("is-local", is_local_val);
 
-            Value is_active = Value (typeof(bool));
-            is_active.set_boolean(true);
-            ConsoleKit.SessionParameter active = 
-                ConsoleKit.SessionParameter("active", is_active);
+            Value session_type_val = Value (typeof(string));
+            session_type_val.set_string("xsplashaa");
+            ConsoleKit.SessionParameter session_type = 
+                ConsoleKit.SessionParameter("session-type", session_type_val);
 
             ConsoleKit.SessionParameter[] parameters = {unixuser,
                                                         x11display,
                                                         x11displaydev,
-                                                        active,
+                                                        session_type,
                                                         islocal};
 
             try
@@ -192,13 +199,15 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                GLib.stderr.printf("Error on open session\n");
+                GLib.critical ("error on generate ck session");
             }
         }
 
         private void
         on_child_setup()
         {
+            GLib.debug ("child setup");
+
             try
             {
                 pam.open_session();
@@ -206,34 +215,25 @@ namespace XSAA
             catch (GLib.Error err)
             {
                 error_msg("Invalid user or wrong password");
-                GLib.stderr.printf("Error on open pam session\n");
+                GLib.critical ("error on open pam session");
                 Posix.exit(1);
             }
 
-            if (Posix.setsid() < 0)
-            {
-                error_msg("Error on user authentification");
-                GLib.stderr.printf("Error on change user\n");
-                Posix.exit(1);
-            }
-
-            if (Posix.setuid(passwd.pw_uid) < 0)
-            {
-                error_msg("Error on user authentification");
-                GLib.stderr.printf("Error on change user\n");
-                Posix.exit(1);
-            }
-
+            pam.add_env ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin");
+            pam.add_env ("XAUTHORITY", xauth_file);
+            pam.add_env ("XDG_SESSION_COOKIE", cookie);
+            pam.add_env ("DISPLAY", display_num);
             pam.set_env();
 
-            Posix.setenv("XAUTHORITY", xauth_file, 1);
-            Posix.setenv("XDG_SESSION_COOKIE", cookie, 1);
-            Posix.setenv("DISPLAY", display_num, 1);
+            Posix.unsetenv ("DBUS_STARTER_BUS_TYPE");
+            Posix.unsetenv ("DBUS_STARTER_ADDRESS");
 
             int fd = Posix.open ("/dev/null", Posix.O_RDONLY);
             Posix.dup2 (fd, 0);
             Posix.close (fd);
 
+            Posix.unlink (passwd.pw_dir + "/.xsession-errors.old");
+            Posix.link (passwd.pw_dir + "/.xsession-errors", passwd.pw_dir + "/.xsession-errors.old");
             fd = Posix.open(passwd.pw_dir + "/.xsession-errors", 
                             Posix.O_TRUNC | Posix.O_CREAT | Posix.O_WRONLY, 0644);
             Posix.dup2 (fd, 1);
@@ -244,6 +244,8 @@ namespace XSAA
         private void
         on_child_watch(Pid pid, int status)
         {
+            GLib.debug ("child watch %lu: %i", pid, status);
+
             if (Process.if_exited(status))
                 exited();
             else if (Process.if_signaled(status))
@@ -254,12 +256,14 @@ namespace XSAA
 
             try
             {
+                GLib.message ("launch killall dbus-launch");
+
                 Process.spawn_command_line_async("killall dbus-launch");
             }
             catch (GLib.Error err)
             {
-                GLib.stderr.printf("Error on launch killall dbus-launch: %s\n",
-                                   err.message);
+               GLib.debug ("error on launch killall dbus-launch: %s",
+                           err.message);
             }
         }
 
@@ -290,16 +294,18 @@ namespace XSAA
         public void
         authenticate()
         {
-            GLib.stderr.printf("Authenticate \n");
+            GLib.debug ("authenticate");
             authenticated();
         }
 
         public void
         launch(string cmd) throws SessionError
         {
+            GLib.debug ("launch: %s", cmd);
+
             string[] argvp;
 
-            register();
+            register ();
 
             try
             {

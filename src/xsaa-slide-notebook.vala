@@ -71,7 +71,7 @@ namespace XSAA
             return false;
         }
 
-        private override int
+        public override int
         insert_page_menu(Gtk.Widget widget, Gtk.Widget? label, Gtk.Widget? menu, int position)
         {
             Gtk.EventBox page;

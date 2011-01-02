@@ -16,13 +16,15 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Author:
- * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
+ *  Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
 namespace XSAA
 {
     public class Splash : Gtk.Window
     {
+        const int ICON_SIZE = 90;
+
         Server socket;
         Throbber[] phase = new Throbber[3];
         Throbber throbber_session;
@@ -30,6 +32,10 @@ namespace XSAA
         int current_phase = 0;
         Gtk.ProgressBar progress;
         SlideNotebook notebook;
+        Gtk.ScrolledWindow user_scrolled_window;
+        Gtk.ListStore user_list;
+        Gtk.TreeView user_treeview;
+        Gtk.Table login_prompt;
         Gtk.Label label_prompt;
         Gtk.Entry entry_prompt;
         string username;
@@ -48,6 +54,7 @@ namespace XSAA
 
         public Splash(Server server)
         {
+            GLib.debug ("create splash window");
             socket = server;
             socket.phase.connect(on_phase_changed);
             socket.pulse.connect(on_start_pulse);
@@ -59,13 +66,18 @@ namespace XSAA
         {
             load_config();
 
+            user_list = new Gtk.ListStore (5, typeof (Gdk.Pixbuf),
+                                              typeof (string), typeof (string),
+                                              typeof (int), typeof (bool));
             Gdk.Screen screen = Gdk.Screen.get_default();
             Gdk.Rectangle geometry;
             screen.get_monitor_geometry(0, out geometry);
 
             set_app_paintable(true);
             set_default_size(geometry.width, geometry.height);
+            set_colormap (screen.get_rgba_colormap ());
 
+            GLib.debug ("splash window geometry (%i,%i)", geometry.width, geometry.height);
             fullscreen();
 
             destroy.connect(Gtk.main_quit);
@@ -80,6 +92,7 @@ namespace XSAA
             alignment.add(vbox);
 
             Gtk.Box box = null;
+            GLib.debug ("layout: %s", layout);
             if (layout == "horizontal")
             {
                 box = new Gtk.HBox(false, 25);
@@ -93,39 +106,41 @@ namespace XSAA
 
             try
             {
-                Gdk.Pixbuf pixbuf = 
+                GLib.debug ("load %s", Config.PACKAGE_DATA_DIR + "/" + theme + "/distrib-logo.png");
+
+                Gdk.Pixbuf pixbuf =
                     new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + theme + "/distrib-logo.png");
 
                 int width, height;
 
                 if (layout == "horizontal")
                 {
-                    width = geometry.width / 3 > pixbuf.get_width() ? 
+                    width = geometry.width / 3 > pixbuf.get_width() ?
                             pixbuf.get_width() : geometry.width / 3;
-                    height = (int)((double)width * 
-                                   ((double)pixbuf.get_height() / 
+                    height = (int)((double)width *
+                                   ((double)pixbuf.get_height() /
                                     (double)pixbuf.get_width()));
                 }
-                else 
+                else
                 {
-                    width = geometry.width / 1.5 > pixbuf.get_width() ? 
+                    width = geometry.width / 1.5 > pixbuf.get_width() ?
                             pixbuf.get_width() : (int)(geometry.width / 1.5);
-                    height = (int)((double)width * 
-                                   ((double)pixbuf.get_height() / 
+                    height = (int)((double)width *
+                                   ((double)pixbuf.get_height() /
                                     (double)pixbuf.get_width()));
                 }
 
-                Gtk.Image image = 
-                    new Gtk.Image.from_pixbuf(pixbuf.scale_simple(width, height, 
+                Gtk.Image image =
+                    new Gtk.Image.from_pixbuf(pixbuf.scale_simple(width, height,
                                                                   Gdk.InterpType.BILINEAR));
                 image.show();
                 box.pack_start(image, false, false, layout == "horizontal" ? 0 : 36);
             }
             catch (GLib.Error err)
             {
-                GLib.stderr.printf("Error on loading %s: %s", 
-                                   Config.PACKAGE_DATA_DIR + "/" + theme + "/distrib-logo.png",
-                                   err.message);
+                GLib.warning ("error on loading %s: %s",
+                              Config.PACKAGE_DATA_DIR + "/" + theme + "/distrib-logo.png",
+                              err.message);
             }
 
             Gtk.Box box_info;
@@ -142,34 +157,38 @@ namespace XSAA
 
             try
             {
+                GLib.debug ("load %s", Config.PACKAGE_DATA_DIR + "/" + theme + "/logo.png");
+
                 Gdk.Pixbuf pixbuf = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + theme + "/logo.png");
                 int width, height;
-                
+
                 if (layout == "horizontal")
                 {
-                    width = geometry.width / 3 > pixbuf.get_width() ? 
+                    width = geometry.width / 3 > pixbuf.get_width() ?
                             pixbuf.get_width() : geometry.width / 3;
-                    height = (int)((double)width * 
-                                   ((double)pixbuf.get_height() / 
+                    height = (int)((double)width *
+                                   ((double)pixbuf.get_height() /
                                     (double)pixbuf.get_width()));
                 }
-                else 
+                else
                 {
-                    width = pixbuf.get_width() > geometry.width  ? 
+                    width = pixbuf.get_width() > geometry.width  ?
                             geometry.width : pixbuf.get_width();
-                    height = (int)((double)width * 
-                                   ((double)pixbuf.get_height() / 
+                    height = (int)((double)width *
+                                   ((double)pixbuf.get_height() /
                                     (double)pixbuf.get_width()));
                 }
-                Gtk.Image image = 
-                    new Gtk.Image.from_pixbuf(pixbuf.scale_simple(width, height, 
+                Gtk.Image image =
+                    new Gtk.Image.from_pixbuf(pixbuf.scale_simple(width, height,
                                                                   Gdk.InterpType.BILINEAR));
                 image.show();
                 box_info.pack_start(image, true, true, 0);
             }
             catch (GLib.Error err)
             {
-                GLib.stderr.printf("Error on loading %s: %s", Config.PACKAGE_DATA_DIR + "/" + theme + "/logo.png", err.message);
+                GLib.warning ("error on loading %s: %s",
+                              Config.PACKAGE_DATA_DIR + "/" + theme + "/logo.png",
+                              err.message);
             }
 
             alignment = new Gtk.Alignment(0.5f, 0.5f, 0, 0);
@@ -199,7 +218,7 @@ namespace XSAA
 
             progress = new Gtk.ProgressBar();
             progress.show();
-            table_progress.attach(progress, 2, 3, 0, 1, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 
+            table_progress.attach(progress, 2, 3, 0, 1, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL,
                                   0, 0, 0);
 
             on_start_pulse();
@@ -208,6 +227,8 @@ namespace XSAA
         private void
         load_config()
         {
+            GLib.debug ("load config %s", Config.PACKAGE_CONFIG_FILE);
+
             if (FileUtils.test(Config.PACKAGE_CONFIG_FILE, FileTest.EXISTS))
             {
                 try
@@ -222,22 +243,82 @@ namespace XSAA
                 }
                 catch (GLib.Error err)
                 {
-                    GLib.stderr.printf("Error on read %s: %s", Config.PACKAGE_CONFIG_FILE, err.message);
+                    GLib.warning ("error on read %s: %s",
+                                  Config.PACKAGE_CONFIG_FILE, err.message);
                 }
             }
+            else
+            {
+                GLib.warning ("unable to found %s", Config.PACKAGE_CONFIG_FILE);
+            }
+        }
+
+        private void
+        reload_user_list ()
+        {
+            Users users = new Users ();
+
+            user_list.clear ();
+            foreach (User user in users)
+            {
+                Gdk.Pixbuf? face_pixbuf = null;
+                if (user.face_icon_filename != null)
+                {
+                    try
+                    {
+                        face_pixbuf = new Gdk.Pixbuf.from_file (user.face_icon_filename);
+                    }
+                    catch (GLib.Error err)
+                    {
+                        GLib.warning ("error on load %s", user.face_icon_filename);
+                    }
+                }
+
+                Gdk.Pixbuf pixbuf = new Gdk.Pixbuf (Gdk.Colorspace.RGB, true, 8,
+                                                    ICON_SIZE, int.min (ICON_SIZE, face_pixbuf.height + 10));
+                CairoContext ctx = new CairoContext.from_pixbuf (pixbuf);
+                ctx.set_operator (Cairo.Operator.CLEAR);
+                ctx.paint ();
+                ctx.set_operator (Cairo.Operator.OVER);
+                if (face_pixbuf != null)
+                {
+                    double scale = ICON_SIZE / (double)(face_pixbuf.width + 10);
+                    ctx.scale (scale, scale);
+                    ctx.rounded_rectangle (((ICON_SIZE - ((double)(face_pixbuf.width + 10) * scale)) / 2.0) + 5.0,
+                                           ((int.min (ICON_SIZE, (face_pixbuf.height + 10)) - ((double)(face_pixbuf.height + 10) * scale)) / 2.0) + 5.0,
+                                           face_pixbuf.width, face_pixbuf.height, 5, CairoCorner.ALL);
+                    ctx.clip ();
+                    Gdk.cairo_set_source_pixbuf (ctx, face_pixbuf, 
+                                                 ((ICON_SIZE - ((double)(face_pixbuf.width + 10) * scale)) / 2.0) + 5.0,
+                                                 ((int.min (ICON_SIZE, (face_pixbuf.height + 10)) - ((double)(face_pixbuf.height + 10) * scale)) / 2.0) + 5.0);
+                    ctx.paint ();
+                }
+                pixbuf = ctx.to_pixbuf ();
+
+                Gtk.TreeIter iter;
+                user_list.append (out iter);
+                user_list.set (iter, 0, pixbuf, 1, "<span size='x-large'>" + user.real_name + "</span>",
+                                     2, user.login, 3, user.frequency, 4, true);
+            }
+
+            Gtk.TreeIter iter;
+            user_list.append (out iter);
+            user_list.set (iter, 0, null, 1, "<span size='x-large'>Other...</span>",
+                                 2, null, 3, 0, 4, true);
         }
 
         private void
         construct_loading_page()
         {
+            GLib.debug ("construct loading page");
+
             var table = new Gtk.Table(3, 2, false);
             table.show();
-            notebook.append_page(table, null);
             table.set_border_width(12);
             table.set_col_spacings(12);
             table.set_row_spacings(12);
 
-            var label = new Gtk.Label("<span size='xx-large' color='" + 
+            var label = new Gtk.Label("<span size='xx-large' color='" +
                                   text +"'>Loading...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
@@ -253,10 +334,10 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                GLib.stderr.printf("Error on loading throbber %s", err.message);
+                GLib.warning ("error on loading throbber %s", err.message);
             }
 
-            label = new Gtk.Label("<span size='xx-large' color='" + 
+            label = new Gtk.Label("<span size='xx-large' color='" +
                                   text +"'>Checking filesystem...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
@@ -271,16 +352,16 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                GLib.stderr.printf("Error on loading throbber %s", err.message);
+                GLib.warning ("error on loading throbber %s", err.message);
             }
 
-            label = new Gtk.Label("<span size='xx-large' color='" + 
+            label = new Gtk.Label("<span size='xx-large' color='" +
                                   text +"'>Starting...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
             table.attach_defaults(label, 0, 1, 2, 3);
-            
+
             try
             {
                 phase[2] = new Throbber(theme, 83);
@@ -289,44 +370,73 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                GLib.stderr.printf("Error on loading throbber %s", err.message);
+                GLib.warning ("error on loading throbber %s", err.message);
             }
+
+            notebook.append_page(table, null);
         }
 
         private void
         construct_login_page()
         {
-            var alignment = new Gtk.Alignment(0.5f, 1.0f, 0, 0);
+            GLib.debug ("construct login page");
+
+            var alignment = new Gtk.Alignment(0.5f, 1.0f, 1.0f, 1.0f);
             alignment.show();
-            notebook.append_page(alignment, null);
 
             var box = new Gtk.VBox(false, 12);
             box.show();
             alignment.add(box);
-            
-            var table = new Gtk.Table(3, 3, false);
-            table.set_border_width(12);
-            table.set_col_spacings(12);
-            table.set_row_spacings(24);
-            table.show();
-            box.pack_start(table, true, true, 0);
 
-            label_prompt = new Gtk.Label("<span size='xx-large' color='" + 
+            user_scrolled_window = new Gtk.ScrolledWindow (null, null);
+            user_scrolled_window.hscrollbar_policy = Gtk.PolicyType.NEVER;
+            user_scrolled_window.vscrollbar_policy = Gtk.PolicyType.AUTOMATIC;
+            user_scrolled_window.set_size_request (-1, ICON_SIZE + 5);
+            user_scrolled_window.show ();
+            box.pack_start (user_scrolled_window, true, true, 12);
+
+            reload_user_list ();
+            var model = new Gtk.TreeModelFilter (user_list, null);
+            model.set_visible_column (4);
+            user_treeview = new Gtk.TreeView.with_model (model);
+            user_treeview.headers_visible = false;
+            user_treeview.insert_column_with_attributes (-1, "", new Gtk.CellRendererPixbuf (), "pixbuf", 0);
+            user_treeview.insert_column_with_attributes (-1, "", new Gtk.CellRendererText (), "markup", 1);
+            user_treeview.get_selection ().changed.connect (on_selection_changed);
+            user_treeview.show ();
+            user_scrolled_window.add (user_treeview);
+
+            login_prompt = new Gtk.Table(2, 3, false);
+            login_prompt.set_border_width(12);
+            login_prompt.set_col_spacings(12);
+            login_prompt.set_row_spacings(12);
+            box.pack_start(login_prompt, true, true, 0);
+
+            label_prompt = new Gtk.Label("<span size='xx-large' color='" +
                                          text +"'>Login :</span>");
             label_prompt.set_use_markup(true);
             label_prompt.set_alignment(0.0f, 0.5f);
             label_prompt.show();
-            table.attach_defaults(label_prompt, 1, 2, 0, 1);
+            login_prompt.attach (label_prompt, 1, 2, 0, 1,
+                                 Gtk.AttachOptions.FILL,
+                                 Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+                                 0, 0);
 
             entry_prompt = new Gtk.Entry();
             entry_prompt.show();
-            table.attach_defaults(entry_prompt, 2, 3, 0, 1);
+            login_prompt.attach (entry_prompt, 2, 3, 0, 1,
+                                 Gtk.AttachOptions.FILL,
+                                 Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+                                 0, 0);
 
             label_message = new Gtk.Label("");
             label_message.set_use_markup(true);
             label_message.set_alignment(0.5f, 0.5f);
             label_message.show();
-            table.attach_defaults(label_message, 0, 4, 1, 2);
+            login_prompt.attach (label_message, 0, 4, 1, 2,
+                                 Gtk.AttachOptions.FILL,
+                                 Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+                                 0, 0);
 
             var button_box = new Gtk.HButtonBox();
             button_box.show();
@@ -343,25 +453,28 @@ namespace XSAA
             button.show();
             button.clicked.connect(on_shutdown_clicked);
             button_box.pack_start(button, false, false, 0);
+
+            notebook.append_page(alignment, null);
         }
 
         private void
         construct_launch_session_page()
         {
+            GLib.debug ("construct launch session page");
+
             var table = new Gtk.Table(1, 2, false);
             table.show();
-            notebook.append_page(table, null);
             table.set_border_width(12);
             table.set_col_spacings(12);
             table.set_row_spacings(12);
 
-            var label =  new Gtk.Label("<span size='xx-large' color='" + 
+            var label =  new Gtk.Label("<span size='xx-large' color='" +
                                        text +"'>Launching session...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
             table.attach_defaults(label, 0, 1, 0, 1);
-            
+
             try
             {
                 throbber_session = new Throbber(theme, 83);
@@ -370,27 +483,30 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                GLib.stderr.printf("Error on loading throbber %s", err.message);
+                GLib.warning ("Error on loading throbber %s", err.message);
             }
+
+            notebook.append_page(table, null);
         }
 
         private void
         construct_shutdown_page()
         {
+            GLib.debug ("construct shutdown page");
+
             var table = new Gtk.Table(1, 2, false);
             table.show();
-            notebook.append_page(table, null);
             table.set_border_width(12);
             table.set_col_spacings(12);
             table.set_row_spacings(12);
 
-            var label =  new Gtk.Label("<span size='xx-large' color='" + 
+            var label =  new Gtk.Label("<span size='xx-large' color='" +
                                        text +"'>Shutdown in progress...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
             table.attach_defaults(label, 0, 1, 0, 1);
-            
+
             try
             {
                 throbber_shutdown = new Throbber(theme, 83);
@@ -399,13 +515,18 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                GLib.stderr.printf("Error on loading throbber %s", err.message);
+                GLib.warning ("error on loading throbber %s", err.message);
             }
+
+            notebook.append_page(table, null);
         }
 
         private void
         on_phase_changed(int new_phase)
         {
+            GLib.message ("phase changed current = %i, new = %i",
+                          current_phase, new_phase);
+
             if (current_phase != new_phase)
             {
                 if (current_phase < 3 && current_phase >= 0)
@@ -426,6 +547,8 @@ namespace XSAA
         private void
         on_start_pulse()
         {
+            GLib.debug ("start pulse");
+
             if (id_pulse == 0)
             {
                 id_pulse = GLib.Timeout.add(83, on_pulse);
@@ -435,6 +558,8 @@ namespace XSAA
         private void
         on_progress(int val)
         {
+            GLib.debug ("progress = %i", val);
+
             if (id_pulse > 0) GLib.Source.remove(id_pulse);
             id_pulse = 0;
             progress.set_fraction((double)val / (double)100);
@@ -443,14 +568,68 @@ namespace XSAA
         private void
         on_progress_orientation(Gtk.ProgressBarOrientation orientation)
         {
+            GLib.debug ("progress orientation");
             progress.set_orientation(orientation);
+        }
+
+        private void
+        on_selection_changed ()
+        {
+            Gtk.TreeModel model;
+            Gtk.TreeIter iter;
+            if (user_treeview.get_selection ().get_selected (out model, out iter))
+            {
+                model.get (iter, 2, out username, -1);
+
+                GLib.debug ("selected %s", username);
+
+                user_treeview.set_sensitive (false);
+                user_scrolled_window.set_size_request (-1, ICON_SIZE + 5);
+                login_prompt.show ();
+                if (username != null)
+                {
+                    if (user_list.get_iter_first (out iter))
+                    {
+                        do
+                        {
+                            string login;
+                            user_list.get (iter, 2, out login, -1);
+                            user_list.set (iter, 4, login == username, -1);
+                        } while (user_list.iter_next (ref iter));
+                    }
+                    on_login_enter ();
+                }
+                else
+                {
+                    user_scrolled_window.hide ();
+                }
+                login_prompt.parent.resize_children ();
+            }
+            else
+            {
+                username = null;
+                user_scrolled_window.show ();
+                user_scrolled_window.set_size_request (-1, -1);
+                user_treeview.set_sensitive (true);
+                login_prompt.hide ();
+                if (user_list.get_iter_first (out iter))
+                {
+                    do
+                    {
+                        user_list.set (iter, 4, true, -1);
+                    } while (user_list.iter_next (ref iter));
+                }
+                login_prompt.parent.resize_children ();
+            }
         }
 
         private void
         on_login_enter()
         {
-            username = entry_prompt.get_text();
-            GLib.stderr.printf ("Login %s\n", username);
+            if (username == null)
+                username = entry_prompt.get_text();
+
+            GLib.debug ("login enter user: %s", username);
             if (username.length > 0)
             {
                 set_focus(entry_prompt);
@@ -458,7 +637,7 @@ namespace XSAA
                 entry_prompt.set_visibility(false);
                 entry_prompt.set_text("");
                 entry_prompt.activate.connect(on_passwd_enter);
-                label_prompt.set_markup("<span size='xx-large' color='" + 
+                label_prompt.set_markup("<span size='xx-large' color='" +
                                         text +"'>Password :</span>");
                 label_message.set_text("");
             }
@@ -467,31 +646,38 @@ namespace XSAA
         private void
         on_passwd_enter()
         {
+            GLib.debug ("passwd enter user: %s", username);
+
             entry_prompt.set_sensitive(false);
             entry_prompt.activate.disconnect (on_passwd_enter);
-	    GLib.stderr.printf ("Login %s\n", username);
             login(username, entry_prompt.get_text());
         }
 
         private void
         on_restart_clicked()
         {
+            GLib.debug ("restart clicked");
             restart();
         }
 
         private void
         on_shutdown_clicked()
         {
+            GLib.debug ("shutdown clicked");
             shutdown();
         }
 
         override void
         realize ()
         {
+            GLib.debug ("realize");
             base.realize();
 
             if (!FileUtils.test(Config.PACKAGE_DATA_DIR + "/" + theme + "/background.png", FileTest.EXISTS))
             {
+                GLib.debug ("%s not found set background color %s",
+                            Config.PACKAGE_DATA_DIR + "/" + theme + "/background.png",
+                            bg);
                 Gdk.Color color;
 
                 Gdk.Color.parse(bg, out color);
@@ -506,14 +692,17 @@ namespace XSAA
             {
                 try
                 {
+                    GLib.debug ("loading %s",
+                                Config.PACKAGE_DATA_DIR + "/" + theme + "/background.png");
+
                     Gdk.Pixbuf pixbuf = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + theme + "/background.png");
 
                     Gdk.Pixmap pixmap = new Gdk.Pixmap(window, allocation.width, allocation.height, -1);
                     Gdk.Pixbuf scale = pixbuf.scale_simple(allocation.width, allocation.height, Gdk.InterpType.BILINEAR);
 
-                    pixmap.draw_rectangle (style.bg_gc[Gtk.StateType.NORMAL], true, 0, 0, 
+                    pixmap.draw_rectangle (style.bg_gc[Gtk.StateType.NORMAL], true, 0, 0,
                                            allocation.width, allocation.height);
-                    pixmap.draw_pixbuf (style.black_gc, scale, 0, 0, 0, 0, 
+                    pixmap.draw_pixbuf (style.black_gc, scale, 0, 0, 0, 0,
                                         allocation.width, allocation.height,
                                         Gdk.RgbDither.MAX, 0, 0);
                     Gtk.Style style = new Gtk.Style();
@@ -522,16 +711,18 @@ namespace XSAA
                 }
                 catch (GLib.Error err)
                 {
-                    GLib.stderr.printf("Error on loading %s: %s",
-                                       Config.PACKAGE_DATA_DIR + "/" + theme + "/background.png",
-                                       err.message);
-                } 
+                    GLib.warning ("Error on loading %s: %s",
+                                  Config.PACKAGE_DATA_DIR + "/" + theme + "/background.png",
+                                  err.message);
+                }
             }
         }
 
         override void
         hide()
         {
+            GLib.debug ("hide");
+
             throbber_session.finished();
             base.hide();
         }
@@ -539,6 +730,8 @@ namespace XSAA
         public void
         show_launch()
         {
+            GLib.debug ("show launch");
+
             var cursor = new Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR);
             get_window().set_cursor(cursor);
             notebook.set_current_page(2);
@@ -548,6 +741,8 @@ namespace XSAA
         public void
         show_shutdown()
         {
+            GLib.debug ("show shutdown");
+
             var cursor = new Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR);
             get_window().set_cursor(cursor);
             notebook.set_current_page(3);
@@ -559,13 +754,18 @@ namespace XSAA
         public void
         ask_for_login()
         {
+            GLib.debug ("ask for login");
+
             phase[2].finished();
 
             var cursor = new Gdk.Cursor(Gdk.CursorType.LEFT_PTR);
             get_window().set_cursor(cursor);
 
             notebook.set_current_page(1);
-            label_prompt.set_markup("<span size='xx-large' color='" + 
+
+            user_treeview.get_selection ().unselect_all ();
+
+            label_prompt.set_markup("<span size='xx-large' color='" +
                                      text +"'>Login :</span>");
             set_focus(entry_prompt);
             entry_prompt.grab_focus();
@@ -581,7 +781,9 @@ namespace XSAA
         public void
         login_message(string msg)
         {
-            label_message.set_markup("<span size='xx-large' color='" + 
+            GLib.debug ("login message: %s", msg);
+
+            label_message.set_markup("<span size='xx-large' color='" +
                                      text +"'>" + msg + "</span>");
         }
     }
