@@ -98,6 +98,24 @@ namespace Posix
 
     [CCode (cheader_filename = "setjmp.h")]
     public void longjmp(jmp_buf env, int val);
+
+    [CCode (cheader_filename = "sys/ipc.h,sys/shm.h")]
+    int shmget(key_t key, size_t size, int shmflg);
+
+    [CCode (cheader_filename = "sys/types.h,sys/shm.h")]
+    public void *shmat(int shmid, void *shmaddr, int shmflg);
+
+    [CCode (cheader_filename = "sys/types.h,sys/shm.h")]
+    public int shmdt(void *shmaddr);
+
+    [CCode (cheader_filename = "sys/ipc.h")]
+    public const int IPC_CREAT;
+
+    [CCode (cheader_filename = "sys/ipc.h")]
+    public const int IPC_EXCL;
+
+    [CCode (cheader_filename = "sys/ipc.h")]
+    public const int IPC_NOWAIT;
 }
 
 

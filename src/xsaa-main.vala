@@ -26,6 +26,7 @@ public interface XSAA.Manager : DBus.Object
     public abstract void close_session(DBus.ObjectPath path) throws DBus.Error;
     public abstract void reboot() throws DBus.Error;
     public abstract void halt() throws DBus.Error;
+    public abstract int get_nb_users () throws DBus.Error;
 }
 
 [DBus (name = "fr.supersonicimagine.XSAA.Manager.Session")] 
@@ -41,6 +42,15 @@ public interface XSAA.Session : DBus.Object
     public abstract void set_passwd(string pass) throws DBus.Error;
     public abstract void authenticate() throws DBus.Error;
     public abstract void launch(string cmd) throws DBus.Error;
+}
+
+[DBus (name = "fr.supersonicimagine.XSAA.Manager.User")] 
+public interface XSAA.User : DBus.Object 
+{
+    public abstract string login          { owned get; }
+    public abstract string real_name      { owned get; }
+    public abstract uint frequency        { get; }
+    public abstract int face_icon_shm_id  { get; }
 }
 
 namespace XSAA
@@ -220,17 +230,6 @@ namespace XSAA
 
             try
             {
-                if (conn == null)
-                {
-                    conn = DBus.Bus.get (DBus.BusType.SYSTEM);
-                }
-
-                if (manager == null)
-                {
-                    manager = (XSAA.Manager)conn.get_object ("fr.supersonicimagine.XSAA.Manager", 
-                                                             "/fr/supersonicimagine/XSAA/Manager",
-                                                             "/fr/supersonicimagine/XSAA/Manager");
-                }
                 if (session == null)
                 {
                     GLib.message ("open session");
@@ -262,8 +261,18 @@ namespace XSAA
         {
             if (user == null || user.length == 0)
             {
-                GLib.debug ("ask for login\n");
-                splash.ask_for_login();
+                GLib.debug ("ask for login");
+                int nb_user = -1;
+                try
+                {
+                    nb_user = manager.get_nb_users ();
+                }
+                catch (DBus.Error err)
+                {
+                    GLib.warning ("error on get nb users: %s", err.message);
+                }
+
+                splash.ask_for_login(nb_user);
             }
             else
             {
@@ -288,6 +297,26 @@ namespace XSAA
             GLib.debug ("dbus ready");
 
             device = display.get_device();
+
+            try
+            {
+                if (conn == null)
+                {
+                    conn = DBus.Bus.get (DBus.BusType.SYSTEM);
+                }
+
+                if (manager == null)
+                {
+                    manager = (XSAA.Manager)conn.get_object ("fr.supersonicimagine.XSAA.Manager", 
+                                                             "/fr/supersonicimagine/XSAA/Manager",
+                                                             "/fr/supersonicimagine/XSAA/Manager");
+                }
+            }
+            catch (GLib.Error err)
+            {
+                GLib.warning ("Error on connect to dbus system: %s", err.message);
+            }
+
             start_session();
         }
 
@@ -308,6 +337,9 @@ namespace XSAA
             }
             session = null;
             splash.show();
+            splash.map ();
+            splash.window.focus (Gdk.CURRENT_TIME);
+            Gdk.Display.get_default ().flush ();
             splash.ask_for_login();
         }
 
@@ -345,6 +377,9 @@ namespace XSAA
                 shutdown = true;
             }
             splash.show();
+            splash.map ();
+            splash.window.focus (Gdk.CURRENT_TIME);
+            Gdk.Display.get_default ().flush ();
             splash.show_shutdown();
         }
 

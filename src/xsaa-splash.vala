@@ -26,6 +26,7 @@ namespace XSAA
         const int ICON_SIZE = 90;
 
         Server socket;
+        DBus.Connection conn;
         Throbber[] phase = new Throbber[3];
         Throbber throbber_session;
         Throbber throbber_shutdown;
@@ -38,6 +39,7 @@ namespace XSAA
         Gtk.Table login_prompt;
         Gtk.Label label_prompt;
         Gtk.Entry entry_prompt;
+        Gtk.HButtonBox button_box;
         string username;
         Gtk.Label label_message;
         uint id_pulse = 0;
@@ -65,6 +67,19 @@ namespace XSAA
         construct
         {
             load_config();
+
+            if (theme != null)
+            {
+                string gtkrc = Config.PACKAGE_DATA_DIR + "/" + theme + "/gtkrc"; 
+                if (GLib.FileUtils.test (gtkrc, FileTest.EXISTS))
+                {
+                    GLib.debug ("Load theme %s", gtkrc);
+                    Gtk.rc_add_default_file (gtkrc);
+                    Gtk.rc_parse (gtkrc);
+                    Gtk.rc_reparse_all ();
+                    Gtk.rc_reset_styles (Gtk.Settings.get_default ());
+                }
+            }
 
             user_list = new Gtk.ListStore (5, typeof (Gdk.Pixbuf),
                                               typeof (string), typeof (string),
@@ -253,52 +268,54 @@ namespace XSAA
             }
         }
 
-        private void
-        reload_user_list ()
+        private Gdk.Pixbuf
+        get_face_pixbuf (int shm_id)
         {
-            Users users = new Users ();
+            unowned uchar* src = (uchar*)Posix.shmat(shm_id, null, 0);
+            uchar[] dst = new uchar [ICON_SIZE * ICON_SIZE * 4];
+            GLib.Memory.copy (dst, src, ICON_SIZE * ICON_SIZE * 4);
+            Posix.shmdt (src);
+
+            Cairo.ImageSurface surface = new Cairo.ImageSurface.for_data (dst, 
+                                                                          Cairo.Format.ARGB32,
+                                                                          ICON_SIZE, ICON_SIZE,
+                                                                          Cairo.Format.ARGB32.stride_for_width (ICON_SIZE));
+            CairoContext ctx = new CairoContext (surface);
+            return ctx.to_pixbuf ();
+        }
+
+        private void
+        reload_user_list (int nb_users)
+        {
+            if (conn == null)
+            {
+                try
+                {
+                    conn = DBus.Bus.get (DBus.BusType.SYSTEM);
+                }
+                catch (DBus.Error err)
+                {
+                    GLib.warning ("Error on connect to dbus system: %s", err.message);
+                }
+            }
 
             user_list.clear ();
-            foreach (User user in users)
-            {
-                Gdk.Pixbuf? face_pixbuf = null;
-                if (user.face_icon_filename != null)
-                {
-                    try
-                    {
-                        face_pixbuf = new Gdk.Pixbuf.from_file (user.face_icon_filename);
-                    }
-                    catch (GLib.Error err)
-                    {
-                        GLib.warning ("error on load %s", user.face_icon_filename);
-                    }
-                }
 
-                Gdk.Pixbuf pixbuf = new Gdk.Pixbuf (Gdk.Colorspace.RGB, true, 8,
-                                                    ICON_SIZE, int.min (ICON_SIZE, face_pixbuf.height + 10));
-                CairoContext ctx = new CairoContext.from_pixbuf (pixbuf);
-                ctx.set_operator (Cairo.Operator.CLEAR);
-                ctx.paint ();
-                ctx.set_operator (Cairo.Operator.OVER);
-                if (face_pixbuf != null)
-                {
-                    double scale = ICON_SIZE / (double)(face_pixbuf.width + 10);
-                    ctx.scale (scale, scale);
-                    ctx.rounded_rectangle (((ICON_SIZE - ((double)(face_pixbuf.width + 10) * scale)) / 2.0) + 5.0,
-                                           ((int.min (ICON_SIZE, (face_pixbuf.height + 10)) - ((double)(face_pixbuf.height + 10) * scale)) / 2.0) + 5.0,
-                                           face_pixbuf.width, face_pixbuf.height, 5, CairoCorner.ALL);
-                    ctx.clip ();
-                    Gdk.cairo_set_source_pixbuf (ctx, face_pixbuf, 
-                                                 ((ICON_SIZE - ((double)(face_pixbuf.width + 10) * scale)) / 2.0) + 5.0,
-                                                 ((int.min (ICON_SIZE, (face_pixbuf.height + 10)) - ((double)(face_pixbuf.height + 10) * scale)) / 2.0) + 5.0);
-                    ctx.paint ();
-                }
-                pixbuf = ctx.to_pixbuf ();
+            for (int cpt = 0; cpt < nb_users; ++cpt)
+            {
+                XSAA.User user = (XSAA.User)conn.get_object ("fr.supersonicimagine.XSAA.Manager.User", 
+                                                             "/fr/supersonicimagine/XSAA/Manager/User/%i".printf (cpt),
+                                                             "fr.supersonicimagine.XSAA.Manager.User");
+
+                Gdk.Pixbuf pixbuf = get_face_pixbuf (user.face_icon_shm_id);
+
+                string login = user.login;
+                GLib.debug ("add user %s in list", login);
 
                 Gtk.TreeIter iter;
                 user_list.append (out iter);
                 user_list.set (iter, 0, pixbuf, 1, "<span size='x-large'>" + user.real_name + "</span>",
-                                     2, user.login, 3, user.frequency, 4, true);
+                                     2, login, 3, user.frequency, 4, true);
             }
 
             Gtk.TreeIter iter;
@@ -392,10 +409,10 @@ namespace XSAA
             user_scrolled_window.hscrollbar_policy = Gtk.PolicyType.NEVER;
             user_scrolled_window.vscrollbar_policy = Gtk.PolicyType.AUTOMATIC;
             user_scrolled_window.set_size_request (-1, ICON_SIZE + 5);
+            user_scrolled_window.set_shadow_type (Gtk.ShadowType.IN);
             user_scrolled_window.show ();
             box.pack_start (user_scrolled_window, true, true, 12);
 
-            reload_user_list ();
             var model = new Gtk.TreeModelFilter (user_list, null);
             model.set_visible_column (4);
             user_treeview = new Gtk.TreeView.with_model (model);
@@ -438,7 +455,7 @@ namespace XSAA
                                  Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
                                  0, 0);
 
-            var button_box = new Gtk.HButtonBox();
+            button_box = new Gtk.HButtonBox();
             button_box.show();
             button_box.set_spacing(12);
             button_box.set_layout(Gtk.ButtonBoxStyle.END);
@@ -612,6 +629,7 @@ namespace XSAA
                 user_scrolled_window.set_size_request (-1, -1);
                 user_treeview.set_sensitive (true);
                 login_prompt.hide ();
+                button_box.show ();
                 if (user_list.get_iter_first (out iter))
                 {
                     do
@@ -633,6 +651,7 @@ namespace XSAA
             if (username.length > 0)
             {
                 set_focus(entry_prompt);
+                button_box.hide ();
                 entry_prompt.activate.disconnect (on_login_enter);
                 entry_prompt.set_visibility(false);
                 entry_prompt.set_text("");
@@ -752,17 +771,23 @@ namespace XSAA
         }
 
         public void
-        ask_for_login()
+        ask_for_login(int nb_users = -1)
         {
             GLib.debug ("ask for login");
 
             phase[2].finished();
+
+            if (nb_users >= 0)
+            {
+                reload_user_list (nb_users);
+            }
 
             var cursor = new Gdk.Cursor(Gdk.CursorType.LEFT_PTR);
             get_window().set_cursor(cursor);
 
             notebook.set_current_page(1);
 
+            username = null;
             user_treeview.get_selection ().unselect_all ();
 
             label_prompt.set_markup("<span size='xx-large' color='" +

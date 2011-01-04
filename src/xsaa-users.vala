@@ -21,55 +21,149 @@
 
 namespace XSAA
 {
-    public struct User
+    const int ICON_SIZE = 90;
+
+    [DBus (name = "fr.supersonicimagine.XSAA.Manager.User")]
+    public class User : GLib.Object
     {
-        public string      login;
-        public Posix.uid_t uid;
-        public Posix.gid_t gid;
-        public string      real_name;
-        public string      home_dir;
-        public string      shell;
-        public string      face_icon_filename;
-        public uint        frequency;
+        private string          _login;
+        private string          _real_name;
+        private string          _face_icon_filename;
+        private Posix.key_t     _face_icon_shm_key;
+        private int             _face_icon_shm_id;
+        private unowned uchar[] _face_icon_pixels;
+        public uint             _frequency;
+
+        public Posix.uid_t  uid;
+        public Posix.gid_t  gid;
+        public string       home_dir;
+        public string       shell;
+        
+
+        public string login {
+            get {
+                return _login;
+            }
+        }
+
+        public string real_name {
+            get {
+                return _real_name;
+            }
+        }
+
+        public uint frequency {
+            get {
+                return (int)_frequency;
+            }
+        }
+
+        public int face_icon_shm_id {
+            get {
+                return _face_icon_shm_id;
+            }
+        }
 
         public User (Posix.Passwd entry)
         {
-            login    = entry.pw_name;
+            _login    = entry.pw_name;
             uid      = entry.pw_uid;
             gid      = entry.pw_gid;
             home_dir = entry.pw_dir;
             shell    = entry.pw_shell;
 
-            real_name = entry.pw_name;
+            _real_name = entry.pw_name;
             if (entry.pw_gecos != null)
             {
-                real_name = entry.pw_gecos.split (",")[0];
-                if (real_name == null || real_name[0] == '\0')
+                _real_name = entry.pw_gecos.split (",")[0];
+                if (_real_name == null || _real_name[0] == '\0')
                 {
-                    real_name = entry.pw_name;
+                    _real_name = entry.pw_name;
                 }
             }
 
-            face_icon_filename = entry.pw_dir + "/.face";
-            if (!FileUtils.test(face_icon_filename, FileTest.EXISTS))
+            _face_icon_filename = entry.pw_dir + "/.face";
+            if (!FileUtils.test(_face_icon_filename, FileTest.EXISTS))
             {
-                face_icon_filename = entry.pw_dir + "/.face.icon";
-                if (!FileUtils.test(face_icon_filename, FileTest.EXISTS))
+                _face_icon_filename = entry.pw_dir + "/.face.icon";
+                if (!FileUtils.test(_face_icon_filename, FileTest.EXISTS))
                 {
-                    face_icon_filename = null;
+                    _face_icon_filename = null;
                 }
             }
 
-            frequency = 0;
+            create_face_icon_shm ();
+
+            _frequency = 0;
         }
 
-        public int
+        ~User ()
+        {
+            Posix.shmdt (_face_icon_pixels);
+        }
+
+        private void
+        create_face_icon_shm ()
+        {
+            Gdk.Pixbuf? face_pixbuf = null;
+            if (_face_icon_filename != null)
+            {
+                try
+                {
+                    face_pixbuf = new Gdk.Pixbuf.from_file_at_scale (_face_icon_filename,
+                                                                     ICON_SIZE,
+                                                                     ICON_SIZE,
+                                                                     true);
+                }
+                catch (GLib.Error err)
+                {
+                    GLib.warning ("error on load %s", _face_icon_filename);
+                }
+            }
+
+            if (face_pixbuf != null)
+            {
+                Cairo.ImageSurface surface = new Cairo.ImageSurface (Cairo.Format.ARGB32,
+                                                                     ICON_SIZE, ICON_SIZE);
+
+                CairoContext ctx = new CairoContext (surface);
+                ctx.set_operator (Cairo.Operator.CLEAR);
+                ctx.paint ();
+                ctx.set_operator (Cairo.Operator.OVER);
+
+                double scale = ICON_SIZE / (double)(face_pixbuf.width + 4);
+                ctx.scale (scale, scale);
+                ctx.rounded_rectangle (((ICON_SIZE - ((double)(face_pixbuf.width + 4) * scale)) / 2.0) + 2.0,
+                                       ((ICON_SIZE - ((double)(face_pixbuf.height + 4) * scale)) / 2.0) + 2.0,
+                                       face_pixbuf.width, face_pixbuf.height, 4, CairoCorner.ALL);
+                ctx.clip ();
+                Gdk.cairo_set_source_pixbuf (ctx, face_pixbuf, 
+                                             ((ICON_SIZE - ((double)(face_pixbuf.width + 4) * scale)) / 2.0) + 2.0,
+                                             ((ICON_SIZE - ((double)(face_pixbuf.height + 4) * scale)) / 2.0) + 2.0);
+                ctx.paint ();
+                surface.finish ();
+
+                _face_icon_shm_key = GLib.Quark.from_string (login);
+                _face_icon_shm_id = Posix.shmget(_face_icon_shm_key,
+                                                 ICON_SIZE * ICON_SIZE *  4,
+                                                 Posix.IPC_CREAT | 0666);
+
+                GLib.debug ("Face icon %s: key = 0x%x, id = %i",
+                            login, (int)_face_icon_shm_key, _face_icon_shm_id);
+
+                _face_icon_pixels = (uchar[])Posix.shmat(face_icon_shm_id, null, 0);
+
+                GLib.Memory.copy (_face_icon_pixels, surface.get_data (), ICON_SIZE * ICON_SIZE * 4);
+            }
+        }
+
+        internal int
         compare (User other)
         {
-            if (frequency > other.frequency)
+            if (_frequency > other._frequency)
                 return -1;
 
-            if (frequency < other.frequency)
+            if (_frequency < other._frequency)
                 return 1;
 
             if (uid < other.uid)
@@ -78,7 +172,7 @@ namespace XSAA
             if (uid > other.uid)
                 return 1;
 
-            return GLib.strcmp (real_name, other.real_name);
+            return GLib.strcmp (_real_name, other._real_name);
         }
     }
 
@@ -128,15 +222,24 @@ namespace XSAA
             }
         }
 
-        private int      size = 0;
-        private int      reserved = 4;
-        private Node*    content;
-        private string   ignore_users = "nobody nobody4 noaccess";
-        private string   ignore_shells = "/bin/false /usr/sbin/nologin";
-        private int      minimum_uid = 1000;
+        private DBus.Connection connection;
+        private int             size = 0;
+        private int             reserved = 4;
+        private Node*           content;
+        private string          ignore_users = "nobody nobody4 noaccess";
+        private string          ignore_shells = "/bin/false /usr/sbin/nologin";
+        private int             minimum_uid = 1000;
 
-        public Users ()
+        public int nb_users {
+            get {
+                return size;
+            }
+        }
+
+        public Users (DBus.Connection conn)
         {
+            connection = conn;
+
             content = new Node [reserved];
 
             load_config ();
@@ -148,7 +251,7 @@ namespace XSAA
                 if (entry == null)
                     break;
 
-                User user = User (entry);
+                User user = new User (entry);
 
                 if (user.uid < minimum_uid)
                     continue;
@@ -272,6 +375,11 @@ namespace XSAA
                                   (size - pos - 1) * sizeof (Node));
 
             content[pos].val = user;
+
+            DBus.ObjectPath path = new DBus.ObjectPath ("/fr/supersonicimagine/XSAA/Manager/User/" +
+                                                        pos.to_string());
+
+            connection.register_object(path, user);
         }
 
         public unowned User?
@@ -286,7 +394,7 @@ namespace XSAA
             return null;
         }
 
-        public Iterator
+		public Iterator
         iterator ()
         {
             return new Iterator (this);

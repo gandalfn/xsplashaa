@@ -46,11 +46,6 @@ public interface ConsoleKit.Manager : DBus.Object
     stop() throws DBus.Error;
 }
 
-[DBus (name = "org.gnome.SettingsDaemon")] 
-public interface SettingsDaemon.Manager : DBus.Object 
-{
-}
-
 namespace XSAA
 {
     static MainLoop loop;
@@ -61,6 +56,7 @@ namespace XSAA
         private DBus.Connection connection;
         public Vala.Map <string, Session> sessions;
         private ConsoleKit.Manager manager;
+        private Users users;
 
         public SessionManager(DBus.Connection conn, dynamic DBus.Object bus)
         {
@@ -72,6 +68,8 @@ namespace XSAA
 
             sessions = new Vala.HashMap <string, Session> (GLib.str_hash, GLib.str_equal);
             bus.NameOwnerChanged.connect (on_client_lost);
+
+            users = new Users (conn);
         }
 
         private void 
@@ -83,8 +81,8 @@ namespace XSAA
         public bool
         open_session(string user, int display, string device, bool autologin, out DBus.ObjectPath? path)
         {
-            path =  new DBus.ObjectPath ("/fr/supersonicimagine/XSAA/Manager/Session/" +
-                                         user + "/" + display.to_string());
+            path = new DBus.ObjectPath ("/fr/supersonicimagine/XSAA/Manager/Session/" +
+                                        user + "/" + display.to_string());
             try
             {
                 string service = "xsplashaa";
@@ -138,11 +136,17 @@ namespace XSAA
                 GLib.critical ("error on ask halt %s", err.message);
             }
         }
+
+        public int
+        get_nb_users ()
+        {
+            return users.nb_users;
+        }
     }
 
-    const OptionEntry[] option_entries = 
+    const GLib.OptionEntry[] option_entries = 
     {
-        { "no-daemonize", 'd', 0, OptionArg.NONE, ref no_daemon, "Do not run xsplashaa-session-daemon as a daemonn", null },
+        { "no-daemonize", 'd', 0, GLib.OptionArg.NONE, ref no_daemon, "Do not run xsplashaa-session-daemon as a daemonn", null },
         { null }
     };
 
@@ -162,7 +166,7 @@ namespace XSAA
             opt_context.add_main_entries(option_entries, "xsplasaa-session-daemon");
             opt_context.parse(ref args);
         }
-        catch (OptionError err) 
+        catch (GLib.OptionError err) 
         {
             GLib.critical ("option parsing failed: %s", err.message);
             return -1;
@@ -179,7 +183,7 @@ namespace XSAA
 
         try
         {
-            loop = new MainLoop(null, false);
+            loop = new GLib.MainLoop(null, false);
 
             var conn = DBus.Bus.get (DBus.BusType.SYSTEM);
 
@@ -188,10 +192,12 @@ namespace XSAA
                                                        "org.freedesktop.DBus");
 
             uint r1 = bus.request_name ("fr.supersonicimagine.XSAA.Manager.Session", (uint) 0);
-            uint r2 = bus.request_name ("fr.supersonicimagine.XSAA.Manager", (uint) 0);
+            uint r2 = bus.request_name ("fr.supersonicimagine.XSAA.Manager.User", (uint) 0);
+            uint r3 = bus.request_name ("fr.supersonicimagine.XSAA.Manager", (uint) 0);
 
             if (r1 == DBus.RequestNameReply.PRIMARY_OWNER &&
-                r2 == DBus.RequestNameReply.PRIMARY_OWNER) 
+                r2 == DBus.RequestNameReply.PRIMARY_OWNER &&
+                r3 == DBus.RequestNameReply.PRIMARY_OWNER) 
             {
                 var service = new SessionManager (conn, bus);
 

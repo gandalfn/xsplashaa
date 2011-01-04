@@ -28,8 +28,8 @@ libxsaa_private_la_VALAFLAGS = \
     --vapi=xsaa-private.vapi
 
 libxsaa_private_la_SOURCES = \
+    xsaa-cairo-context.vala \
     xsaa-log.vala \
-    xsaa-users.vala \
     xsaa-socket.vala
 
 noinst_HEADERS = xsaa-source.h
@@ -40,7 +40,6 @@ xsplashaa_SOURCES = \
     xsaa-timeout-pool.vala \
     xsaa-timeout.vala \
     xsaa-timeline.vala \
-    xsaa-cairo-context.vala \
     xsaa-slide-notebook.vala \
     xsaa-server.vala \
     xsaa-display.vala \
@@ -75,6 +74,7 @@ xsplashaa_session_daemon_CFLAGS = \
     $(XSPLASHAA_SESSION_DAEMON_CFLAGS)
 
 xsplashaa_session_daemon_SOURCES = \
+    xsaa-users.vala \
     xsaa-pam.vala \
     xsaa-session.vala \
     xsaa-session-daemon.vala

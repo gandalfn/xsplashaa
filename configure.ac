@@ -51,6 +51,7 @@ PKG_CHECK_MODULES(XSPLASHAA, [glib-2.0 >= $GLIB_REQUIRED
 
 PKG_CHECK_MODULES(XSPLASHAA_SESSION_DAEMON, [glib-2.0 >= $GLIB_REQUIRED,
                                              gobject-2.0 >= $GLIB_REQUIRED
+                                             gtk+-2.0 >= $GTK_REQUIRED
                                              dbus-glib-1
                                              vala-0.10 >= $VALA_REQUIRED
                                              xau])
