@@ -45,6 +45,29 @@ namespace XSAA
     [DBus (name = "fr.supersonicimagine.XSAA.Manager.Session")]
     public class Session : GLib.Object
     {
+        private enum MessageType
+        {
+            ASK_PASSWD,
+            ASK_PASSWD_RESPONSE,
+            ASK_FACE_AUTHENTICATION,
+            AUTHENTIFICATED,
+            ERROR,
+            INFO,
+            FINISHED
+        }
+
+        private struct Message
+        {
+            public MessageType type;
+            public string message;
+
+            public Message (MessageType type, string message)
+            {
+                this.type = type;
+                this.message = message;
+            }
+        }
+
         private ConsoleKit.Manager ck_manager;
         private string cookie;
         private string display_num;
@@ -52,13 +75,17 @@ namespace XSAA
 
         private GLib.Pid pid = (Pid)0;
         unowned Posix.Passwd passwd;
-        private string pass = null;
         private PamSession pam;
         private string xauth_file;
+
+        private GLib.AsyncQueue<Message?> m_MessageQueue;
+        private GLib.AsyncQueue<Message?> m_ResponseQueue;
 
         public signal void died();
         public signal void exited();
 
+        public signal void ask_passwd ();
+        public signal void ask_face_authentication ();
         public signal void authenticated();
         public signal void info (string msg);
         public signal void error_msg (string msg);
@@ -81,7 +108,6 @@ namespace XSAA
             try
             {
                 pam = new PamSession(service, user, display, xauth_file, device);
-                pam.passwd.connect(on_ask_passwd);
                 pam.info.connect(on_info);
                 pam.error_msg.connect(on_error_msg);
             }
@@ -92,6 +118,9 @@ namespace XSAA
 
             display_num = ":" + display.to_string();
             device_num = device;
+
+            m_MessageQueue = new GLib.AsyncQueue<Message?> ();
+            m_ResponseQueue = new GLib.AsyncQueue<Message?> ();
         }
 
         ~Session()
@@ -267,35 +296,154 @@ namespace XSAA
             }
         }
 
+        private bool
+        on_message ()
+        {
+            Message msg = m_MessageQueue.pop ();
+
+            switch (msg.type)
+            {
+                case MessageType.ASK_PASSWD:
+                    GLib.debug ("Received ask passwd message");
+                    ask_passwd ();
+                    break;
+                case MessageType.ASK_FACE_AUTHENTICATION:
+                    GLib.debug ("Received ask face authentication message");
+                    ask_face_authentication ();
+                    break;
+                case MessageType.AUTHENTIFICATED:
+                    GLib.debug ("Received authenticated message");
+                    authenticated ();
+                    break;
+                case MessageType.INFO:
+                    GLib.debug ("Received info message");
+                    info (msg.message);
+                    break;
+                case MessageType.ERROR:
+                    GLib.debug ("Received error message");
+                    error_msg (msg.message);
+                    break;
+                case MessageType.FINISHED:
+                    GLib.debug ("Received finished message");
+                    pam.info.connect (on_info);
+                    pam.error_msg.connect (on_error_msg);
+                    break;
+                default:
+                    break;
+            }
+
+            return false;
+        }
+
         private string
         on_ask_passwd()
         {
-            return pass;
+            GLib.debug ("send ask passwd message");
+            Message msg = Message (MessageType.ASK_PASSWD, "");
+            m_MessageQueue.push (msg);
+            GLib.Idle.add (on_message);
+            Message response = m_ResponseQueue.pop ();
+            return response.type == MessageType.ASK_PASSWD_RESPONSE ? response.message : null;
+        }
+
+        private void
+        on_ask_face_authentication ()
+        {
+            GLib.debug ("send ask face authentication message");
+            Message msg = Message (MessageType.ASK_FACE_AUTHENTICATION, "");
+            m_MessageQueue.push (msg);
+            GLib.Idle.add (on_message);
+        }
+
+        private void
+        on_authentificated ()
+        {
+            GLib.debug ("send authenticated message");
+            Message msg = Message (MessageType.AUTHENTIFICATED, "");
+            m_MessageQueue.push (msg);
+            GLib.Idle.add (on_message);
+        }
+
+        private void
+        on_authenticate_info(string text)
+        {
+            GLib.debug ("authenticate info message: %s", text);
+            Message msg = Message (MessageType.INFO, text);
+            m_MessageQueue.push (msg);
+            GLib.Idle.add (on_message);
+        }
+
+        private void
+        on_authenticate_error_msg(string text)
+        {
+            GLib.debug ("authenticate error message: %s", text);
+            Message msg = Message (MessageType.ERROR, text);
+            m_MessageQueue.push (msg);
+            GLib.Idle.add (on_message);
         }
 
         private void
         on_info(string text)
         {
-            info(text);
+            GLib.debug ("info message: %s", text);
+            info (text);
         }
 
         private void
         on_error_msg(string text)
         {
-            error_msg(text);
+            GLib.debug ("error message: %s", text);
+            error_msg (text);
         }
 
-        public void
-        set_passwd(string pass)
+        private void*
+        start_authenticate ()
         {
-            this.pass = pass;
+            GLib.debug ("start authenticate");
+
+            pam.authenticated.connect (on_authentificated);
+            pam.passwd.connect (on_ask_passwd);
+            pam.face_authentication.connect (on_ask_face_authentication);
+            pam.info.connect (on_authenticate_info);
+            pam.error_msg.connect (on_authenticate_error_msg);
+
+            pam.authenticate ();
+
+            pam.info.disconnect (on_authenticate_info);
+            pam.error_msg.disconnect (on_authenticate_error_msg);
+
+            Message msg = Message (MessageType.FINISHED, "");
+            m_MessageQueue.push (msg);
+            GLib.Idle.add (on_message);
+
+            return null;
         }
 
         public void
         authenticate()
         {
             GLib.debug ("authenticate");
-            authenticated();
+
+            try
+            {
+                pam.info.disconnect (on_info);
+                pam.error_msg.disconnect (on_error_msg);
+                GLib.Thread.create (start_authenticate, false);
+            }
+            catch (GLib.ThreadError err)
+            {
+                pam.info.connect (on_info);
+                pam.error_msg.connect (on_error_msg);
+                GLib.warning ("Error on launch authentification: %s", err.message);
+                error_msg ("Error on launch authentification");
+            }
+        }
+
+        public void
+        set_passwd (string passwd)
+        {
+            Message msg = Message (MessageType.ASK_PASSWD_RESPONSE, passwd);
+            m_ResponseQueue.push (msg);
         }
 
         public void

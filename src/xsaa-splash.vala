@@ -21,9 +21,29 @@
 
 namespace XSAA
 {
+    public enum FaceAuthenticationStatus
+    {
+        INPROGRESS = 35,
+
+        STOPPED = 28,
+        STARTED = 21,
+
+        CANCEL = 14,
+        AUTHENTICATE = 7,
+        DISPLAY_ERROR = 1,
+        EXIT_GUI = 2
+    }
+
     public class Splash : Gtk.Window
     {
         const int ICON_SIZE = 90;
+
+        const Posix.key_t FACE_AUTHENTICATION_IPC_KEY_SEM_IMAGE = 567816;
+        const Posix.key_t FACE_AUTHENTICATION_IPC_KEY_IMAGE = 567814;
+        const Posix.key_t FACE_AUTHENTICATION_IPC_KEY_STATUS = 567813;
+        const int         FACE_AUTHENTICATION_IMAGE_WIDTH = 320;
+        const int         FACE_AUTHENTICATION_IMAGE_HEIGHT = 240;
+        const int         FACE_AUTHENTICATION_IMAGE_SIZE = 307200;
 
         Server socket;
         DBus.Connection conn;
@@ -44,13 +64,22 @@ namespace XSAA
         Gtk.Label label_message;
         uint id_pulse = 0;
 
+        Gtk.DrawingArea face_authentication;
+        Timeline face_authentication_refresh;
+        int face_authentication_sem_pixels_id = 0;
+        int face_authentication_pixels_id = 0;
+        int face_authentication_status_id = 0;
+        unowned uchar* face_authentication_pixels = null;
+        int* face_authentication_status = null;
+
         string theme = "chicken-curie";
         string layout = "horizontal";
         string bg = "#1B242D";
         string text = "#7BC4F5";
         float yposition = 0.5f;
 
-        public signal void login(string username, string passwd);
+        public signal void login(string username);
+        public signal void passwd(string passwd);
         public signal void restart();
         public signal void shutdown();
 
@@ -329,7 +358,7 @@ namespace XSAA
         {
             GLib.debug ("construct loading page");
 
-            var table = new Gtk.Table(3, 2, false);
+            var table = new Gtk.Table(4, 2, false);
             table.show();
             table.set_border_width(12);
             table.set_col_spacings(12);
@@ -340,14 +369,20 @@ namespace XSAA
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
-            table.attach_defaults(label, 0, 1, 0, 1);
+            table.attach(label, 0, 1, 0, 1,
+                         Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+                         Gtk.AttachOptions.FILL,
+                         0, 0);
 
             try
             {
                 phase[0] = new Throbber(theme, 83);
                 phase[0].show();
                 phase[0].start();
-                table.attach_defaults(phase[0], 1, 2, 0, 1);
+                table.attach(phase[0], 1, 2, 0, 1,
+                             Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+                             Gtk.AttachOptions.FILL,
+                             0, 0);
             }
             catch (GLib.Error err)
             {
@@ -359,13 +394,19 @@ namespace XSAA
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
-            table.attach_defaults(label, 0, 1, 1, 2);
+            table.attach(label, 0, 1, 1, 2,
+                         Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+                         Gtk.AttachOptions.FILL,
+                         0, 0);
 
             try
             {
                 phase[1] = new Throbber(theme, 83);
                 phase[1].show();
-                table.attach_defaults(phase[1], 1, 2, 1, 2);
+                table.attach(phase[1], 1, 2, 1, 2,
+                             Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+                             Gtk.AttachOptions.FILL,
+                             0, 0);
             }
             catch (GLib.Error err)
             {
@@ -377,13 +418,19 @@ namespace XSAA
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
-            table.attach_defaults(label, 0, 1, 2, 3);
+            table.attach(label, 0, 1, 2, 3,
+                         Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+                         Gtk.AttachOptions.FILL,
+                         0, 0);
 
             try
             {
                 phase[2] = new Throbber(theme, 83);
                 phase[2].show();
-                table.attach_defaults(phase[2], 1, 2, 2, 3);
+                table.attach(phase[2], 1, 2, 2, 3,
+                             Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+                             Gtk.AttachOptions.FILL,
+                             0, 0);
             }
             catch (GLib.Error err)
             {
@@ -416,6 +463,7 @@ namespace XSAA
             var model = new Gtk.TreeModelFilter (user_list, null);
             model.set_visible_column (4);
             user_treeview = new Gtk.TreeView.with_model (model);
+            user_treeview.can_focus = false;
             user_treeview.headers_visible = false;
             user_treeview.insert_column_with_attributes (-1, "", new Gtk.CellRendererPixbuf (), "pixbuf", 0);
             user_treeview.insert_column_with_attributes (-1, "", new Gtk.CellRendererText (), "markup", 1);
@@ -423,7 +471,16 @@ namespace XSAA
             user_treeview.show ();
             user_scrolled_window.add (user_treeview);
 
-            login_prompt = new Gtk.Table(2, 3, false);
+            face_authentication_refresh = new Timeline(60, 60);
+            face_authentication_refresh.loop = true;
+            face_authentication_refresh.new_frame.connect (on_refresh_face_authentication);
+
+            face_authentication = new Gtk.DrawingArea ();
+            face_authentication.set_size_request (320, 240);
+            face_authentication.expose_event.connect (on_face_authentication_expose_event);
+            box.pack_start(face_authentication, false, false, 0);
+
+            login_prompt = new Gtk.Table(1, 3, false);
             login_prompt.set_border_width(12);
             login_prompt.set_col_spacings(12);
             login_prompt.set_row_spacings(12);
@@ -440,6 +497,7 @@ namespace XSAA
                                  0, 0);
 
             entry_prompt = new Gtk.Entry();
+            entry_prompt.can_focus = true;
             entry_prompt.show();
             login_prompt.attach (entry_prompt, 2, 3, 0, 1,
                                  Gtk.AttachOptions.FILL,
@@ -449,11 +507,7 @@ namespace XSAA
             label_message = new Gtk.Label("");
             label_message.set_use_markup(true);
             label_message.set_alignment(0.5f, 0.5f);
-            label_message.show();
-            login_prompt.attach (label_message, 0, 4, 1, 2,
-                                 Gtk.AttachOptions.FILL,
-                                 Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
-                                 0, 0);
+            box.pack_start(label_message, false, false, 0);
 
             button_box = new Gtk.HButtonBox();
             button_box.show();
@@ -462,11 +516,13 @@ namespace XSAA
             box.pack_start(button_box, false, false, 0);
 
             var button = new Gtk.Button.with_label("Restart");
+            button.can_focus = false;
             button.show();
             button.clicked.connect(on_restart_clicked);
             button_box.pack_start(button, false, false, 0);
 
             button = new Gtk.Button.with_label("Shutdown");
+            button.can_focus = false;
             button.show();
             button.clicked.connect(on_shutdown_clicked);
             button_box.pack_start(button, false, false, 0);
@@ -573,6 +629,124 @@ namespace XSAA
         }
 
         private void
+        on_refresh_face_authentication (int num_frame)
+        {
+            if ((int)face_authentication_status == -1)
+                ipc_start ();
+
+            if ((int)face_authentication_status != -1)
+            {
+                switch (*face_authentication_status)
+                {
+                    case FaceAuthenticationStatus.STARTED:
+                        face_authentication.queue_draw ();
+                        break;
+                    case FaceAuthenticationStatus.STOPPED:
+                        GLib.Idle.add (() => { 
+                            face_authentication_refresh.stop ();
+                            face_authentication_refresh.rewind ();
+
+                            Posix.shmdt (face_authentication_pixels);
+                            Posix.shmdt (face_authentication_status);
+                            face_authentication_pixels = null;
+                            face_authentication_status = null;
+                            return false;
+                        });
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        private void
+        ipc_start ()
+        {
+            face_authentication_sem_pixels_id = Posix.semget (FACE_AUTHENTICATION_IPC_KEY_SEM_IMAGE, 
+                                                              1, Posix.IPC_CREAT | 0666);
+
+            face_authentication_pixels_id = Posix.shmget (FACE_AUTHENTICATION_IPC_KEY_IMAGE, 
+                                                          FACE_AUTHENTICATION_IMAGE_SIZE,
+                                                          Posix.IPC_CREAT | 0666);
+            if ((int)face_authentication_pixels_id != -1)
+            {
+                face_authentication_pixels = Posix.shmat (face_authentication_pixels_id, null, 0);
+                if ((int)face_authentication_pixels == -1)
+                {
+                    GLib.warning ("error on get face authentication pixels mem: %s", GLib.strerror (GLib.errno));
+                }
+            }
+
+            face_authentication_status_id = Posix.shmget (FACE_AUTHENTICATION_IPC_KEY_STATUS, 
+                                                           sizeof (int), Posix.IPC_CREAT | 0666);
+            if ((int)face_authentication_status_id != -1)
+            {
+                face_authentication_status = Posix.shmat (face_authentication_status_id, null, 0);
+                if ((int)face_authentication_status == -1)
+                {
+                    GLib.warning ("error on get face authentication status mem: %s", GLib.strerror (GLib.errno));
+                }
+            }
+        }
+
+        private Cairo.ImageSurface?
+        get_face_authentication_surface ()
+        {
+            Cairo.ImageSurface? surface = null;
+
+            if ((int)face_authentication_pixels == -1)
+                ipc_start ();
+
+            if ((int)face_authentication_status != -1 && 
+                (int)face_authentication_pixels != -1 && 
+                *face_authentication_status == FaceAuthenticationStatus.STARTED)
+            {
+                surface = new Cairo.ImageSurface (Cairo.Format.ARGB32,
+                                                  FACE_AUTHENTICATION_IMAGE_WIDTH,
+                                                  FACE_AUTHENTICATION_IMAGE_HEIGHT);
+
+                unowned uchar* dst = surface.get_data ();
+                unowned uchar* src = face_authentication_pixels;
+
+                for (int i = 0; i < FACE_AUTHENTICATION_IMAGE_WIDTH; ++i)
+                {
+                    for (int j = 0; j < FACE_AUTHENTICATION_IMAGE_HEIGHT; ++j)
+                    {
+                        dst[0] = src[0];
+                        dst[1] = src[1];
+                        dst[2] = src[2];
+                        dst[3] = 255;
+                        src += 3;
+                        dst += 4;
+                    }
+                }
+
+                surface.mark_dirty ();
+                surface.flush ();
+            }
+
+            return surface;
+        }
+
+        private bool
+        on_face_authentication_expose_event (Gdk.EventExpose event)
+        {
+            if (face_authentication_pixels != null)
+            {
+                Cairo.Surface surface = get_face_authentication_surface ();
+                if (surface != null)
+                {
+                    CairoContext ctx = new CairoContext.from_widget (face_authentication);
+                    ctx.set_operator (Cairo.Operator.SOURCE);
+                    ctx.set_source_surface (surface, 0, 0);
+                    ctx.paint ();
+                }
+            }
+
+            return true;
+        }
+
+        private void
         on_progress(int val)
         {
             GLib.debug ("progress = %i", val);
@@ -603,6 +777,8 @@ namespace XSAA
                 user_treeview.set_sensitive (false);
                 user_scrolled_window.set_size_request (-1, ICON_SIZE + 5);
                 login_prompt.show ();
+                entry_prompt.can_focus = true;
+                set_focus (entry_prompt);
                 if (username != null)
                 {
                     if (user_list.get_iter_first (out iter))
@@ -629,6 +805,7 @@ namespace XSAA
                 user_scrolled_window.set_size_request (-1, -1);
                 user_treeview.set_sensitive (true);
                 login_prompt.hide ();
+                face_authentication.hide ();
                 button_box.show ();
                 if (user_list.get_iter_first (out iter))
                 {
@@ -650,15 +827,8 @@ namespace XSAA
             GLib.debug ("login enter user: %s", username);
             if (username.length > 0)
             {
-                set_focus(entry_prompt);
-                button_box.hide ();
-                entry_prompt.activate.disconnect (on_login_enter);
-                entry_prompt.set_visibility(false);
-                entry_prompt.set_text("");
-                entry_prompt.activate.connect(on_passwd_enter);
-                label_prompt.set_markup("<span size='xx-large' color='" +
-                                        text +"'>Password :</span>");
-                label_message.set_text("");
+                entry_prompt.set_sensitive (false);
+                login(username);
             }
         }
 
@@ -669,7 +839,7 @@ namespace XSAA
 
             entry_prompt.set_sensitive(false);
             entry_prompt.activate.disconnect (on_passwd_enter);
-            login(username, entry_prompt.get_text());
+            passwd (entry_prompt.get_text());
         }
 
         private void
@@ -792,8 +962,8 @@ namespace XSAA
 
             label_prompt.set_markup("<span size='xx-large' color='" +
                                      text +"'>Login :</span>");
-            set_focus(entry_prompt);
-            entry_prompt.grab_focus();
+            entry_prompt.can_focus = true;
+            set_focus (entry_prompt);
             entry_prompt.set_sensitive(true);
             entry_prompt.set_visibility(true);
             entry_prompt.set_text("");
@@ -804,12 +974,46 @@ namespace XSAA
         }
 
         public void
+        ask_for_passwd()
+        {
+            GLib.debug ("ask for password");
+
+            label_message.hide ();
+            face_authentication.hide ();
+            login_prompt.show ();
+            entry_prompt.can_focus = true;
+            set_focus (entry_prompt);
+            button_box.hide ();
+            entry_prompt.set_sensitive (true);
+            entry_prompt.activate.disconnect (on_login_enter);
+            entry_prompt.set_visibility(false);
+            entry_prompt.set_text("");
+            entry_prompt.activate.connect(on_passwd_enter);
+            label_prompt.set_markup("<span size='xx-large' color='" +
+                                    text +"'>Password :</span>");
+        }
+
+        public void
+        ask_for_face_authentication()
+        {
+            GLib.debug ("ask for face authentication");
+
+            ipc_start ();
+
+            face_authentication_refresh.start ();
+
+            login_prompt.hide ();
+            face_authentication.show ();
+        }
+
+        public void
         login_message(string msg)
         {
             GLib.debug ("login message: %s", msg);
 
-            label_message.set_markup("<span size='xx-large' color='" +
+            label_message.set_markup("<span size='x-large' color='" +
                                      text +"'>" + msg + "</span>");
+            label_message.show ();
         }
     }
 }

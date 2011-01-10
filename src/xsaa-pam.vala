@@ -46,9 +46,17 @@ namespace XSAA
                     break;
                 case Pam.PROMPT_ECHO_OFF:
                     GLib.message ("echo off message : %s", msg.msg);
-                    string passwd = pam.passwd();
-                    resp[i].resp = Memory.dup(passwd, (uint)passwd.length);
-                    resp[i].resp_retcode = Pam.SUCCESS;
+                    string pass = pam.passwd ();
+                    if (pass != null)
+                    {
+                        resp[i].resp = Memory.dup(pass, (uint)pass.length);
+                        resp[i].resp_retcode = Pam.SUCCESS;
+                    }
+                    else
+                    {
+                        resp[i].resp = null;
+                        resp[i].resp_retcode = Pam.AUTH_ERR;
+                    }
                     break;
                 case Pam.TEXT_INFO:
                     GLib.message ("text info message : %s", msg.msg);
@@ -70,19 +78,26 @@ namespace XSAA
     public class PamSession : GLib.Object
     {
         string user;
+        string pass;
         bool accredited = false;
         bool openned = false;
         Pam.Handle pam_handle = null;
         Pam.Conv conv;
+        internal GLib.MainLoop wait_passwd_loop;
         public Vala.Map <string, string> envs;
 
-        public signal string passwd();
+        public signal string passwd ();
+        public signal void face_authentication ();
+        public signal void authenticated();
         public signal void info(string text);
         public signal void error_msg(string text);
 
         public PamSession(string service, string username, int display, string xauth_file, string device) throws PamError
         {
+            GLib.debug ("Create pam session for %s", username);
+            wait_passwd_loop = new GLib.MainLoop ();
             user = username;
+            pass = null;
 
             conv = Pam.Conv();
             conv.conv = (void*)on_pam_conversation;
@@ -135,13 +150,48 @@ namespace XSAA
         }
 
         public void
-        open_session() throws PamError
+        authenticate ()
         {
-            if (pam_handle.authenticate(0) != Pam.SUCCESS)
+            unowned Posix.Passwd passwd = Posix.getpwnam(user);
+            string face_authentication_dir = passwd.pw_dir + "/.pam-face-authentication/faces";
+            GLib.debug ("check if %s exist", face_authentication_dir);
+            if (GLib.FileUtils.test (face_authentication_dir, GLib.FileTest.EXISTS))
             {
-                throw new PamError.AUTHENTICATE("Error on authenticate");
+                bool found = false;
+
+                GLib.debug ("found %s check if face exist", face_authentication_dir);
+                try
+                {
+                    GLib.Dir dir = GLib.Dir.open (face_authentication_dir, 0);
+                    unowned string item = dir.read_name ();
+                    while (!found && item != null)
+                    {
+                        found = item != "." && item != "..";
+                        item = dir.read_name ();
+                    }
+                }
+                catch (GLib.FileError err)
+                {
+                    GLib.warning ("error on open %s: %s", face_authentication_dir,
+                                  err.message);
+                }
+
+                if (found) face_authentication ();
             }
 
+            if (pam_handle.authenticate(0) != Pam.SUCCESS)
+            {
+                error_msg ("Authentification failure");
+            }
+            else
+            {
+                authenticated ();
+            }
+        }
+
+        public void
+        open_session() throws PamError
+        {
             unowned Posix.Passwd passwd = Posix.getpwnam(user);
             if (passwd == null)
             {

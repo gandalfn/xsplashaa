@@ -35,6 +35,8 @@ public interface XSAA.Session : DBus.Object
     public signal void died();
     public signal void exited();
 
+    public signal void ask_passwd ();
+    public signal void ask_face_authentication ();
     public signal void authenticated ();
     public signal void info (string msg);
     public signal void error_msg (string msg);
@@ -94,6 +96,7 @@ namespace XSAA
 
         public Daemon(string socket_name, bool test_only = false) throws GLib.Error
         {
+            GLib.debug ("Start daemon on %s in test only %s", socket_name, test_only.to_string ());
             load_config();
 
             this.test_only = test_only;
@@ -111,6 +114,40 @@ namespace XSAA
                     display.died.connect(on_display_exit);
                     display.exited.connect(on_display_exit);
                 }
+
+                socket = new Server(socket_name);
+                socket.dbus.connect(on_dbus_ready);
+                socket.session.connect(on_session_ready);
+                socket.close_session.connect(on_init_shutdown);
+                socket.quit.connect(on_quit);
+            }
+            catch (GLib.Error err)
+            {
+                this.unref();
+                throw err;
+            }
+        }
+
+        public Daemon.xnest (string socket_name) throws GLib.Error
+        {
+            GLib.debug ("Start daemon xnest on %s in test only %s", socket_name, test_only.to_string ());
+
+            load_config();
+
+            if (!enable)
+                throw new DaemonError.DISABLED("Use gdm instead xsplashaa");
+
+            server = "/usr/bin/Xnest";
+            number = 11;
+            options = "";
+
+            string cmd = server + " :" + number.to_string() + " " + options;
+            try
+            {
+                display = new Display(cmd, number);
+                display.ready.connect(on_display_ready);
+                display.died.connect(on_display_exit);
+                display.exited.connect(on_display_exit);
 
                 socket = new Server(socket_name);
                 socket.dbus.connect(on_dbus_ready);
@@ -203,6 +240,7 @@ namespace XSAA
 
             splash = new Splash(socket);
             splash.login.connect(on_login_response);
+            splash.passwd.connect(on_passwd_response);
             splash.restart.connect(on_restart_request);
             splash.shutdown.connect(on_shutdown_request);
             splash.show();
@@ -232,17 +270,23 @@ namespace XSAA
             {
                 if (session == null)
                 {
-                    GLib.message ("open session");
+                    GLib.message ("open session for %s: number=%i device=%s autologin=%s",
+                                  username, number, device, autologin.to_string ());
                     if (manager.open_session (username, number, device, autologin, out path))
                     {
                         session = (XSAA.Session) conn.get_object ("fr.supersonicimagine.XSAA.Manager.Session",
                                                                   path,
                                                                   "fr.supersonicimagine.XSAA.Manager.Session");
-                        session.died.connect(on_session_ended);
-                        session.exited.connect(on_session_ended);
-                        session.info.connect(on_session_info);
-                        session.error_msg.connect(on_error_msg);
-                        ret = true;
+                        if (session != null)
+                        {
+                            session.died.connect(on_session_ended);
+                            session.exited.connect(on_session_ended);
+                            session.info.connect(on_session_info);
+                            session.error_msg.connect(on_error_msg);
+                            ret = true;
+                        }
+                        else
+                            GLib.warning ("error on open session");
                     }
                     else
                         GLib.warning ("error on open session");
@@ -277,17 +321,20 @@ namespace XSAA
             else
             {
                 GLib.message ("start session for user %s", user);
-                open_session(user, true);
-
-                try
+                if (open_session(user, true))
                 {
-                    session.authenticate();
-                    session.authenticated.connect(on_authenticated);
+                    try
+                    {
+                        session.authenticate();
+                        session.authenticated.connect(on_authenticated);
+                    }
+                    catch (GLib.Error err)
+                    {
+                        GLib.warning ("error on session authenticate: %s", err.message);
+                    }
                 }
-                catch (GLib.Error err)
-                {
-                    GLib.warning ("error on session authenticate: %s", err.message);
-                }
+                else
+                    GLib.warning ("Error on open session");
             }
         }
 
@@ -297,6 +344,8 @@ namespace XSAA
             GLib.debug ("dbus ready");
 
             device = display.get_device();
+            if (device == null)
+                device = "/dev/tty1";
 
             try
             {
@@ -310,6 +359,10 @@ namespace XSAA
                     manager = (XSAA.Manager)conn.get_object ("fr.supersonicimagine.XSAA.Manager", 
                                                              "/fr/supersonicimagine/XSAA/Manager",
                                                              "/fr/supersonicimagine/XSAA/Manager");
+                }
+                if (manager == null)
+                {
+                    GLib.warning ("Error on get manager object");
                 }
             }
             catch (GLib.Error err)
@@ -440,24 +493,7 @@ namespace XSAA
         on_session_info(string msg)
         {
             GLib.debug ("session info: %s", msg);
-            if (session != null)
-            {
-                try
-                {
-                    GLib.message ("close session: %s", path);
-
-                    manager.close_session(path);
-                }
-                catch (DBus.Error err)
-                {
-                    GLib.critical ("error on close session: %s", err.message);
-                }
-                session = null;
-            }
-            user = null;
-            pass = null;
             splash.login_message(msg);
-            splash.ask_for_login();
         }
 
         private void
@@ -505,7 +541,21 @@ namespace XSAA
         }
 
         private void
-        on_login_response(string username, string passwd)
+        on_ask_passwd ()
+        {
+            GLib.debug ("Ask password");
+            splash.ask_for_passwd ();
+        }
+
+        private void
+        on_ask_face_authentication ()
+        {
+            GLib.debug ("Ask face authentication");
+            splash.ask_for_face_authentication ();
+        }
+
+        private void
+        on_login_response(string username)
         {
             GLib.debug ("login response for %s", username);
 
@@ -514,12 +564,12 @@ namespace XSAA
                 GLib.message ("open session for %s", username);
 
                 user = username;
-                pass = passwd;
                 try
                 {
-                    session.set_passwd(pass);
                     session.authenticate();
                     session.authenticated.connect(on_authenticated);
+                    session.ask_passwd.connect(on_ask_passwd);
+                    session.ask_face_authentication.connect (on_ask_face_authentication);
                 }
                 catch (DBus.Error err)
                 {
@@ -531,6 +581,20 @@ namespace XSAA
                 user = null;
                 pass = null;
                 splash.ask_for_login();
+            }
+        }
+
+        private void
+        on_passwd_response(string passwd)
+        {
+            GLib.debug ("passwd response");
+            try
+            {
+                session.set_passwd(passwd);
+            }
+            catch (DBus.Error err)
+            {
+                GLib.warning ("Error on set passwd: %s", err.message);
             }
         }
 
@@ -583,12 +647,14 @@ namespace XSAA
     const OptionEntry[] option_entries = 
     {
         { "test-only", 't', 0, OptionArg.NONE, ref test_only, "Test only", null },
+        { "xnest", 'x', 0, OptionArg.NONE, ref xnest, "Xnest", null },
         { "no-daemonize", 'd', 0, OptionArg.NONE, ref no_daemon, "Do not run xsplashaa as a daemonn", null },
         { null }
     };
 
     static bool test_only = false;
     static bool no_daemon = false;
+    static bool xnest     = false;
 
     static int 
     main (string[] args) 
@@ -615,6 +681,23 @@ namespace XSAA
             try
             {
                 daemon = new Daemon (SOCKET_NAME, test_only);
+                daemon.args = args;
+                daemon.run(true);
+                daemon = null;
+            }
+            catch (GLib.Error err)
+            {
+                GLib.critical ("%s", err.message);
+                daemon = null;
+                return -1;
+            }
+        }
+        else if (xnest)
+        {
+            try
+            {
+                Posix.signal(Posix.SIGSEGV, on_sig_term);
+                daemon = new Daemon.xnest (SOCKET_NAME);
                 daemon.args = args;
                 daemon.run(true);
                 daemon = null;

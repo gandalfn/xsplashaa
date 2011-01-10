@@ -100,13 +100,27 @@ namespace Posix
     public void longjmp(jmp_buf env, int val);
 
     [CCode (cheader_filename = "sys/ipc.h,sys/shm.h")]
-    int shmget(key_t key, size_t size, int shmflg);
+    public int shmget(key_t key, size_t size, int shmflg);
+
+    [CCode (cheader_filename = "sys/ipc.h,sys/sem.h")]
+    public int semget(key_t key, int nsems, int semflg);
 
     [CCode (cheader_filename = "sys/types.h,sys/shm.h")]
     public void *shmat(int shmid, void *shmaddr, int shmflg);
 
     [CCode (cheader_filename = "sys/types.h,sys/shm.h")]
     public int shmdt(void *shmaddr);
+
+    [CCode (cheader_filename = "sys/types.h,sys/ipc.h,sys/sem.h", cname = "struct sembuf")]
+    public struct Sembuf
+    {
+        public ushort sem_num;
+        public short sem_op;
+        public short sem_flg;
+    }
+
+    [CCode (cheader_filename = "sys/types.h,sys/ipc.h,sys/sem.h")]
+    public int semop(int semid, ref Sembuf sops, uint nsops);
 
     [CCode (cheader_filename = "sys/ipc.h")]
     public const int IPC_CREAT;
@@ -116,6 +130,9 @@ namespace Posix
 
     [CCode (cheader_filename = "sys/ipc.h")]
     public const int IPC_NOWAIT;
+
+    [CCode (cheader_filename = "sys/ipc.h")]
+    public const short SEM_UNDO;
 }
 
 
