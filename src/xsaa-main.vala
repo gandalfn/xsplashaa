@@ -22,7 +22,8 @@
 [DBus (name = "fr.supersonicimagine.XSAA.Manager")] 
 public interface XSAA.Manager : DBus.Object 
 {
-    public abstract bool open_session (string user, int display, string device, bool autologin, out DBus.ObjectPath? path) throws DBus.Error; 
+    public abstract bool open_session (string user, int display, string device,
+                                       bool face_authentication, bool autologin, out DBus.ObjectPath? path) throws DBus.Error; 
     public abstract void close_session(DBus.ObjectPath path) throws DBus.Error;
     public abstract void reboot() throws DBus.Error;
     public abstract void halt() throws DBus.Error;
@@ -260,7 +261,7 @@ namespace XSAA
         }
 
         private bool
-        open_session(string username, bool autologin)
+        open_session(string username, bool face_authentication, bool autologin)
         {
             GLib.debug ("open session for %s", username);
 
@@ -272,7 +273,7 @@ namespace XSAA
                 {
                     GLib.message ("open session for %s: number=%i device=%s autologin=%s",
                                   username, number, device, autologin.to_string ());
-                    if (manager.open_session (username, number, device, autologin, out path))
+                    if (manager.open_session (username, number, device, face_authentication, autologin, out path))
                     {
                         session = (XSAA.Session) conn.get_object ("fr.supersonicimagine.XSAA.Manager.Session",
                                                                   path,
@@ -321,7 +322,7 @@ namespace XSAA
             else
             {
                 GLib.message ("start session for user %s", user);
-                if (open_session(user, true))
+                if (open_session(user, false, true))
                 {
                     try
                     {
@@ -555,11 +556,11 @@ namespace XSAA
         }
 
         private void
-        on_login_response(string username)
+        on_login_response(string username, bool face_authentication)
         {
             GLib.debug ("login response for %s", username);
 
-            if (open_session(username, false))
+            if (open_session(username, face_authentication, false))
             {
                 GLib.message ("open session for %s", username);
 
@@ -739,6 +740,7 @@ namespace XSAA
 
                 if (ret_fork == 0)
                 {
+                    Posix.nice (-10);
                     try
                     {
                         GLib.message ("starting child deamon");

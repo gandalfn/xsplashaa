@@ -59,11 +59,12 @@ namespace XSAA
         Gtk.Table login_prompt;
         Gtk.Label label_prompt;
         Gtk.Entry entry_prompt;
-        Gtk.HButtonBox button_box;
+        Gtk.HBox button_box;
         string username;
         Gtk.Label label_message;
         uint id_pulse = 0;
 
+        Gtk.CheckButton face_authentication_check_button;
         Gtk.DrawingArea face_authentication;
         Timeline face_authentication_refresh;
         int face_authentication_sem_pixels_id = 0;
@@ -78,7 +79,7 @@ namespace XSAA
         string text = "#7BC4F5";
         float yposition = 0.5f;
 
-        public signal void login(string username);
+        public signal void login(string username, bool face_authentication);
         public signal void passwd(string passwd);
         public signal void restart();
         public signal void shutdown();
@@ -509,11 +510,24 @@ namespace XSAA
             label_message.set_alignment(0.5f, 0.5f);
             box.pack_start(label_message, false, false, 0);
 
-            button_box = new Gtk.HButtonBox();
-            button_box.show();
-            button_box.set_spacing(12);
-            button_box.set_layout(Gtk.ButtonBoxStyle.END);
+            button_box = new Gtk.HBox (false, 5);
+            button_box.show ();
             box.pack_start(button_box, false, false, 0);
+
+            face_authentication_check_button = new Gtk.CheckButton ();
+            face_authentication_check_button.show ();
+            button_box.pack_start (face_authentication_check_button, false, false, 0);
+            var face_authentication_label = new Gtk.Label (null);
+            face_authentication_label.show ();
+            face_authentication_label.set_markup ("<span color='" +
+                                                  text +"'><b>Face authentification</b></span>");
+            button_box.pack_start (face_authentication_label, false, false, 0);
+
+            Gtk.HButtonBox system_button_box = new Gtk.HButtonBox();
+            system_button_box.show();
+            system_button_box.set_spacing(12);
+            system_button_box.set_layout(Gtk.ButtonBoxStyle.END);
+            button_box.pack_start(system_button_box, true, true, 0);
 
             var button = new Gtk.Button.with_label("Restart");
             button.can_focus = false;
@@ -737,8 +751,17 @@ namespace XSAA
                 if (surface != null)
                 {
                     CairoContext ctx = new CairoContext.from_widget (face_authentication);
-                    ctx.set_operator (Cairo.Operator.SOURCE);
-                    ctx.set_source_surface (surface, 0, 0);
+                    ctx.set_operator (Cairo.Operator.CLEAR);
+                    ctx.paint ();
+
+                    ctx.set_operator (Cairo.Operator.OVER);
+                    ctx.rounded_rectangle ((face_authentication.parent.allocation.width - 320) / 2, 
+                                           0,
+                                           320, 240, 10, CairoCorner.ALL);
+                    ctx.clip ();
+                    ctx.set_source_surface (surface,
+                                            (face_authentication.parent.allocation.width - 320) / 2, 
+                                            0);
                     ctx.paint ();
                 }
             }
@@ -828,7 +851,7 @@ namespace XSAA
             if (username.length > 0)
             {
                 entry_prompt.set_sensitive (false);
-                login(username);
+                login(username, face_authentication_check_button.active);
             }
         }
 
@@ -921,6 +944,7 @@ namespace XSAA
         {
             GLib.debug ("show launch");
 
+            face_authentication.hide ();
             var cursor = new Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR);
             get_window().set_cursor(cursor);
             notebook.set_current_page(2);
@@ -1002,6 +1026,7 @@ namespace XSAA
 
             face_authentication_refresh.start ();
 
+            button_box.hide ();
             login_prompt.hide ();
             face_authentication.show ();
         }

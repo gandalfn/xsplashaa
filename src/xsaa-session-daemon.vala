@@ -79,13 +79,14 @@ namespace XSAA
         }
 
         public bool
-        open_session(string user, int display, string device, bool autologin, out DBus.ObjectPath? path)
+        open_session(string user, int display, string device, bool face_authentication, bool autologin, out DBus.ObjectPath? path)
         {
             path = new DBus.ObjectPath ("/fr/supersonicimagine/XSAA/Manager/Session/" +
                                         user + "/" + display.to_string());
             try
             {
                 string service = "xsplashaa";
+                if (face_authentication) service = "xsplashaa-face-authentication";
                 if (autologin) service = "xsplashaa-autologin";
 
                 var session = new Session(connection, manager, service, user, display, device);
