@@ -21,8 +21,9 @@
 
 public struct ConsoleKit.SessionParameter
 {
-    public string key;
-    public Value? value ;
+    // properties
+    public string       key;
+    public GLib.Value?  value ;
 
     public SessionParameter (string a, Value? b)
     {
@@ -34,7 +35,7 @@ public struct ConsoleKit.SessionParameter
 namespace XSAA
 {
     [DBus (name = "fr.supersonicimagine.XSAA.Manager.SessionError")]
-    errordomain SessionError
+    public errordomain SessionError
     {
         COMMAND,
         LAUNCH,
@@ -45,6 +46,7 @@ namespace XSAA
     [DBus (name = "fr.supersonicimagine.XSAA.Manager.Session")]
     public class Session : GLib.Object
     {
+        // types
         private enum MessageType
         {
             ASK_PASSWD,
@@ -58,9 +60,11 @@ namespace XSAA
 
         private struct Message
         {
+            // properties
             public MessageType type;
             public string message;
 
+            // methods
             public Message (MessageType type, string message)
             {
                 this.type = type;
@@ -68,19 +72,21 @@ namespace XSAA
             }
         }
 
-        private ConsoleKit.Manager ck_manager;
-        private string cookie;
-        private string display_num;
-        private string device_num;
+        // properties
+        private ConsoleKit.Manager m_CkManager;
+        private string             m_Cookie;
+        private string             m_DisplayNum;
+        private string             m_DeviceNum;
 
-        private GLib.Pid pid = (Pid)0;
-        unowned Posix.Passwd passwd;
-        private PamSession pam;
-        private string xauth_file;
+        private GLib.Pid           m_Pid = (GLib.Pid)0;
+        unowned Os.Passwd          m_Passwd;
+        private PamSession         m_Pam;
+        private string             m_XauthFile;
 
         private GLib.AsyncQueue<Message?> m_MessageQueue;
         private GLib.AsyncQueue<Message?> m_ResponseQueue;
 
+        // signals
         public signal void died();
         public signal void exited();
 
@@ -90,34 +96,35 @@ namespace XSAA
         public signal void info (string msg);
         public signal void error_msg (string msg);
 
-        public Session(DBus.Connection conn, ConsoleKit.Manager manager, 
-                       string service, string user, int display, string device) throws SessionError
+        // methods
+        public Session(DBus.Connection inConn, ConsoleKit.Manager inManager, 
+                       string inService, string inUser, int inDisplay, string inDevice) throws SessionError
         {
             GLib.debug ("create ck session");
 
-            ck_manager = manager;
+            m_CkManager = inManager;
 
-            passwd = Posix.getpwnam(user);
-            if (passwd == null)
+            m_Passwd = Os.getpwnam(inUser);
+            if (m_Passwd == null)
             {
-                throw new SessionError.USER("%s doesn't exist!", user);
+                throw new SessionError.USER("%s doesn't exist!", inUser);
             }
 
-            generate_xauth(user, display);
+            generate_xauth(inUser, inDisplay);
 
             try
             {
-                pam = new PamSession(service, user, display, xauth_file, device);
-                pam.info.connect(on_info);
-                pam.error_msg.connect(on_error_msg);
+                m_Pam = new PamSession(inService, inUser, inDisplay, m_XauthFile, inDevice);
+                m_Pam.info.connect(on_info);
+                m_Pam.error_msg.connect(on_error_msg);
             }
             catch (PamError err)
             {
                 throw new SessionError.USER("Error on create pam session");
             }
 
-            display_num = ":" + display.to_string();
-            device_num = device;
+            m_DisplayNum = ":" + inDisplay.to_string();
+            m_DeviceNum = inDevice;
 
             m_MessageQueue = new GLib.AsyncQueue<Message?> ();
             m_ResponseQueue = new GLib.AsyncQueue<Message?> ();
@@ -127,21 +134,21 @@ namespace XSAA
         {
             GLib.debug ("destroy ck session");
 
-            if (FileUtils.test(xauth_file, FileTest.EXISTS))
+            if (FileUtils.test(m_XauthFile, FileTest.EXISTS))
             {
-                FileUtils.remove(xauth_file);
+                FileUtils.remove(m_XauthFile);
             }
-            if (cookie != null)
-                ck_manager.close_session(cookie);
-            if (pid != (Pid)0)
-                Posix.kill((Posix.pid_t)pid, Posix.SIGKILL);
-            pid = (Pid)0;
+            if (m_Cookie != null)
+                m_CkManager.close_session(m_Cookie);
+            if (m_Pid != (Pid)0)
+                Os.kill((Os.pid_t)m_Pid, Os.SIGKILL);
+            m_Pid = (Pid)0;
         }
 
         private void
-        generate_xauth(string user, int display) throws SessionError
+        generate_xauth(string inUser, int inDisplay) throws SessionError
         {
-            GLib.debug ("generate xauth for user %s and display %i", user, display);
+            GLib.debug ("generate xauth for user %s and display %i", inUser, inDisplay);
 
             if (!FileUtils.test(PACKAGE_XAUTH_DIR, FileTest.EXISTS | FileTest.IS_DIR))
             {
@@ -149,21 +156,21 @@ namespace XSAA
                 FileUtils.chmod(PACKAGE_XAUTH_DIR, 0777);
             }
 
-            xauth_file = PACKAGE_XAUTH_DIR + "/xauth-" + user + "-" + display.to_string();
-            if (FileUtils.test(xauth_file, FileTest.EXISTS))
+            m_XauthFile = PACKAGE_XAUTH_DIR + "/xauth-" + inUser + "-" + inDisplay.to_string();
+            if (FileUtils.test(m_XauthFile, FileTest.EXISTS))
             {
-                FileUtils.remove(xauth_file);
+                FileUtils.remove(m_XauthFile);
             }
 
-            FileStream f = FileStream.open(xauth_file, "w");
+            FileStream f = FileStream.open(m_XauthFile, "w");
                         
             X.Auth auth = X.Auth();
 
             auth.family = X.FamilyLocal;
             auth.address = "localhost";
             auth.address_length = (ushort)"localhost".length;
-            auth.number = display.to_string();
-            auth.number_length = (ushort)display.to_string().length;
+            auth.number = inDisplay.to_string();
+            auth.number_length = (ushort)inDisplay.to_string().length;
             auth.name = "MIT-MAGIC-COOKIE-1";
             auth.name_length = (ushort)"MIT-MAGIC-COOKIE-1".length;
 
@@ -180,9 +187,9 @@ namespace XSAA
             auth.write(f);
             f.flush();
             
-            if (Posix.chown(xauth_file, passwd.pw_uid, passwd.pw_gid) < 0)
+            if (Os.chown(m_XauthFile, m_Passwd.pw_uid, m_Passwd.pw_gid) < 0)
             {
-                throw new SessionError.XAUTH("Error on generate " + xauth_file);
+                throw new SessionError.XAUTH("Error on generate " + m_XauthFile);
             }
         }
 
@@ -192,17 +199,17 @@ namespace XSAA
             GLib.debug ("register");
 
             Value user_val = Value (typeof(int));
-            user_val.set_int((int)passwd.pw_uid);
+            user_val.set_int((int)m_Passwd.pw_uid);
             ConsoleKit.SessionParameter unixuser = 
                 ConsoleKit.SessionParameter ("unix-user", user_val);
 
             Value display_val = Value (typeof(string));
-            display_val.set_string(display_num);
+            display_val.set_string(m_DisplayNum);
             ConsoleKit.SessionParameter x11display = 
                 ConsoleKit.SessionParameter("x11-display", display_val);
 
             Value display_dev_val = Value (typeof(string));
-            display_dev_val.set_string(device_num);
+            display_dev_val.set_string(m_DeviceNum);
             ConsoleKit.SessionParameter x11displaydev = 
                 ConsoleKit.SessionParameter("x11-display-device", display_dev_val);
 
@@ -224,7 +231,7 @@ namespace XSAA
 
             try
             {
-                cookie = ck_manager.open_session_with_parameters (parameters); 
+                m_Cookie = m_CkManager.open_session_with_parameters (parameters); 
             }
             catch (GLib.Error err)
             {
@@ -239,49 +246,49 @@ namespace XSAA
 
             try
             {
-                pam.open_session();
+                m_Pam.open_session();
             }
             catch (GLib.Error err)
             {
                 error_msg("Invalid user or wrong password");
                 GLib.critical ("error on open pam session");
-                Posix.exit(1);
+                Os.exit(1);
             }
 
-            pam.add_env ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin");
-            pam.add_env ("XAUTHORITY", xauth_file);
-            pam.add_env ("XDG_SESSION_COOKIE", cookie);
-            pam.add_env ("DISPLAY", display_num);
-            pam.set_env();
+            m_Pam.add_env ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin");
+            m_Pam.add_env ("XAUTHORITY", m_XauthFile);
+            m_Pam.add_env ("XDG_SESSION_COOKIE", m_Cookie);
+            m_Pam.add_env ("DISPLAY", m_DisplayNum);
+            m_Pam.set_env();
 
-            Posix.unsetenv ("DBUS_STARTER_BUS_TYPE");
-            Posix.unsetenv ("DBUS_STARTER_ADDRESS");
+            Os.unsetenv ("DBUS_STARTER_BUS_TYPE");
+            Os.unsetenv ("DBUS_STARTER_ADDRESS");
 
-            int fd = Posix.open ("/dev/null", Posix.O_RDONLY);
-            Posix.dup2 (fd, 0);
-            Posix.close (fd);
+            int fd = Os.open ("/dev/null", Os.O_RDONLY);
+            Os.dup2 (fd, 0);
+            Os.close (fd);
 
-            Posix.unlink (passwd.pw_dir + "/.xsession-errors.old");
-            Posix.link (passwd.pw_dir + "/.xsession-errors", passwd.pw_dir + "/.xsession-errors.old");
-            fd = Posix.open(passwd.pw_dir + "/.xsession-errors", 
-                            Posix.O_TRUNC | Posix.O_CREAT | Posix.O_WRONLY, 0644);
-            Posix.dup2 (fd, 1);
-            Posix.dup2 (fd, 2);
-            Posix.close (fd);
+            GLib.FileUtils.unlink (m_Passwd.pw_dir + "/.xsession-errors.old");
+            Os.link (m_Passwd.pw_dir + "/.xsession-errors", m_Passwd.pw_dir + "/.xsession-errors.old");
+            fd = Os.open(m_Passwd.pw_dir + "/.xsession-errors", 
+                         Os.O_TRUNC | Os.O_CREAT | Os.O_WRONLY, 0644);
+            Os.dup2 (fd, 1);
+            Os.dup2 (fd, 2);
+            Os.close (fd);
         }
 
         private void
-        on_child_watch(Pid pid, int status)
+        on_child_watch(GLib.Pid inPid, int inStatus)
         {
-            GLib.debug ("child watch %lu: %i", pid, status);
+            GLib.debug ("child watch %lu: %i", inPid, inStatus);
 
-            if (Process.if_exited(status))
+            if (Process.if_exited(inStatus))
                 exited();
-            else if (Process.if_signaled(status))
+            else if (Process.if_signaled(inStatus))
                 died();
 
-            Process.close_pid(pid);
-            this.pid = (Pid)0;
+            Process.close_pid(inPid);
+            m_Pid = (Pid)0;
 
             try
             {
@@ -325,8 +332,8 @@ namespace XSAA
                     break;
                 case MessageType.FINISHED:
                     GLib.debug ("Received finished message");
-                    pam.info.connect (on_info);
-                    pam.error_msg.connect (on_error_msg);
+                    m_Pam.info.connect (on_info);
+                    m_Pam.error_msg.connect (on_error_msg);
                     break;
                 default:
                     break;
@@ -365,35 +372,35 @@ namespace XSAA
         }
 
         private void
-        on_authenticate_info(string text)
+        on_authenticate_info(string inText)
         {
-            GLib.debug ("authenticate info message: %s", text);
-            Message msg = Message (MessageType.INFO, text);
+            GLib.debug ("authenticate info message: %s", inText);
+            Message msg = Message (MessageType.INFO, inText);
             m_MessageQueue.push (msg);
             GLib.Idle.add (on_message);
         }
 
         private void
-        on_authenticate_error_msg(string text)
+        on_authenticate_error_msg(string inText)
         {
-            GLib.debug ("authenticate error message: %s", text);
-            Message msg = Message (MessageType.ERROR, text);
+            GLib.debug ("authenticate error message: %s", inText);
+            Message msg = Message (MessageType.ERROR, inText);
             m_MessageQueue.push (msg);
             GLib.Idle.add (on_message);
         }
 
         private void
-        on_info(string text)
+        on_info(string inText)
         {
-            GLib.debug ("info message: %s", text);
-            info (text);
+            GLib.debug ("info message: %s", inText);
+            info (inText);
         }
 
         private void
-        on_error_msg(string text)
+        on_error_msg(string inText)
         {
-            GLib.debug ("error message: %s", text);
-            error_msg (text);
+            GLib.debug ("error message: %s", inText);
+            error_msg (inText);
         }
 
         private void*
@@ -401,16 +408,16 @@ namespace XSAA
         {
             GLib.debug ("start authenticate");
 
-            pam.authenticated.connect (on_authentificated);
-            pam.passwd.connect (on_ask_passwd);
-            pam.face_authentication.connect (on_ask_face_authentication);
-            pam.info.connect (on_authenticate_info);
-            pam.error_msg.connect (on_authenticate_error_msg);
+            m_Pam.authenticated.connect (on_authentificated);
+            m_Pam.passwd.connect (on_ask_passwd);
+            m_Pam.face_authentication.connect (on_ask_face_authentication);
+            m_Pam.info.connect (on_authenticate_info);
+            m_Pam.error_msg.connect (on_authenticate_error_msg);
 
-            pam.authenticate ();
+            m_Pam.authenticate ();
 
-            pam.info.disconnect (on_authenticate_info);
-            pam.error_msg.disconnect (on_authenticate_error_msg);
+            m_Pam.info.disconnect (on_authenticate_info);
+            m_Pam.error_msg.disconnect (on_authenticate_error_msg);
 
             Message msg = Message (MessageType.FINISHED, "");
             m_MessageQueue.push (msg);
@@ -426,30 +433,30 @@ namespace XSAA
 
             try
             {
-                pam.info.disconnect (on_info);
-                pam.error_msg.disconnect (on_error_msg);
-                GLib.Thread.create (start_authenticate, false);
+                m_Pam.info.disconnect (on_info);
+                m_Pam.error_msg.disconnect (on_error_msg);
+                GLib.Thread.create<void*> (start_authenticate, false);
             }
             catch (GLib.ThreadError err)
             {
-                pam.info.connect (on_info);
-                pam.error_msg.connect (on_error_msg);
+                m_Pam.info.connect (on_info);
+                m_Pam.error_msg.connect (on_error_msg);
                 GLib.warning ("Error on launch authentification: %s", err.message);
                 error_msg ("Error on launch authentification");
             }
         }
 
         public void
-        set_passwd (string passwd)
+        set_passwd (string inPasswd)
         {
-            Message msg = Message (MessageType.ASK_PASSWD_RESPONSE, passwd);
+            Message msg = Message (MessageType.ASK_PASSWD_RESPONSE, inPasswd);
             m_ResponseQueue.push (msg);
         }
 
         public void
-        launch(string cmd) throws SessionError
+        launch(string inCmd) throws SessionError
         {
-            GLib.debug ("launch: %s", cmd);
+            GLib.debug ("launch: %s", inCmd);
 
             string[] argvp;
 
@@ -457,12 +464,12 @@ namespace XSAA
 
             try
             {
-                Shell.parse_argv(cmd, out argvp);
+                Shell.parse_argv(inCmd, out argvp);
             }
             catch (GLib.Error err)
             {
                 throw new SessionError.COMMAND("Invalid %s command !!", 
-                                               cmd);
+                                               inCmd);
             }
 
             try
@@ -470,8 +477,8 @@ namespace XSAA
                 Process.spawn_async(null, argvp, null, 
                                     SpawnFlags.SEARCH_PATH |
                                     SpawnFlags.DO_NOT_REAP_CHILD, 
-                                    on_child_setup, out pid);
-                ChildWatch.add((Pid)pid, on_child_watch);
+                                    on_child_setup, out m_Pid);
+                ChildWatch.add((Pid)m_Pid, on_child_watch);
             }
             catch (GLib.Error err)
             {

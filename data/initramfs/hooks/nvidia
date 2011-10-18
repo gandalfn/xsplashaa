@@ -18,6 +18,15 @@ copy_exec_if_exist ()
     fi
 }
 
+copy_lib_tls ()
+{
+    for f in $(find /usr/lib/tls -type f)
+    do
+        d=$(dirname $f)
+        copy_exec_if_exist $f $d 
+    done
+}
+
 case "$1" in
     prereqs)
 	prereqs
@@ -35,8 +44,8 @@ if [ -e /usr/lib/xorg/modules/drivers/nvidia_drv.so ]; then
     mkdir -p ${DESTDIR}/usr/share/xserver-xorg/pci
 
     # Copy needed files
+    copy_lib_tls
     copy_exec_if_exist /usr/lib/xorg/modules/drivers/nvidia_drv.so /usr/lib/xorg/modules/drivers
-    copy_exec_if_exist /usr/lib/tls/libnvidia-tls.so.256.53 /usr/lib/tls
     copy_exec_if_exist /usr/share/xserver-xorg/pci/nv.ids /usr/share/xserver-xorg/pci
     copy_exec_if_exist /usr/lib/libGL.so /usr/lib
     copy_exec_if_exist /usr/lib/libGLcore.so.1 /usr/lib

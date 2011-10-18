@@ -23,84 +23,78 @@ namespace XSAA
 {
     public enum FaceAuthenticationStatus
     {
-        INPROGRESS = 35,
+        INPROGRESS      = 35,
 
-        STOPPED = 28,
-        STARTED = 21,
+        STOPPED         = 28,
+        STARTED         = 21,
 
-        CANCEL = 14,
-        AUTHENTICATE = 7,
-        DISPLAY_ERROR = 1,
-        EXIT_GUI = 2
+        CANCEL          = 14,
+        AUTHENTICATE    = 7,
+        DISPLAY_ERROR   = 1,
+        EXIT_GUI        = 2
     }
 
     public class Splash : Gtk.Window
     {
+        // constants
         const int ICON_SIZE = 90;
 
-        const Posix.key_t FACE_AUTHENTICATION_IPC_KEY_SEM_IMAGE = 567816;
-        const Posix.key_t FACE_AUTHENTICATION_IPC_KEY_IMAGE = 567814;
-        const Posix.key_t FACE_AUTHENTICATION_IPC_KEY_STATUS = 567813;
-        const int         FACE_AUTHENTICATION_IMAGE_WIDTH = 320;
-        const int         FACE_AUTHENTICATION_IMAGE_HEIGHT = 240;
-        const int         FACE_AUTHENTICATION_IMAGE_SIZE = 307200;
+        const Os.key_t FACE_AUTHENTICATION_IPC_KEY_SEM_IMAGE = 567816;
+        const Os.key_t FACE_AUTHENTICATION_IPC_KEY_IMAGE = 567814;
+        const Os.key_t FACE_AUTHENTICATION_IPC_KEY_STATUS = 567813;
+        const int     FACE_AUTHENTICATION_IMAGE_WIDTH = 320;
+        const int     FACE_AUTHENTICATION_IMAGE_HEIGHT = 240;
+        const int     FACE_AUTHENTICATION_IMAGE_SIZE = 307200;
 
-        Server socket;
-        DBus.Connection conn;
-        Throbber[] phase = new Throbber[3];
-        Throbber throbber_session;
-        Throbber throbber_shutdown;
-        int current_phase = 0;
-        Gtk.ProgressBar progress;
-        SlideNotebook notebook;
-        Gtk.ScrolledWindow user_scrolled_window;
-        Gtk.ListStore user_list;
-        Gtk.TreeView user_treeview;
-        Gtk.Table login_prompt;
-        Gtk.Label label_prompt;
-        Gtk.Entry entry_prompt;
-        Gtk.HBox button_box;
-        string username;
-        Gtk.Label label_message;
-        uint id_pulse = 0;
+        // properties
+        private Server              m_Socket;
+        private DBus.Connection     m_Connection;
+        private Throbber[]          m_Phase = new Throbber[3];
+        private Throbber            m_ThrobberSession;
+        private Throbber            m_ThrobberShutdown;
+        private int                 m_CurrentPhase = 0;
+        private Gtk.ProgressBar     m_Progress;
+        private SlideNotebook       m_Notebook;
+        private Gtk.ScrolledWindow  m_UserScrolledWindow;
+        private Gtk.ListStore       m_UserList;
+        private Gtk.TreeView        m_UserTreeview;
+        private Gtk.Table           m_LoginPrompt;
+        private Gtk.Label           m_LabelPrompt;
+        private Gtk.Entry           m_EntryPrompt;
+        private Gtk.HBox            m_ButtonBox;
+        private string              m_Username;
+        private Gtk.Label           m_LabelMessage;
+        private uint                m_IdPulse = 0;
 
-        Gtk.CheckButton face_authentication_check_button;
-        Gtk.DrawingArea face_authentication;
-        Timeline face_authentication_refresh;
-        int face_authentication_sem_pixels_id = 0;
-        int face_authentication_pixels_id = 0;
-        int face_authentication_status_id = 0;
-        unowned uchar* face_authentication_pixels = null;
-        int* face_authentication_status = null;
+        private Gtk.CheckButton     m_FaceAuthenticationCheckButton;
+        private Gtk.DrawingArea     m_FaceAuthentication;
+        private Timeline            m_FaceAuthenticationRefresh;
+        private int                 m_FaceAuthenticationSemPixelsId = 0;
+        private int                 m_FaceAuthenticationPixelsId = 0;
+        private int                 m_FaceAuthenticationStatusId = 0;
+        private unowned uchar*      m_FaceAuthenticationPixels = null;
+        private int*                m_FaceAuthenticationStatus = null;
 
-        string theme = "chicken-curie";
-        string layout = "horizontal";
-        string bg = "#1B242D";
-        string text = "#7BC4F5";
-        float yposition = 0.5f;
+        private string              m_Theme = "chicken-curie";
+        private string              m_Layout = "horizontal";
+        private string              m_Bg = "#1B242D";
+        private string              m_Text = "#7BC4F5";
+        private float               m_YPosition = 0.5f;
 
+        // signals
         public signal void login(string username, bool face_authentication);
         public signal void passwd(string passwd);
         public signal void restart();
         public signal void shutdown();
 
-        public Splash(Server server)
-        {
-            GLib.debug ("create splash window");
-            socket = server;
-            socket.phase.connect(on_phase_changed);
-            socket.pulse.connect(on_start_pulse);
-            socket.progress.connect(on_progress);
-            socket.progress_orientation.connect(on_progress_orientation);
-        }
-
+        // methods
         construct
         {
             load_config();
 
-            if (theme != null)
+            if (m_Theme != null)
             {
-                string gtkrc = Config.PACKAGE_DATA_DIR + "/" + theme + "/gtkrc"; 
+                string gtkrc = Config.PACKAGE_DATA_DIR + "/" + m_Theme + "/gtkrc"; 
                 if (GLib.FileUtils.test (gtkrc, FileTest.EXISTS))
                 {
                     GLib.debug ("Load theme %s", gtkrc);
@@ -111,9 +105,9 @@ namespace XSAA
                 }
             }
 
-            user_list = new Gtk.ListStore (5, typeof (Gdk.Pixbuf),
-                                              typeof (string), typeof (string),
-                                              typeof (int), typeof (bool));
+            m_UserList = new Gtk.ListStore (5, typeof (Gdk.Pixbuf),
+                                               typeof (string), typeof (string),
+                                               typeof (int), typeof (bool));
             Gdk.Screen screen = Gdk.Screen.get_default();
             Gdk.Rectangle geometry;
             screen.get_monitor_geometry(0, out geometry);
@@ -127,7 +121,7 @@ namespace XSAA
 
             destroy.connect(Gtk.main_quit);
 
-            var alignment = new Gtk.Alignment(0.5f, yposition, 0, 0);
+            var alignment = new Gtk.Alignment(0.5f, m_YPosition, 0, 0);
             alignment.show();
             add(alignment);
 
@@ -137,8 +131,8 @@ namespace XSAA
             alignment.add(vbox);
 
             Gtk.Box box = null;
-            GLib.debug ("layout: %s", layout);
-            if (layout == "horizontal")
+            GLib.debug ("layout: %s", m_Layout);
+            if (m_Layout == "horizontal")
             {
                 box = new Gtk.HBox(false, 25);
             }
@@ -151,45 +145,36 @@ namespace XSAA
 
             try
             {
-                GLib.debug ("load %s", Config.PACKAGE_DATA_DIR + "/" + theme + "/distrib-logo.png");
+                GLib.debug ("load %s", Config.PACKAGE_DATA_DIR + "/" + m_Theme + "/distrib-logo.png");
 
-                Gdk.Pixbuf pixbuf =
-                    new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + theme + "/distrib-logo.png");
+                Gdk.Pixbuf dl = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + m_Theme + "/distrib-logo.png");
 
-                int width, height;
+                int width_dl, height_dl;
 
-                if (layout == "horizontal")
+                if (m_Layout == "horizontal")
                 {
-                    width = geometry.width / 3 > pixbuf.get_width() ?
-                            pixbuf.get_width() : geometry.width / 3;
-                    height = (int)((double)width *
-                                   ((double)pixbuf.get_height() /
-                                    (double)pixbuf.get_width()));
+                    width_dl = geometry.width / 3 > dl.get_width() ? dl.get_width() : geometry.width / 3;
+                    height_dl = (int)((double)width_dl * ((double)dl.get_height() / (double)dl.get_width()));
                 }
                 else
                 {
-                    width = geometry.width / 1.5 > pixbuf.get_width() ?
-                            pixbuf.get_width() : (int)(geometry.width / 1.5);
-                    height = (int)((double)width *
-                                   ((double)pixbuf.get_height() /
-                                    (double)pixbuf.get_width()));
+                    width_dl = geometry.width / 1.5 > dl.get_width() ? dl.get_width() : (int)(geometry.width / 1.5);
+                    height_dl = (int)((double)width_dl * ((double)dl.get_height() / (double)dl.get_width()));
                 }
 
-                Gtk.Image image =
-                    new Gtk.Image.from_pixbuf(pixbuf.scale_simple(width, height,
-                                                                  Gdk.InterpType.BILINEAR));
-                image.show();
-                box.pack_start(image, false, false, layout == "horizontal" ? 0 : 36);
+                Gtk.Image image_dl = new Gtk.Image.from_pixbuf(dl.scale_simple(width_dl, height_dl, Gdk.InterpType.BILINEAR));
+                image_dl.show();
+                box.pack_start(image_dl, false, false, m_Layout == "horizontal" ? 0 : 36);
             }
             catch (GLib.Error err)
             {
                 GLib.warning ("error on loading %s: %s",
-                              Config.PACKAGE_DATA_DIR + "/" + theme + "/distrib-logo.png",
+                              Config.PACKAGE_DATA_DIR + "/" + m_Theme + "/distrib-logo.png",
                               err.message);
             }
 
             Gtk.Box box_info;
-            if (layout == "horizontal")
+            if (m_Layout == "horizontal")
             {
                 box_info = new Gtk.VBox(false, 25);
             }
@@ -202,37 +187,29 @@ namespace XSAA
 
             try
             {
-                GLib.debug ("load %s", Config.PACKAGE_DATA_DIR + "/" + theme + "/logo.png");
+                GLib.debug ("load %s", Config.PACKAGE_DATA_DIR + "/" + m_Theme + "/logo.png");
 
-                Gdk.Pixbuf pixbuf = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + theme + "/logo.png");
-                int width, height;
+                Gdk.Pixbuf l = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + m_Theme + "/logo.png");
+                int width_l, height_l;
 
-                if (layout == "horizontal")
+                if (m_Layout == "horizontal")
                 {
-                    width = geometry.width / 3 > pixbuf.get_width() ?
-                            pixbuf.get_width() : geometry.width / 3;
-                    height = (int)((double)width *
-                                   ((double)pixbuf.get_height() /
-                                    (double)pixbuf.get_width()));
+                    width_l = geometry.width / 3 > l.get_width() ? l.get_width() : geometry.width / 3;
+                    height_l = (int)((double)width_l * ((double)l.get_height() / (double)l.get_width()));
                 }
                 else
                 {
-                    width = pixbuf.get_width() > geometry.width  ?
-                            geometry.width : pixbuf.get_width();
-                    height = (int)((double)width *
-                                   ((double)pixbuf.get_height() /
-                                    (double)pixbuf.get_width()));
+                    width_l = l.get_width() > geometry.width  ? geometry.width : l.get_width();
+                    height_l = (int)((double)width_l * ((double)l.get_height() / (double)l.get_width()));
                 }
-                Gtk.Image image =
-                    new Gtk.Image.from_pixbuf(pixbuf.scale_simple(width, height,
-                                                                  Gdk.InterpType.BILINEAR));
-                image.show();
-                box_info.pack_start(image, true, true, 0);
+                Gtk.Image image_l = new Gtk.Image.from_pixbuf(l.scale_simple(width_l, height_l, Gdk.InterpType.BILINEAR));
+                image_l.show();
+                box_info.pack_start(image_l, true, true, 0);
             }
             catch (GLib.Error err)
             {
                 GLib.warning ("error on loading %s: %s",
-                              Config.PACKAGE_DATA_DIR + "/" + theme + "/logo.png",
+                              Config.PACKAGE_DATA_DIR + "/" + m_Theme + "/logo.png",
                               err.message);
             }
 
@@ -240,11 +217,11 @@ namespace XSAA
             alignment.show();
             box_info.pack_start(alignment, true, true, 0);
 
-            notebook = new SlideNotebook();
-            notebook.show();
-            alignment.add(notebook);
-            notebook.set_show_tabs(false);
-            notebook.set_show_border(false);
+            m_Notebook = new SlideNotebook();
+            m_Notebook.show();
+            alignment.add(m_Notebook);
+            m_Notebook.set_show_tabs(false);
+            m_Notebook.set_show_border(false);
 
             construct_loading_page();
 
@@ -261,12 +238,22 @@ namespace XSAA
             table_progress.set_row_spacings(12);
             vbox.pack_start(table_progress, false, false, 12);
 
-            progress = new Gtk.ProgressBar();
-            progress.show();
-            table_progress.attach(progress, 2, 3, 0, 1, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL,
+            m_Progress = new Gtk.ProgressBar();
+            m_Progress.show();
+            table_progress.attach(m_Progress, 2, 3, 0, 1, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL,
                                   0, 0, 0);
 
             on_start_pulse();
+        }
+
+        public Splash(Server inServer)
+        {
+            GLib.debug ("create splash window");
+            m_Socket = inServer;
+            m_Socket.phase.connect(on_phase_changed);
+            m_Socket.pulse.connect(on_start_pulse);
+            m_Socket.progress.connect(on_progress);
+            m_Socket.progress_orientation.connect(on_progress_orientation);
         }
 
         private void
@@ -280,11 +267,11 @@ namespace XSAA
                 {
                     KeyFile config = new KeyFile();
                     config.load_from_file(Config.PACKAGE_CONFIG_FILE, KeyFileFlags.NONE);
-                    theme = config.get_string("splash", "theme");
-                    layout = config.get_string("splash", "layout");
-                    bg = config.get_string("splash", "background");
-                    text = config.get_string("splash", "text");
-                    yposition = (float)config.get_double("splash", "yposition");
+                    m_Theme = config.get_string("splash", "theme");
+                    m_Layout = config.get_string("splash", "layout");
+                    m_Bg = config.get_string("splash", "background");
+                    m_Text = config.get_string("splash", "text");
+                    m_YPosition = (float)config.get_double("splash", "yposition");
                 }
                 catch (GLib.Error err)
                 {
@@ -299,12 +286,12 @@ namespace XSAA
         }
 
         private Gdk.Pixbuf
-        get_face_pixbuf (int shm_id)
+        get_face_pixbuf (int inShmId)
         {
-            unowned uchar* src = (uchar*)Posix.shmat(shm_id, null, 0);
+            unowned uchar* src = (uchar*)Os.shmat(inShmId, null, 0);
             uchar[] dst = new uchar [ICON_SIZE * ICON_SIZE * 4];
             GLib.Memory.copy (dst, src, ICON_SIZE * ICON_SIZE * 4);
-            Posix.shmdt (src);
+            Os.shmdt (src);
 
             Cairo.ImageSurface surface = new Cairo.ImageSurface.for_data (dst, 
                                                                           Cairo.Format.ARGB32,
@@ -315,13 +302,13 @@ namespace XSAA
         }
 
         private void
-        reload_user_list (int nb_users)
+        reload_user_list (int inNbUsers)
         {
-            if (conn == null)
+            if (m_Connection == null)
             {
                 try
                 {
-                    conn = DBus.Bus.get (DBus.BusType.SYSTEM);
+                    m_Connection = DBus.Bus.get (DBus.BusType.SYSTEM);
                 }
                 catch (DBus.Error err)
                 {
@@ -329,13 +316,13 @@ namespace XSAA
                 }
             }
 
-            user_list.clear ();
+            m_UserList.clear ();
 
-            for (int cpt = 0; cpt < nb_users; ++cpt)
+            for (int cpt = 0; cpt < inNbUsers; ++cpt)
             {
-                XSAA.User user = (XSAA.User)conn.get_object ("fr.supersonicimagine.XSAA.Manager.User", 
-                                                             "/fr/supersonicimagine/XSAA/Manager/User/%i".printf (cpt),
-                                                             "fr.supersonicimagine.XSAA.Manager.User");
+                XSAA.User user = (XSAA.User)m_Connection.get_object ("fr.supersonicimagine.XSAA.Manager.User", 
+                                                                     "/fr/supersonicimagine/XSAA/Manager/User/%i".printf (cpt),
+                                                                     "fr.supersonicimagine.XSAA.Manager.User");
 
                 Gdk.Pixbuf pixbuf = get_face_pixbuf (user.face_icon_shm_id);
 
@@ -343,15 +330,15 @@ namespace XSAA
                 GLib.debug ("add user %s in list", login);
 
                 Gtk.TreeIter iter;
-                user_list.append (out iter);
-                user_list.set (iter, 0, pixbuf, 1, "<span size='x-large'>" + user.real_name + "</span>",
-                                     2, login, 3, user.frequency, 4, true);
+                m_UserList.append (out iter);
+                m_UserList.set (iter, 0, pixbuf, 1, "<span size='x-large'>" + user.real_name + "</span>",
+                                      2, login, 3, user.frequency, 4, true);
             }
 
             Gtk.TreeIter iter;
-            user_list.append (out iter);
-            user_list.set (iter, 0, null, 1, "<span size='x-large'>Other...</span>",
-                                 2, null, 3, 0, 4, true);
+            m_UserList.append (out iter);
+            m_UserList.set (iter, 0, null, 1, "<span size='x-large'>Other...</span>",
+                                  2, null, 3, 0, 4, true);
         }
 
         private void
@@ -366,7 +353,7 @@ namespace XSAA
             table.set_row_spacings(12);
 
             var label = new Gtk.Label("<span size='xx-large' color='" +
-                                  text +"'>Loading...</span>");
+                                      m_Text +"'>Loading...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
@@ -377,10 +364,10 @@ namespace XSAA
 
             try
             {
-                phase[0] = new Throbber(theme, 83);
-                phase[0].show();
-                phase[0].start();
-                table.attach(phase[0], 1, 2, 0, 1,
+                m_Phase[0] = new Throbber(m_Theme, 83);
+                m_Phase[0].show();
+                m_Phase[0].start();
+                table.attach(m_Phase[0], 1, 2, 0, 1,
                              Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
                              Gtk.AttachOptions.FILL,
                              0, 0);
@@ -391,7 +378,7 @@ namespace XSAA
             }
 
             label = new Gtk.Label("<span size='xx-large' color='" +
-                                  text +"'>Checking filesystem...</span>");
+                                  m_Text +"'>Checking filesystem...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
@@ -402,9 +389,9 @@ namespace XSAA
 
             try
             {
-                phase[1] = new Throbber(theme, 83);
-                phase[1].show();
-                table.attach(phase[1], 1, 2, 1, 2,
+                m_Phase[1] = new Throbber(m_Theme, 83);
+                m_Phase[1].show();
+                table.attach(m_Phase[1], 1, 2, 1, 2,
                              Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
                              Gtk.AttachOptions.FILL,
                              0, 0);
@@ -415,7 +402,7 @@ namespace XSAA
             }
 
             label = new Gtk.Label("<span size='xx-large' color='" +
-                                  text +"'>Starting...</span>");
+                                  m_Text +"'>Starting...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
@@ -426,9 +413,9 @@ namespace XSAA
 
             try
             {
-                phase[2] = new Throbber(theme, 83);
-                phase[2].show();
-                table.attach(phase[2], 1, 2, 2, 3,
+                m_Phase[2] = new Throbber(m_Theme, 83);
+                m_Phase[2].show();
+                table.attach(m_Phase[2], 1, 2, 2, 3,
                              Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
                              Gtk.AttachOptions.FILL,
                              0, 0);
@@ -438,7 +425,7 @@ namespace XSAA
                 GLib.warning ("error on loading throbber %s", err.message);
             }
 
-            notebook.append_page(table, null);
+            m_Notebook.append_page(table, null);
         }
 
         private void
@@ -453,95 +440,95 @@ namespace XSAA
             box.show();
             alignment.add(box);
 
-            user_scrolled_window = new Gtk.ScrolledWindow (null, null);
-            user_scrolled_window.hscrollbar_policy = Gtk.PolicyType.NEVER;
-            user_scrolled_window.vscrollbar_policy = Gtk.PolicyType.AUTOMATIC;
-            user_scrolled_window.set_size_request (-1, ICON_SIZE + 5);
-            user_scrolled_window.set_shadow_type (Gtk.ShadowType.IN);
-            user_scrolled_window.show ();
-            box.pack_start (user_scrolled_window, true, true, 12);
+            m_UserScrolledWindow = new Gtk.ScrolledWindow (null, null);
+            m_UserScrolledWindow.hscrollbar_policy = Gtk.PolicyType.NEVER;
+            m_UserScrolledWindow.vscrollbar_policy = Gtk.PolicyType.AUTOMATIC;
+            m_UserScrolledWindow.set_size_request (-1, ICON_SIZE + 5);
+            m_UserScrolledWindow.set_shadow_type (Gtk.ShadowType.IN);
+            m_UserScrolledWindow.show ();
+            box.pack_start (m_UserScrolledWindow, true, true, 12);
 
-            var model = new Gtk.TreeModelFilter (user_list, null);
+            var model = new Gtk.TreeModelFilter (m_UserList, null);
             model.set_visible_column (4);
-            user_treeview = new Gtk.TreeView.with_model (model);
-            user_treeview.can_focus = false;
-            user_treeview.headers_visible = false;
-            user_treeview.insert_column_with_attributes (-1, "", new Gtk.CellRendererPixbuf (), "pixbuf", 0);
-            user_treeview.insert_column_with_attributes (-1, "", new Gtk.CellRendererText (), "markup", 1);
-            user_treeview.get_selection ().changed.connect (on_selection_changed);
-            user_treeview.show ();
-            user_scrolled_window.add (user_treeview);
+            m_UserTreeview = new Gtk.TreeView.with_model (model);
+            m_UserTreeview.can_focus = false;
+            m_UserTreeview.headers_visible = false;
+            m_UserTreeview.insert_column_with_attributes (-1, "", new Gtk.CellRendererPixbuf (), "pixbuf", 0);
+            m_UserTreeview.insert_column_with_attributes (-1, "", new Gtk.CellRendererText (), "markup", 1);
+            m_UserTreeview.get_selection ().changed.connect (on_selection_changed);
+            m_UserTreeview.show ();
+            m_UserScrolledWindow.add (m_UserTreeview);
 
-            face_authentication_refresh = new Timeline(60, 60);
-            face_authentication_refresh.loop = true;
-            face_authentication_refresh.new_frame.connect (on_refresh_face_authentication);
+            m_FaceAuthenticationRefresh = new Timeline(60, 60);
+            m_FaceAuthenticationRefresh.loop = true;
+            m_FaceAuthenticationRefresh.new_frame.connect (on_refresh_face_authentication);
 
-            face_authentication = new Gtk.DrawingArea ();
-            face_authentication.set_size_request (320, 240);
-            face_authentication.expose_event.connect (on_face_authentication_expose_event);
-            box.pack_start(face_authentication, false, false, 0);
+            m_FaceAuthentication = new Gtk.DrawingArea ();
+            m_FaceAuthentication.set_size_request (320, 240);
+            m_FaceAuthentication.expose_event.connect (on_face_authentication_expose_event);
+            box.pack_start(m_FaceAuthentication, false, false, 0);
 
-            login_prompt = new Gtk.Table(1, 3, false);
-            login_prompt.set_border_width(12);
-            login_prompt.set_col_spacings(12);
-            login_prompt.set_row_spacings(12);
-            box.pack_start(login_prompt, true, true, 0);
+            m_LoginPrompt = new Gtk.Table(1, 3, false);
+            m_LoginPrompt.set_border_width(12);
+            m_LoginPrompt.set_col_spacings(12);
+            m_LoginPrompt.set_row_spacings(12);
+            box.pack_start(m_LoginPrompt, true, true, 0);
 
-            label_prompt = new Gtk.Label("<span size='xx-large' color='" +
-                                         text +"'>Login :</span>");
-            label_prompt.set_use_markup(true);
-            label_prompt.set_alignment(0.0f, 0.5f);
-            label_prompt.show();
-            login_prompt.attach (label_prompt, 1, 2, 0, 1,
-                                 Gtk.AttachOptions.FILL,
-                                 Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
-                                 0, 0);
+            m_LabelPrompt = new Gtk.Label("<span size='xx-large' color='" +
+                                         m_Text +"'>Login :</span>");
+            m_LabelPrompt.set_use_markup(true);
+            m_LabelPrompt.set_alignment(0.0f, 0.5f);
+            m_LabelPrompt.show();
+            m_LoginPrompt.attach (m_LabelPrompt, 1, 2, 0, 1,
+                                  Gtk.AttachOptions.FILL,
+                                  Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+                                  0, 0);
 
-            entry_prompt = new Gtk.Entry();
-            entry_prompt.can_focus = true;
-            entry_prompt.show();
-            login_prompt.attach (entry_prompt, 2, 3, 0, 1,
-                                 Gtk.AttachOptions.FILL,
-                                 Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
-                                 0, 0);
+            m_EntryPrompt = new Gtk.Entry();
+            m_EntryPrompt.can_focus = true;
+            m_EntryPrompt.show();
+            m_LoginPrompt.attach (m_EntryPrompt, 2, 3, 0, 1,
+                                  Gtk.AttachOptions.FILL,
+                                  Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+                                  0, 0);
 
-            label_message = new Gtk.Label("");
-            label_message.set_use_markup(true);
-            label_message.set_alignment(0.5f, 0.5f);
-            box.pack_start(label_message, false, false, 0);
+            m_LabelMessage = new Gtk.Label("");
+            m_LabelMessage.set_use_markup(true);
+            m_LabelMessage.set_alignment(0.5f, 0.5f);
+            box.pack_start(m_LabelMessage, false, false, 0);
 
-            button_box = new Gtk.HBox (false, 5);
-            button_box.show ();
-            box.pack_start(button_box, false, false, 0);
+            m_ButtonBox = new Gtk.HBox (false, 5);
+            m_ButtonBox.show ();
+            box.pack_start(m_ButtonBox, false, false, 0);
 
-            face_authentication_check_button = new Gtk.CheckButton ();
-            face_authentication_check_button.show ();
-            button_box.pack_start (face_authentication_check_button, false, false, 0);
+            m_FaceAuthenticationCheckButton = new Gtk.CheckButton ();
+            m_FaceAuthenticationCheckButton.show ();
+            m_ButtonBox.pack_start (m_FaceAuthenticationCheckButton, false, false, 0);
             var face_authentication_label = new Gtk.Label (null);
             face_authentication_label.show ();
             face_authentication_label.set_markup ("<span color='" +
-                                                  text +"'><b>Face authentification</b></span>");
-            button_box.pack_start (face_authentication_label, false, false, 0);
+                                                  m_Text +"'><b>Face authentification</b></span>");
+            m_ButtonBox.pack_start (face_authentication_label, false, false, 0);
 
             Gtk.HButtonBox system_button_box = new Gtk.HButtonBox();
             system_button_box.show();
             system_button_box.set_spacing(12);
             system_button_box.set_layout(Gtk.ButtonBoxStyle.END);
-            button_box.pack_start(system_button_box, true, true, 0);
+            m_ButtonBox.pack_start(system_button_box, true, true, 0);
 
             var button = new Gtk.Button.with_label("Restart");
             button.can_focus = false;
             button.show();
             button.clicked.connect(on_restart_clicked);
-            button_box.pack_start(button, false, false, 0);
+            m_ButtonBox.pack_start(button, false, false, 0);
 
             button = new Gtk.Button.with_label("Shutdown");
             button.can_focus = false;
             button.show();
             button.clicked.connect(on_shutdown_clicked);
-            button_box.pack_start(button, false, false, 0);
+            m_ButtonBox.pack_start(button, false, false, 0);
 
-            notebook.append_page(alignment, null);
+            m_Notebook.append_page(alignment, null);
         }
 
         private void
@@ -556,7 +543,7 @@ namespace XSAA
             table.set_row_spacings(12);
 
             var label =  new Gtk.Label("<span size='xx-large' color='" +
-                                       text +"'>Launching session...</span>");
+                                       m_Text +"'>Launching session...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
@@ -564,16 +551,16 @@ namespace XSAA
 
             try
             {
-                throbber_session = new Throbber(theme, 83);
-                throbber_session.show();
-                table.attach_defaults(throbber_session, 1, 2, 0, 1);
+                m_ThrobberSession = new Throbber(m_Theme, 83);
+                m_ThrobberSession.show();
+                table.attach_defaults(m_ThrobberSession, 1, 2, 0, 1);
             }
             catch (GLib.Error err)
             {
                 GLib.warning ("Error on loading throbber %s", err.message);
             }
 
-            notebook.append_page(table, null);
+            m_Notebook.append_page(table, null);
         }
 
         private void
@@ -588,7 +575,7 @@ namespace XSAA
             table.set_row_spacings(12);
 
             var label =  new Gtk.Label("<span size='xx-large' color='" +
-                                       text +"'>Shutdown in progress...</span>");
+                                       m_Text +"'>Shutdown in progress...</span>");
             label.set_use_markup(true);
             label.set_alignment(0.0f, 0.5f);
             label.show();
@@ -596,38 +583,38 @@ namespace XSAA
 
             try
             {
-                throbber_shutdown = new Throbber(theme, 83);
-                throbber_shutdown.show();
-                table.attach_defaults(throbber_shutdown, 1, 2, 0, 1);
+                m_ThrobberShutdown = new Throbber(m_Theme, 83);
+                m_ThrobberShutdown.show();
+                table.attach_defaults(m_ThrobberShutdown, 1, 2, 0, 1);
             }
             catch (GLib.Error err)
             {
                 GLib.warning ("error on loading throbber %s", err.message);
             }
 
-            notebook.append_page(table, null);
+            m_Notebook.append_page(table, null);
         }
 
         private void
-        on_phase_changed(int new_phase)
+        on_phase_changed(int inNewPhase)
         {
             GLib.message ("phase changed current = %i, new = %i",
-                          current_phase, new_phase);
+                          m_CurrentPhase, inNewPhase);
 
-            if (current_phase != new_phase)
+            if (m_CurrentPhase != inNewPhase)
             {
-                if (current_phase < 3 && current_phase >= 0)
-                    phase[current_phase].finished();
-                if (new_phase < 3 && new_phase >= 0)
-                    phase[new_phase].start();
-                current_phase = new_phase;
+                if (m_CurrentPhase < 3 && m_CurrentPhase >= 0)
+                    m_Phase[m_CurrentPhase].finished();
+                if (inNewPhase < 3 && inNewPhase >= 0)
+                    m_Phase[inNewPhase].start();
+                m_CurrentPhase = inNewPhase;
             }
         }
 
         private bool
         on_pulse()
         {
-            progress.pulse();
+            m_Progress.pulse();
             return true;
         }
 
@@ -636,34 +623,34 @@ namespace XSAA
         {
             GLib.debug ("start pulse");
 
-            if (id_pulse == 0)
+            if (m_IdPulse == 0)
             {
-                id_pulse = GLib.Timeout.add(83, on_pulse);
+                m_IdPulse = GLib.Timeout.add(83, on_pulse);
             }
         }
 
         private void
-        on_refresh_face_authentication (int num_frame)
+        on_refresh_face_authentication (int inNumFrame)
         {
-            if ((int)face_authentication_status == -1)
+            if ((int)m_FaceAuthenticationStatus == -1)
                 ipc_start ();
 
-            if ((int)face_authentication_status != -1)
+            if ((int)m_FaceAuthenticationStatus != -1)
             {
-                switch (*face_authentication_status)
+                switch (*m_FaceAuthenticationStatus)
                 {
                     case FaceAuthenticationStatus.STARTED:
-                        face_authentication.queue_draw ();
+                        m_FaceAuthentication.queue_draw ();
                         break;
                     case FaceAuthenticationStatus.STOPPED:
                         GLib.Idle.add (() => { 
-                            face_authentication_refresh.stop ();
-                            face_authentication_refresh.rewind ();
+                            m_FaceAuthenticationRefresh.stop ();
+                            m_FaceAuthenticationRefresh.rewind ();
 
-                            Posix.shmdt (face_authentication_pixels);
-                            Posix.shmdt (face_authentication_status);
-                            face_authentication_pixels = null;
-                            face_authentication_status = null;
+                            Os.shmdt (m_FaceAuthenticationPixels);
+                            Os.shmdt (m_FaceAuthenticationStatus);
+                            m_FaceAuthenticationPixels = null;
+                            m_FaceAuthenticationStatus = null;
                             return false;
                         });
                         break;
@@ -676,27 +663,27 @@ namespace XSAA
         private void
         ipc_start ()
         {
-            face_authentication_sem_pixels_id = Posix.semget (FACE_AUTHENTICATION_IPC_KEY_SEM_IMAGE, 
-                                                              1, Posix.IPC_CREAT | 0666);
+            m_FaceAuthenticationSemPixelsId = Os.semget (FACE_AUTHENTICATION_IPC_KEY_SEM_IMAGE, 
+                                                         1, Os.IPC_CREAT | 0666);
 
-            face_authentication_pixels_id = Posix.shmget (FACE_AUTHENTICATION_IPC_KEY_IMAGE, 
-                                                          FACE_AUTHENTICATION_IMAGE_SIZE,
-                                                          Posix.IPC_CREAT | 0666);
-            if ((int)face_authentication_pixels_id != -1)
+            m_FaceAuthenticationPixelsId = Os.shmget (FACE_AUTHENTICATION_IPC_KEY_IMAGE, 
+                                                       FACE_AUTHENTICATION_IMAGE_SIZE,
+                                                       Os.IPC_CREAT | 0666);
+            if ((int)m_FaceAuthenticationPixelsId != -1)
             {
-                face_authentication_pixels = Posix.shmat (face_authentication_pixels_id, null, 0);
-                if ((int)face_authentication_pixels == -1)
+                m_FaceAuthenticationPixels = Os.shmat (m_FaceAuthenticationPixelsId, null, 0);
+                if ((int)m_FaceAuthenticationPixels == -1)
                 {
                     GLib.warning ("error on get face authentication pixels mem: %s", GLib.strerror (GLib.errno));
                 }
             }
 
-            face_authentication_status_id = Posix.shmget (FACE_AUTHENTICATION_IPC_KEY_STATUS, 
-                                                           sizeof (int), Posix.IPC_CREAT | 0666);
-            if ((int)face_authentication_status_id != -1)
+            m_FaceAuthenticationStatusId = Os.shmget (FACE_AUTHENTICATION_IPC_KEY_STATUS, 
+                                                      sizeof (int), Os.IPC_CREAT | 0666);
+            if ((int)m_FaceAuthenticationStatusId != -1)
             {
-                face_authentication_status = Posix.shmat (face_authentication_status_id, null, 0);
-                if ((int)face_authentication_status == -1)
+                m_FaceAuthenticationStatus = Os.shmat (m_FaceAuthenticationStatusId, null, 0);
+                if ((int)m_FaceAuthenticationStatus == -1)
                 {
                     GLib.warning ("error on get face authentication status mem: %s", GLib.strerror (GLib.errno));
                 }
@@ -708,19 +695,19 @@ namespace XSAA
         {
             Cairo.ImageSurface? surface = null;
 
-            if ((int)face_authentication_pixels == -1)
+            if ((int)m_FaceAuthenticationPixels == -1)
                 ipc_start ();
 
-            if ((int)face_authentication_status != -1 && 
-                (int)face_authentication_pixels != -1 && 
-                *face_authentication_status == FaceAuthenticationStatus.STARTED)
+            if ((int)m_FaceAuthenticationStatus != -1 && 
+                (int)m_FaceAuthenticationPixels != -1 && 
+                *m_FaceAuthenticationStatus == FaceAuthenticationStatus.STARTED)
             {
                 surface = new Cairo.ImageSurface (Cairo.Format.ARGB32,
                                                   FACE_AUTHENTICATION_IMAGE_WIDTH,
                                                   FACE_AUTHENTICATION_IMAGE_HEIGHT);
 
                 unowned uchar* dst = surface.get_data ();
-                unowned uchar* src = face_authentication_pixels;
+                unowned uchar* src = m_FaceAuthenticationPixels;
 
                 for (int i = 0; i < FACE_AUTHENTICATION_IMAGE_WIDTH; ++i)
                 {
@@ -743,24 +730,24 @@ namespace XSAA
         }
 
         private bool
-        on_face_authentication_expose_event (Gdk.EventExpose event)
+        on_face_authentication_expose_event (Gdk.EventExpose inEvent)
         {
-            if (face_authentication_pixels != null)
+            if (m_FaceAuthenticationPixels != null)
             {
                 Cairo.Surface surface = get_face_authentication_surface ();
                 if (surface != null)
                 {
-                    CairoContext ctx = new CairoContext.from_widget (face_authentication);
+                    CairoContext ctx = new CairoContext.from_widget (m_FaceAuthentication);
                     ctx.set_operator (Cairo.Operator.CLEAR);
                     ctx.paint ();
 
                     ctx.set_operator (Cairo.Operator.OVER);
-                    ctx.rounded_rectangle ((face_authentication.parent.allocation.width - 320) / 2, 
+                    ctx.rounded_rectangle ((m_FaceAuthentication.parent.allocation.width - 320) / 2, 
                                            0,
                                            320, 240, 10, CairoCorner.ALL);
                     ctx.clip ();
                     ctx.set_source_surface (surface,
-                                            (face_authentication.parent.allocation.width - 320) / 2, 
+                                            (m_FaceAuthentication.parent.allocation.width - 320) / 2, 
                                             0);
                     ctx.paint ();
                 }
@@ -770,20 +757,20 @@ namespace XSAA
         }
 
         private void
-        on_progress(int val)
+        on_progress(int inVal)
         {
-            GLib.debug ("progress = %i", val);
+            GLib.debug ("progress = %i", inVal);
 
-            if (id_pulse > 0) GLib.Source.remove(id_pulse);
-            id_pulse = 0;
-            progress.set_fraction((double)val / (double)100);
+            if (m_IdPulse > 0) GLib.Source.remove(m_IdPulse);
+            m_IdPulse = 0;
+            m_Progress.set_fraction((double)inVal / (double)100);
         }
 
         private void
-        on_progress_orientation(Gtk.ProgressBarOrientation orientation)
+        on_progress_orientation(Gtk.ProgressBarOrientation inOrientation)
         {
             GLib.debug ("progress orientation");
-            progress.set_orientation(orientation);
+            m_Progress.set_orientation(inOrientation);
         }
 
         private void
@@ -791,78 +778,78 @@ namespace XSAA
         {
             Gtk.TreeModel model;
             Gtk.TreeIter iter;
-            if (user_treeview.get_selection ().get_selected (out model, out iter))
+            if (m_UserTreeview.get_selection ().get_selected (out model, out iter))
             {
-                model.get (iter, 2, out username, -1);
+                model.get (iter, 2, out m_Username, -1);
 
-                GLib.debug ("selected %s", username);
+                GLib.debug ("selected %s", m_Username);
 
-                user_treeview.set_sensitive (false);
-                user_scrolled_window.set_size_request (-1, ICON_SIZE + 5);
-                login_prompt.show ();
-                entry_prompt.can_focus = true;
-                set_focus (entry_prompt);
-                if (username != null)
+                m_UserTreeview.set_sensitive (false);
+                m_UserScrolledWindow.set_size_request (-1, ICON_SIZE + 5);
+                m_LoginPrompt.show ();
+                m_EntryPrompt.can_focus = true;
+                set_focus (m_EntryPrompt);
+                if (m_Username != null)
                 {
-                    if (user_list.get_iter_first (out iter))
+                    if (m_UserList.get_iter_first (out iter))
                     {
                         do
                         {
                             string login;
-                            user_list.get (iter, 2, out login, -1);
-                            user_list.set (iter, 4, login == username, -1);
-                        } while (user_list.iter_next (ref iter));
+                            m_UserList.get (iter, 2, out login, -1);
+                            m_UserList.set (iter, 4, login == m_Username, -1);
+                        } while (m_UserList.iter_next (ref iter));
                     }
                     on_login_enter ();
                 }
                 else
                 {
-                    user_scrolled_window.hide ();
+                    m_UserScrolledWindow.hide ();
                 }
-                login_prompt.parent.resize_children ();
+                m_LoginPrompt.parent.resize_children ();
             }
             else
             {
-                username = null;
-                user_scrolled_window.show ();
-                user_scrolled_window.set_size_request (-1, -1);
-                user_treeview.set_sensitive (true);
-                login_prompt.hide ();
-                face_authentication.hide ();
-                button_box.show ();
-                if (user_list.get_iter_first (out iter))
+                m_Username = null;
+                m_UserScrolledWindow.show ();
+                m_UserScrolledWindow.set_size_request (-1, -1);
+                m_UserTreeview.set_sensitive (true);
+                m_LoginPrompt.hide ();
+                m_FaceAuthentication.hide ();
+                m_ButtonBox.show ();
+                if (m_UserList.get_iter_first (out iter))
                 {
                     do
                     {
-                        user_list.set (iter, 4, true, -1);
-                    } while (user_list.iter_next (ref iter));
+                        m_UserList.set (iter, 4, true, -1);
+                    } while (m_UserList.iter_next (ref iter));
                 }
-                login_prompt.parent.resize_children ();
+                m_LoginPrompt.parent.resize_children ();
             }
         }
 
         private void
         on_login_enter()
         {
-            if (username == null)
-                username = entry_prompt.get_text();
+            if (m_Username == null)
+                m_Username = m_EntryPrompt.get_text();
 
-            GLib.debug ("login enter user: %s", username);
-            if (username.length > 0)
+            GLib.debug ("login enter user: %s", m_Username);
+            if (m_Username.length > 0)
             {
-                entry_prompt.set_sensitive (false);
-                login(username, face_authentication_check_button.active);
+                m_EntryPrompt.set_sensitive (false);
+                login(m_Username, m_FaceAuthenticationCheckButton.active);
             }
         }
 
         private void
         on_passwd_enter()
         {
-            GLib.debug ("passwd enter user: %s", username);
+            GLib.debug ("passwd enter user: %s", m_Username);
 
-            entry_prompt.set_sensitive(false);
-            entry_prompt.activate.disconnect (on_passwd_enter);
-            passwd (entry_prompt.get_text());
+            m_EntryPrompt.set_sensitive(false);
+            m_EntryPrompt.activate.disconnect (on_passwd_enter);
+            passwd (m_EntryPrompt.get_text());
         }
 
         private void
@@ -879,22 +866,22 @@ namespace XSAA
             shutdown();
         }
 
-        override void
+        internal override void
         realize ()
         {
             GLib.debug ("realize");
             base.realize();
 
-            if (!FileUtils.test(Config.PACKAGE_DATA_DIR + "/" + theme + "/background.png", FileTest.EXISTS))
+            if (!FileUtils.test(Config.PACKAGE_DATA_DIR + "/" + m_Theme + "/background.png", FileTest.EXISTS))
             {
                 GLib.debug ("%s not found set background color %s",
-                            Config.PACKAGE_DATA_DIR + "/" + theme + "/background.png",
-                            bg);
+                            Config.PACKAGE_DATA_DIR + "/" + m_Theme + "/background.png",
+                            m_Bg);
                 Gdk.Color color;
 
-                Gdk.Color.parse(bg, out color);
+                Gdk.Color.parse(m_Bg, out color);
                 modify_bg(Gtk.StateType.NORMAL, color);
-                notebook.modify_bg(Gtk.StateType.NORMAL, color);
+                m_Notebook.modify_bg(Gtk.StateType.NORMAL, color);
 
                 var screen = get_window().get_screen();
                 var root = screen.get_root_window();
@@ -905,9 +892,9 @@ namespace XSAA
                 try
                 {
                     GLib.debug ("loading %s",
-                                Config.PACKAGE_DATA_DIR + "/" + theme + "/background.png");
+                                Config.PACKAGE_DATA_DIR + "/" + m_Theme + "/background.png");
 
-                    Gdk.Pixbuf pixbuf = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + theme + "/background.png");
+                    Gdk.Pixbuf pixbuf = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + m_Theme + "/background.png");
 
                     Gdk.Pixmap pixmap = new Gdk.Pixmap(window, allocation.width, allocation.height, -1);
                     Gdk.Pixbuf scale = pixbuf.scale_simple(allocation.width, allocation.height, Gdk.InterpType.BILINEAR);
@@ -924,18 +911,19 @@ namespace XSAA
                 catch (GLib.Error err)
                 {
                     GLib.warning ("Error on loading %s: %s",
-                                  Config.PACKAGE_DATA_DIR + "/" + theme + "/background.png",
+                                  Config.PACKAGE_DATA_DIR + "/" + m_Theme + "/background.png",
                                   err.message);
                 }
             }
         }
 
-        override void
+        internal override void
         hide()
         {
             GLib.debug ("hide");
 
-            throbber_session.finished();
+            m_FaceAuthenticationRefresh.stop ();
+            m_ThrobberSession.finished();
             base.hide();
         }
 
@@ -944,11 +932,11 @@ namespace XSAA
         {
             GLib.debug ("show launch");
 
-            face_authentication.hide ();
+            m_FaceAuthentication.hide ();
             var cursor = new Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR);
             get_window().set_cursor(cursor);
-            notebook.set_current_page(2);
-            throbber_session.start();
+            m_Notebook.set_current_page(2);
+            m_ThrobberSession.start();
         }
 
         public void
@@ -958,43 +946,43 @@ namespace XSAA
 
             var cursor = new Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR);
             get_window().set_cursor(cursor);
-            notebook.set_current_page(3);
-            progress.show();
+            m_Notebook.set_current_page(3);
+            m_Progress.show();
             on_start_pulse();
-            throbber_shutdown.start();
+            m_ThrobberShutdown.start();
         }
 
         public void
-        ask_for_login(int nb_users = -1)
+        ask_for_login(int inNbUsers = -1)
         {
             GLib.debug ("ask for login");
 
-            phase[2].finished();
+            m_Phase[2].finished();
 
-            if (nb_users >= 0)
+            if (inNbUsers >= 0)
             {
-                reload_user_list (nb_users);
+                reload_user_list (inNbUsers);
             }
 
             var cursor = new Gdk.Cursor(Gdk.CursorType.LEFT_PTR);
             get_window().set_cursor(cursor);
 
-            notebook.set_current_page(1);
+            m_Notebook.set_current_page(1);
 
-            username = null;
-            user_treeview.get_selection ().unselect_all ();
+            m_Username = null;
+            m_UserTreeview.get_selection ().unselect_all ();
 
-            label_prompt.set_markup("<span size='xx-large' color='" +
-                                     text +"'>Login :</span>");
-            entry_prompt.can_focus = true;
-            set_focus (entry_prompt);
-            entry_prompt.set_sensitive(true);
-            entry_prompt.set_visibility(true);
-            entry_prompt.set_text("");
-            entry_prompt.activate.connect(on_login_enter);
-            if (id_pulse > 0) GLib.Source.remove(id_pulse);
-            id_pulse = 0;
-            progress.hide();
+            m_LabelPrompt.set_markup("<span size='xx-large' color='" +
+                                     m_Text +"'>Login :</span>");
+            m_EntryPrompt.can_focus = true;
+            set_focus (m_EntryPrompt);
+            m_EntryPrompt.set_sensitive(true);
+            m_EntryPrompt.set_visibility(true);
+            m_EntryPrompt.set_text("");
+            m_EntryPrompt.activate.connect(on_login_enter);
+            if (m_IdPulse > 0) GLib.Source.remove(m_IdPulse);
+            m_IdPulse = 0;
+            m_Progress.hide();
         }
 
         public void
@@ -1002,19 +990,19 @@ namespace XSAA
         {
             GLib.debug ("ask for password");
 
-            label_message.hide ();
-            face_authentication.hide ();
-            login_prompt.show ();
-            entry_prompt.can_focus = true;
-            set_focus (entry_prompt);
-            button_box.hide ();
-            entry_prompt.set_sensitive (true);
-            entry_prompt.activate.disconnect (on_login_enter);
-            entry_prompt.set_visibility(false);
-            entry_prompt.set_text("");
-            entry_prompt.activate.connect(on_passwd_enter);
-            label_prompt.set_markup("<span size='xx-large' color='" +
-                                    text +"'>Password :</span>");
+            m_LabelMessage.hide ();
+            m_FaceAuthentication.hide ();
+            m_LoginPrompt.show ();
+            m_EntryPrompt.can_focus = true;
+            set_focus (m_EntryPrompt);
+            m_ButtonBox.hide ();
+            m_EntryPrompt.set_sensitive (true);
+            m_EntryPrompt.activate.disconnect (on_login_enter);
+            m_EntryPrompt.set_visibility(false);
+            m_EntryPrompt.set_text("");
+            m_EntryPrompt.activate.connect(on_passwd_enter);
+            m_LabelPrompt.set_markup("<span size='xx-large' color='" +
+                                     m_Text +"'>Password :</span>");
         }
 
         public void
@@ -1024,21 +1012,21 @@ namespace XSAA
 
             ipc_start ();
 
-            face_authentication_refresh.start ();
+            m_FaceAuthenticationRefresh.start ();
 
-            button_box.hide ();
-            login_prompt.hide ();
-            face_authentication.show ();
+            m_ButtonBox.hide ();
+            m_LoginPrompt.hide ();
+            m_FaceAuthentication.show ();
         }
 
         public void
-        login_message(string msg)
+        login_message(string inMsg)
         {
-            GLib.debug ("login message: %s", msg);
+            GLib.debug ("login message: %s", inMsg);
 
-            label_message.set_markup("<span size='x-large' color='" +
-                                     text +"'>" + msg + "</span>");
-            label_message.show ();
+            m_LabelMessage.set_markup("<span size='x-large' color='" +
+                                       m_Text +"'>" + inMsg + "</span>");
+            m_LabelMessage.show ();
         }
     }
 }

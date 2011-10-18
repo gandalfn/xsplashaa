@@ -33,12 +33,14 @@ namespace XSAA
 
     public class CairoContext : Cairo.Context
     {
-        static inline uchar
+        // static methods
+        private static inline uchar
         mult (uchar inC, uchar inA)
         {
             return inA > 0 ? inC * 255 / inA : 0;
         }
 
+        // methods
         public CairoContext(Cairo.Surface inSurface)
         {
             base(inSurface);
@@ -120,22 +122,22 @@ namespace XSAA
                 move_to(inX, inY);
 
             if ((inCorners & CairoCorner.TOPRIGHT) == CairoCorner.TOPRIGHT)
-                arc(inX + inW - inRadius, inY + inRadius, inRadius, Posix.M_PI * 1.5, Posix.M_PI * 2);
+                arc(inX + inW - inRadius, inY + inRadius, inRadius, GLib.Math.PI * 1.5, GLib.Math.PI * 2);
             else
                 line_to(inX + inW, inY);
 
             if ((inCorners & CairoCorner.BOTTOMRIGHT) == CairoCorner.BOTTOMRIGHT)
-                arc(inX + inW - inRadius, inY + inH - inRadius, inRadius, 0, Posix.M_PI * 0.5);
+                arc(inX + inW - inRadius, inY + inH - inRadius, inRadius, 0, GLib.Math.PI * 0.5);
             else
                 line_to(inX + inW, inY + inH);
 
             if ((inCorners & CairoCorner.BOTTOMLEFT) == CairoCorner.BOTTOMLEFT)
-                arc(inX + inRadius, inY + inH - inRadius, inRadius, Posix.M_PI * 0.5, Posix.M_PI);
+                arc(inX + inRadius, inY + inH - inRadius, inRadius, GLib.Math.PI * 0.5, GLib.Math.PI);
             else
                 line_to(inX, inY + inH);
 
             if ((inCorners & CairoCorner.TOPLEFT) == CairoCorner.TOPLEFT)
-                arc(inX + inRadius, inY + inRadius, inRadius, Posix.M_PI, Posix.M_PI * 1.5);
+                arc(inX + inRadius, inY + inRadius, inRadius, GLib.Math.PI, GLib.Math.PI * 1.5);
             else
                 move_to(inX, inY);
         }

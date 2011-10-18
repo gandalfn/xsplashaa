@@ -23,56 +23,57 @@ namespace XSAA
 {
     public class SlideNotebook : Gtk.Notebook, Gtk.Buildable
     {
-        // Properties
+        // properties
+        private Timeline        m_Timeline;
+        private Cairo.Surface   m_PreviousSurface = null;
+        private int             m_PreviousPage = -1;
+
+        // accessors
         [Description (nick="Slide duration", blurb="Notebook slide duration in ms")]
         public uint duration {
             get {
-                return timeline.duration;
+                return m_Timeline.duration;
             }
             set {
-                timeline.duration = value;
+                m_Timeline.duration = value;
             }
         }
 
-        // Private properties
-        Timeline timeline;
-        Cairo.Surface previous_surface = null;
-        int previous_page = -1;
-
+        // methods
         construct
         {
-            timeline = new Timeline.for_duration(400);
-            timeline.new_frame.connect(() => { queue_draw(); });
-            timeline.completed.connect(on_timeline_completed);
+            m_Timeline = new Timeline.for_duration(400);
+            m_Timeline.new_frame.connect(() => { queue_draw(); });
+            m_Timeline.completed.connect(on_timeline_completed);
         }
 
         private void
         on_timeline_completed()
         {
-            previous_page = get_current_page(); 
-            Gtk.EventBox previous = (Gtk.EventBox)base.get_nth_page(previous_page);
+            m_PreviousPage = get_current_page(); 
+            Gtk.EventBox previous = (Gtk.EventBox)base.get_nth_page(m_PreviousPage);
             Cairo.Context cr = Gdk.cairo_create (previous.window);
-            previous_surface = new Cairo.Surface.similar(cr.get_target(), 
-                                                         Cairo.Content.COLOR_ALPHA,
-                                                         previous.allocation.width,
-                                                         previous.allocation.height);
-            Cairo.Context cr_previous = new Cairo.Context(previous_surface);
+            m_PreviousSurface = new Cairo.Surface.similar(cr.get_target(), 
+                                                          Cairo.Content.COLOR_ALPHA,
+                                                          previous.allocation.width,
+                                                          previous.allocation.height);
+            Cairo.Context cr_previous = new Cairo.Context(m_PreviousSurface);
             cr_previous.set_operator(Cairo.Operator.SOURCE);
             cr_previous.set_source_surface(cr.get_target(), 0, 0);
             cr_previous.paint();
         }
 
         private bool
-        on_page_expose_event(Gtk.Widget page, Gdk.EventExpose event)
+        on_page_expose_event(Gtk.Widget inPage, Gdk.EventExpose inEvent)
         {
-            var cr = Gdk.cairo_create (page.window);
+            var cr = Gdk.cairo_create (inPage.window);
             cr.set_operator (Cairo.Operator.CLEAR);
             cr.paint ();
             return false;
         }
 
         public override int
-        insert_page_menu(Gtk.Widget widget, Gtk.Widget? label, Gtk.Widget? menu, int position)
+        insert_page_menu(Gtk.Widget inWidget, Gtk.Widget? inLabel, Gtk.Widget? inMenu, int inPosition)
         {
             Gtk.EventBox page;
 
@@ -83,15 +84,15 @@ namespace XSAA
             page.expose_event.connect(on_page_expose_event);
             Gdk.Screen screen = page.get_screen();
             page.set_colormap (screen.get_rgba_colormap ());
-            page.add(widget);
+            page.add(inWidget);
 
-            return base.insert_page_menu(page, label, menu, position);
+            return base.insert_page_menu(page, inLabel, inMenu, inPosition);
         }
 
         public new unowned Gtk.Widget
-        get_nth_page(int position)
+        get_nth_page(int inPosition)
         {
-            Gtk.Widget? page= base.get_nth_page(position);
+            Gtk.Widget? page= base.get_nth_page(inPosition);
             weak Gtk.Widget child = null;
 
             if (page != null)
@@ -103,9 +104,9 @@ namespace XSAA
         }
 
         public new unowned Gtk.Widget?
-        get_tab_label(Gtk.Widget? widget)
+        get_tab_label(Gtk.Widget? inWidget)
         {
-            Gtk.Widget? page= widget.get_parent();
+            Gtk.Widget? page= inWidget.get_parent();
             weak Gtk.Widget? child = null;
 
             if (page != null)
@@ -117,20 +118,20 @@ namespace XSAA
         }
 
         public new void
-        set_tab_label(Gtk.Widget widget, Gtk.Widget? label)
+        set_tab_label(Gtk.Widget inWidget, Gtk.Widget? inLabel)
         {
-            Gtk.Widget? page= widget.get_parent();
+            Gtk.Widget? page= inWidget.get_parent();
 
             if (page != null)
             {
-                base.set_tab_label(page, label);
+                base.set_tab_label(page, inLabel);
             }
         }
 
         public new int
-        page_num(Gtk.Widget widget)
+        page_num(Gtk.Widget inWidget)
         {
-            Gtk.Widget? page= widget.get_parent();
+            Gtk.Widget? page= inWidget.get_parent();
             int num = -1;
 
             if (page != null)
@@ -141,23 +142,23 @@ namespace XSAA
             return num;
         }
 
-        private override void
-        switch_page(Gtk.NotebookPage page, uint page_num)
+        internal override void
+        switch_page(Gtk.NotebookPage inPage, uint inPageNum)
         {
-            previous_page = get_current_page();
-            if (previous_page >= 0) timeline.start();
-            base.switch_page(page, page_num);
+            m_PreviousPage = get_current_page();
+            if (m_PreviousPage >= 0) m_Timeline.start();
+            base.switch_page(inPage, inPageNum);
         }
 
-        private override bool
-        expose_event(Gdk.EventExpose event)
+        internal override bool
+        expose_event(Gdk.EventExpose inEvent)
         {
-            bool ret = base.expose_event((Gdk.EventExpose)event);
+            bool ret = base.expose_event((Gdk.EventExpose)inEvent);
 
             var cr = Gdk.cairo_create (this.window);
 
-            cr.rectangle (event.area.x, event.area.y,
-                          event.area.width, event.area.height);
+            cr.rectangle (inEvent.area.x, inEvent.area.y,
+                          inEvent.area.width, inEvent.area.height);
             cr.clip ();
 
             if (page >= 0)
@@ -165,38 +166,38 @@ namespace XSAA
                 Gtk.EventBox current = (Gtk.EventBox)base.get_nth_page(page);
 
                 Gdk.Region region = Gdk.Region.rectangle((Gdk.Rectangle)current.allocation);
-                region.intersect(event.region);
+                region.intersect(inEvent.region);
                 Gdk.cairo_region(cr, region);
                 cr.clip();
 
-                if (previous_page != page && previous_page >= 0)
+                if (m_PreviousPage != page && m_PreviousPage >= 0)
                 {
                     var cr_current = Gdk.cairo_create (current.window);
                     int x;
 
-                    if (page < previous_page)
-                        x = current.allocation.x - (current.allocation.width - (int)((double)current.allocation.width * timeline.progress));
+                    if (page < m_PreviousPage)
+                        x = current.allocation.x - (current.allocation.width - (int)((double)current.allocation.width * m_Timeline.progress));
                     else
-                        x = current.allocation.x - (int)((double)current.allocation.width * timeline.progress);
+                        x = current.allocation.x - (int)((double)current.allocation.width * m_Timeline.progress);
                     
                     cr.save();
                     cr.set_operator(Cairo.Operator.OVER);
-                    if (page < previous_page)
+                    if (page < m_PreviousPage)
                         cr.set_source_surface(cr_current.get_target(), 
                                               x, current.allocation.y);
                     else
-                        cr.set_source_surface(previous_surface, 
+                        cr.set_source_surface(m_PreviousSurface, 
                                               x, current.allocation.y);
                     cr.paint();
                     cr.restore();
 
-                    if (page < previous_page)
-                        x = current.allocation.x + (int)((double)current.allocation.width * timeline.progress);
+                    if (page < m_PreviousPage)
+                        x = current.allocation.x + (int)((double)current.allocation.width * m_Timeline.progress);
                     else
-                        x = current.allocation.x + (current.allocation.width - (int)((double)current.allocation.width * timeline.progress));
+                        x = current.allocation.x + (current.allocation.width - (int)((double)current.allocation.width * m_Timeline.progress));
 
-                    if (page < previous_page)
-                        cr.set_source_surface(previous_surface, 
+                    if (page < m_PreviousPage)
+                        cr.set_source_surface(m_PreviousSurface, 
                                               x, current.allocation.y);
                     else
                         cr.set_source_surface(cr_current.get_target(), 
@@ -236,15 +237,15 @@ namespace XSAA
         }
 
         private void
-        add_child(Gtk.Builder builder, GLib.Object child, string? type)
+        add_child(Gtk.Builder inBuilder, GLib.Object inChild, string? inType)
         {
-            if (type == null)
+            if (inType == null)
             {
-                append_page((Gtk.Widget)child, null);
+                append_page((Gtk.Widget)inChild, null);
             }
             else
             {
-                base.add_child(builder, child, type);
+                base.add_child(inBuilder, inChild, inType);
             }
         }
     }

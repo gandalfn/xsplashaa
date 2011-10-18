@@ -19,12 +19,14 @@
 
 internal class XSAA.TimeoutPool
 {
+    // properties
     private XSAA.Source            m_Source;
     private XSAA.SourceFuncs       m_Funcs;
     private TimeVal                m_StartTime;
     private List<Timeout>          m_Timeouts;
     private int                    m_Ready;
 
+    // methods
     public TimeoutPool (int inPriority = GLib.Priority.DEFAULT,
                         GLib.MainContext? inContext = null)
     {

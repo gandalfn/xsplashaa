@@ -25,8 +25,10 @@ public enum XSAA.TimelineDirection
 
 public class XSAA.Timeline : Object
 {
+    // static properties
     static TimeoutPool s_TimeoutPool = null;
 
+    // properties
     private Timeout? m_Timeout = null;
     private TimelineDirection m_Direction = TimelineDirection.FORWARD;
     private int m_CurrentFrameNum = 0;
@@ -35,6 +37,7 @@ public class XSAA.Timeline : Object
     private uint m_Duration = 0;
     private TimeVal m_PrevFrameTimeVal;
 
+    // accessors
     /**
      * Timeline direction
      */
@@ -137,16 +140,19 @@ public class XSAA.Timeline : Object
         }
     }
 
-    static construct
-    {
-        s_TimeoutPool = new TimeoutPool (Priority.DEFAULT + 10);
-    }
-
+    // signals
     public signal void started ();
     public signal void paused ();
     public signal void new_frame (int inNumFrame);
     public signal void completed ();
 
+    // static methods
+    static construct
+    {
+        s_TimeoutPool = new TimeoutPool (Priority.DEFAULT + 10);
+    }
+
+    // methods
     /**
      * Construct a new timeline
      *

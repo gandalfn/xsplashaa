@@ -22,7 +22,7 @@ dnl Packages version required
 dnl ****************************************************************************
 GLIB_REQUIRED=2.12.0
 GTK_REQUIRED=2.10.0
-VALA_REQUIRED=0.10.0
+VALA_REQUIRED=0.12.0
 SSIGTKEXTRAS_REQUIRED=0.5.0
 
 dnl ****************************************************************************
@@ -43,17 +43,16 @@ IT_PROG_INTLTOOL([0.35.0])
 dnl ****************************************************************************
 dnl Check for packages
 dnl ****************************************************************************
-PKG_CHECK_MODULES(XSPLASHAA, [glib-2.0 >= $GLIB_REQUIRED 
+PKG_CHECK_MODULES(XSPLASHAA, [x11
+                              glib-2.0 >= $GLIB_REQUIRED 
                               gobject-2.0 >= $GLIB_REQUIRED 
                               gtk+-2.0 >= $GTK_REQUIRED
-                              dbus-glib-1
-                              vala-0.10 >= $VALA_REQUIRED])
+                              dbus-glib-1])
 
 PKG_CHECK_MODULES(XSPLASHAA_SESSION_DAEMON, [glib-2.0 >= $GLIB_REQUIRED,
                                              gobject-2.0 >= $GLIB_REQUIRED
                                              gtk+-2.0 >= $GTK_REQUIRED
                                              dbus-glib-1
-                                             vala-0.10 >= $VALA_REQUIRED
                                              xau])
 
 PKG_CHECK_MODULES(XSPLASHAA_CLIENT, [glib-2.0 >= $GLIB_REQUIRED,
@@ -114,6 +113,7 @@ AC_CONFIG_FILES([
     data/themes/aixplorer/Makefile
     data/themes/chicken-curie/Makefile
     data/themes/debian/Makefile
-    data/themes/donut-doopler/Makefile])
+    data/themes/donut-doopler/Makefile
+    data/themes/leaves/Makefile])
 
 AC_OUTPUT

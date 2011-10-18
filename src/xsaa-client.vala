@@ -23,58 +23,59 @@ namespace XSAA
 {
     public class Client : Socket
     {
-        public Client(string socket_name) throws SocketError
+        // methods
+        public Client(string inSocketName) throws SocketError
         {
-            GLib.debug ("Create client on %s", socket_name);
+            GLib.debug ("Create client on %s", inSocketName);
 
-            base(socket_name);
+            base(inSocketName);
 
-            Posix.fcntl(fd, Posix.O_NONBLOCK);
+            Os.fcntl(fd, Os.O_NONBLOCK);
 
-            if (Posix.connect(fd, &saddr, 110) != 0)
+            if (Os.connect(fd, &saddr, 110) != 0)
             {
                 throw new SocketError.CREATE("error on connect %s", 
-                                             socket_name);
+                                             inSocketName);
             }
         }
     }
 
 
-    const OptionEntry[] option_entries = 
+    const OptionEntry[] cOptionEntries = 
     {
-        { "ping", 'p', 0, OptionArg.NONE, ref ping, "Ping", null },
-        { "pulse", 'u', 0, OptionArg.NONE, ref pulse, "Pulse", null },
-        { "dbus", 'd', 0, OptionArg.NONE, ref dbus, "DBus ready", null },
-        { "session", 's', 0, OptionArg.NONE, ref session, "Session ready", null },
-        { "phase", 'a', 0, OptionArg.INT, ref phase, null, "PHASE" },
-        { "progress", 'r', 0, OptionArg.INT, ref progress, null, "PROGRESS" },
-        { "left-to-right", 'l', 0, OptionArg.NONE, ref left_to_right, "Left to Right", null },
-        { "right-to-left", 'i', 0, OptionArg.NONE, ref right_to_left, "Right to Left", null },
-        { "quit", 'q', 0, OptionArg.NONE, ref quit, "Quit", null },
-        { "close-session", 'c', 0, OptionArg.NONE, ref close_session, "Close session", null },
-        { "socket", 0, 0, OptionArg.STRING, ref socket_name, null, "SOCKET" },
+        { "ping", 'p', 0, OptionArg.NONE, ref sPing, "Ping", null },
+        { "pulse", 'u', 0, OptionArg.NONE, ref sPulse, "Pulse", null },
+        { "dbus", 'd', 0, OptionArg.NONE, ref sDBus, "DBus ready", null },
+        { "session", 's', 0, OptionArg.NONE, ref sSession, "Session ready", null },
+        { "phase", 'a', 0, OptionArg.INT, ref sPhase, null, "PHASE" },
+        { "progress", 'r', 0, OptionArg.INT, ref sProgress, null, "PROGRESS" },
+        { "left-to-right", 'l', 0, OptionArg.NONE, ref sLeftToRight, "Left to Right", null },
+        { "right-to-left", 'i', 0, OptionArg.NONE, ref sRightToLeft, "Right to Left", null },
+        { "quit", 'q', 0, OptionArg.NONE, ref sQuit, "Quit", null },
+        { "close-session", 'c', 0, OptionArg.NONE, ref sCloseSession, "Close session", null },
+        { "socket", 0, 0, OptionArg.STRING, ref sSocketName, null, "SOCKET" },
         { null }
     };
 
-    static bool quit = false;
-    static bool close_session = false;
-    static bool ping = false;
-    static bool pulse = false;
-    static bool dbus = false;
-    static bool session = false;
-    static int phase = 0;
-    static int progress = 0;
-    static bool right_to_left = false;
-    static bool left_to_right = false;
-    static string socket_name;
-    static Client client;
+    static bool   sQuit = false;
+    static bool   sCloseSession = false;
+    static bool   sPing = false;
+    static bool   sPulse = false;
+    static bool   sDBus = false;
+    static bool   sSession = false;
+    static int    sPhase = 0;
+    static int    sProgress = 0;
+    static bool   sRightToLeft = false;
+    static bool   sLeftToRight = false;
+    static string sSocketName;
+    static Client sClient;
 
     static int
     handle_quit()
     {
         GLib.debug ("send quit");
 
-        client.send("quit");
+        sClient.send("quit");
 
         return 0;
     }
@@ -85,9 +86,9 @@ namespace XSAA
         GLib.debug ("pong received");
 
         string message;
-        if (client.recv(out message))
+        if (sClient.recv(out message))
         {
-            Posix.exit(0);
+            Os.exit(0);
         }
     }
 
@@ -96,7 +97,7 @@ namespace XSAA
     {
         GLib.debug ("send dbus message");
 
-        client.send("dbus");
+        sClient.send("dbus");
 
         return 0;
     }
@@ -106,7 +107,7 @@ namespace XSAA
     {
         GLib.debug ("send session message");
 
-        client.send("session");
+        sClient.send("session");
 
         return 0;
     }
@@ -116,8 +117,8 @@ namespace XSAA
     {
         MainLoop loop = new MainLoop(null, false);
 
-        client.in.connect(on_pong);
-        client.send("ping");
+        sClient.in.connect(on_pong);
+        sClient.send("ping");
         loop.run();
 
         return 0;
@@ -127,9 +128,9 @@ namespace XSAA
     static int
     handle_phase()
     {
-        GLib.debug ("send phase %i message", phase);
+        GLib.debug ("send phase %i message", sPhase);
 
-        client.send("phase=" + (phase - 1).to_string());
+        sClient.send("phase=" + (sPhase - 1).to_string());
 
         return 0;
     }
@@ -137,9 +138,9 @@ namespace XSAA
     static int
     handle_progress()
     {
-        GLib.debug ("send progress %i message", progress);
+        GLib.debug ("send progress %i message", sProgress);
 
-        client.send("progress=" + progress.to_string());
+        sClient.send("progress=" + sProgress.to_string());
 
         return 0;
     }
@@ -149,7 +150,7 @@ namespace XSAA
     {
         GLib.debug ("send right to left message");
 
-        client.send("right-to-left");
+        sClient.send("right-to-left");
 
         return 0;
     }
@@ -159,7 +160,7 @@ namespace XSAA
     {
         GLib.debug ("send left to right message");
 
-        client.send("left-to-right");
+        sClient.send("left-to-right");
 
         return 0;
     }
@@ -169,7 +170,7 @@ namespace XSAA
     {
         GLib.debug ("send pulse message");
 
-        client.send("pulse");
+        sClient.send("pulse");
 
         return 0;
     }
@@ -179,7 +180,7 @@ namespace XSAA
     {
         GLib.debug ("send close session message");
 
-        client.send("close-session");
+        sClient.send("close-session");
 
         return 0;
     }
@@ -189,12 +190,12 @@ namespace XSAA
     {
         GLib.Log.set_default_handler (Log.syslog_log_handler);
 
-        socket_name = "/tmp/xsplashaa-socket";
+        sSocketName = "/tmp/xsplashaa-socket";
         try 
         {
             var opt_context = new OptionContext("- Xsplashaa client");
             opt_context.set_help_enabled(true);
-            opt_context.add_main_entries(option_entries, "xsplasaa");
+            opt_context.add_main_entries(cOptionEntries, "xsplasaa");
             opt_context.parse(ref args);
         } 
         catch (OptionError err) 
@@ -205,32 +206,32 @@ namespace XSAA
 
         try
         {
-            client = new Client (socket_name);
+            sClient = new Client (sSocketName);
         }
         catch (SocketError err)
         {
             return -1;
         }
 
-        if (quit) 
+        if (sQuit) 
             return handle_quit();
-        else if (ping) 
+        else if (sPing) 
             return handle_ping();
-        else if (dbus) 
+        else if (sDBus) 
             return handle_dbus();
-        else if (session) 
+        else if (sSession) 
             return handle_session();
-        else if (phase > 0)
+        else if (sPhase > 0)
             return handle_phase();
-        else if (pulse)
+        else if (sPulse)
             return handle_pulse();
-        else if (progress > 0)
+        else if (sProgress > 0)
             return handle_progress();
-        else if (right_to_left)
+        else if (sRightToLeft)
             return handle_right_to_left();
-        else if (left_to_right)
+        else if (sLeftToRight)
             return handle_left_to_right();
-        else if (close_session)
+        else if (sCloseSession)
             return handle_close_session();
 
         return -1;

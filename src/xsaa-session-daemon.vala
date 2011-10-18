@@ -31,13 +31,13 @@ public interface ConsoleKit.Session : DBus.Object
 public interface ConsoleKit.Manager : DBus.Object 
 {
     public abstract string 
-    open_session_with_parameters (ConsoleKit.SessionParameter[] parameters) throws DBus.Error; 
+    open_session_with_parameters (ConsoleKit.SessionParameter[] inParameters) throws DBus.Error; 
 
     public abstract bool
-    close_session(string cookie) throws DBus.Error;
+    close_session(string inCookie) throws DBus.Error;
 
     public abstract DBus.ObjectPath?
-    get_session_for_cookie(string cookie) throws DBus.Error;
+    get_session_for_cookie(string inCookie) throws DBus.Error;
 
     public abstract void
     restart() throws DBus.Error;
@@ -48,51 +48,54 @@ public interface ConsoleKit.Manager : DBus.Object
 
 namespace XSAA
 {
-    static MainLoop loop;
+    static MainLoop sLoop;
 
     [DBus (name = "fr.supersonicimagine.XSAA.Manager")]
     public class SessionManager : GLib.Object
     {
-        private DBus.Connection connection;
-        public Vala.Map <string, Session> sessions;
-        private ConsoleKit.Manager manager;
-        private Users users;
+        // properties
+        private DBus.Connection    m_Connection;
+        private ConsoleKit.Manager m_Manager;
+        private Users              m_Users;
 
-        public SessionManager(DBus.Connection conn, dynamic DBus.Object bus)
+        public GLib.HashTable <string, Session> m_Sessions;
+
+        // methods
+        public SessionManager(DBus.Connection inConn, dynamic DBus.Object inBus)
         {
-            connection = conn;
+            m_Connection = inConn;
 
-            manager = (ConsoleKit.Manager)conn.get_object ("org.freedesktop.ConsoleKit", 
-                                                           "/org/freedesktop/ConsoleKit/Manager",
-                                                           "/org/freedesktop/ConsoleKit/Manager");
+            m_Manager = (ConsoleKit.Manager)m_Connection.get_object ("org.freedesktop.ConsoleKit", 
+                                                                     "/org/freedesktop/ConsoleKit/Manager",
+                                                                     "/org/freedesktop/ConsoleKit/Manager");
 
-            sessions = new Vala.HashMap <string, Session> (GLib.str_hash, GLib.str_equal);
-            bus.NameOwnerChanged.connect (on_client_lost);
+            m_Sessions = new GLib.HashTable <string, Session> (GLib.str_hash, GLib.str_equal);
+            inBus.NameOwnerChanged.connect (on_client_lost);
 
-            users = new Users (conn);
+            m_Users = new Users (m_Connection);
         }
 
         private void 
-        on_client_lost (DBus.Object sender, string name, string prev, string newp) 
+        on_client_lost (DBus.Object inSender, string iName, string inPrev, string inNewp) 
         {
-            sessions.remove (prev);
+            m_Sessions.remove (inPrev);
         }
 
         public bool
-        open_session(string user, int display, string device, bool face_authentication, bool autologin, out DBus.ObjectPath? path)
+        open_session(string inUser, int inDisplay, string inDevice, bool inFaceAuthentication, bool inAutologin, out DBus.ObjectPath? outPath)
         {
-            path = new DBus.ObjectPath ("/fr/supersonicimagine/XSAA/Manager/Session/" +
-                                        user + "/" + display.to_string());
+            outPath = new DBus.ObjectPath ("/fr/supersonicimagine/XSAA/Manager/Session/" +
+                                           inUser + "/" + inDisplay.to_string());
             try
             {
                 string service = "xsplashaa";
-                if (face_authentication) service = "xsplashaa-face-authentication";
-                if (autologin) service = "xsplashaa-autologin";
+                if (inFaceAuthentication) service = "xsplashaa-face-authentication";
+                if (inAutologin) service = "xsplashaa-autologin";
 
-                var session = new Session(connection, manager, service, user, display, device);
-                GLib.message ("open session %s", path);
-                connection.register_object(path, session);
-                sessions.set(path, session);
+                var session = new Session(m_Connection, m_Manager, service, inUser, inDisplay, inDevice);
+                GLib.message ("open session %s", outPath);
+                m_Connection.register_object(outPath, session);
+                m_Sessions.insert (outPath, session);
             }
             catch (GLib.Error err)
             {
@@ -104,10 +107,10 @@ namespace XSAA
         }
 
         public void
-        close_session(DBus.ObjectPath? path)
+        close_session(DBus.ObjectPath? inPath)
         {
-            GLib.debug ("close session %s", path);
-            sessions.remove(path);
+            GLib.debug ("close session %s", inPath);
+            m_Sessions.remove(inPath);
         }
 
         public void
@@ -116,7 +119,7 @@ namespace XSAA
             GLib.debug ("reboot");
             try
             {
-                manager.restart();
+                m_Manager.restart();
             }
             catch (DBus.Error err)
             {
@@ -130,7 +133,7 @@ namespace XSAA
             GLib.debug ("halt");
             try
             {
-                manager.stop();
+                m_Manager.stop();
             }
             catch (DBus.Error err)
             {
@@ -141,20 +144,20 @@ namespace XSAA
         public int
         get_nb_users ()
         {
-            return users.nb_users;
+            return m_Users.nb_users;
         }
     }
 
-    const GLib.OptionEntry[] option_entries = 
+    const GLib.OptionEntry[] c_OptionEntries = 
     {
-        { "no-daemonize", 'd', 0, GLib.OptionArg.NONE, ref no_daemon, "Do not run xsplashaa-session-daemon as a daemonn", null },
+        { "no-daemonize", 'd', 0, GLib.OptionArg.NONE, ref s_NoDaemon, "Do not run xsplashaa-session-daemon as a daemonn", null },
         { null }
     };
 
-    static bool no_daemon = false;
+    static bool s_NoDaemon = false;
 
     static int
-    main (string[] args) 
+    main (string[] inArgs) 
     {
         GLib.Log.set_default_handler (Log.syslog_log_handler);
 
@@ -164,8 +167,8 @@ namespace XSAA
         {
             var opt_context = new OptionContext("- Xsplashaa session daemon");
             opt_context.set_help_enabled(true);
-            opt_context.add_main_entries(option_entries, "xsplasaa-session-daemon");
-            opt_context.parse(ref args);
+            opt_context.add_main_entries(c_OptionEntries, "xsplasaa-session-daemon");
+            opt_context.parse(ref inArgs);
         }
         catch (GLib.OptionError err) 
         {
@@ -173,9 +176,9 @@ namespace XSAA
             return -1;
         }
 
-        if (!no_daemon)
+        if (!s_NoDaemon)
         {
-            if (Posix.daemon (0, 0) < 0)
+            if (Os.daemon (0, 0) < 0)
             {
                 GLib.critical ("error on launch has daemon");
                 return -1;
@@ -184,7 +187,7 @@ namespace XSAA
 
         try
         {
-            loop = new GLib.MainLoop(null, false);
+            sLoop = new GLib.MainLoop(null, false);
 
             var conn = DBus.Bus.get (DBus.BusType.SYSTEM);
 
@@ -205,7 +208,7 @@ namespace XSAA
                 conn.register_object ("/fr/supersonicimagine/XSAA/Manager", 
                                       service);
 
-                loop.run();
+                sLoop.run();
             }
         }
         catch (GLib.Error err)

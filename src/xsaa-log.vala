@@ -21,44 +21,45 @@
  
 namespace XSAA.Log
 {
+    // static methods
     public static void
-    kmsg_log_handler (string? log_domain, LogLevelFlags log_levels, string message)
+    kmsg_log_handler (string? inLogDomain, LogLevelFlags inLogLevels, string inMessage)
     {
-        int fd = Posix.open("/dev/kmsg", Posix.O_WRONLY);
+        int fd = Os.open("/dev/kmsg", Os.O_WRONLY);
         if (fd > 0)
         {
-            string msg = "xsplashaa: %s\n".printf (message);
-            Posix.write (fd, msg, Posix.strlen (msg));
-            Posix.close (fd);
+            string msg = "xsplashaa: %s\n".printf (inMessage);
+            Os.write (fd, msg, msg.length);
+            Os.close (fd);
         }
     }
 
     public static void
-    syslog_log_handler (string? log_domain, GLib.LogLevelFlags log_levels, string message)
+    syslog_log_handler (string? inLogDomain, LogLevelFlags inLogLevels, string inMessage)
     {
-        int level = Posix.LOG_CRIT;
+        int level = Os.LOG_CRIT;
 
-        switch (log_levels)
+        switch (inLogLevels)
         {
             case GLib.LogLevelFlags.LEVEL_ERROR:
-                level = Posix.LOG_ERR;
+                level = Os.LOG_ERR;
                 break;
             case GLib.LogLevelFlags.LEVEL_CRITICAL:
-                level = Posix.LOG_CRIT;
+                level = Os.LOG_CRIT;
                 break;
             case GLib.LogLevelFlags.LEVEL_WARNING:
-                level = Posix.LOG_WARNING;
+                level = Os.LOG_WARNING;
                 break;
             case GLib.LogLevelFlags.LEVEL_MESSAGE:
-                level = Posix.LOG_INFO;
+                level = Os.LOG_INFO;
                 break;
             case GLib.LogLevelFlags.LEVEL_DEBUG:
-                level = Posix.LOG_DEBUG;
+                level = Os.LOG_DEBUG;
                 break;
             default:
                 break;
         }
 
-        Posix.syslog (level, message);
+        Os.syslog (level, inMessage);
     }
 }

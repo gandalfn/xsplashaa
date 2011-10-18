@@ -19,9 +19,6 @@
  * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
-using GLib;
-using Posix;
-
 namespace XSAA
 {
     public errordomain SocketError
@@ -36,8 +33,8 @@ namespace XSAA
 
         protected string filename;
         protected int fd = 0;
-        protected Posix.SockAddrUn saddr;
-        protected IOChannel ioc;
+        protected Os.SockAddrUn saddr;
+        protected GLib.IOChannel ioc;
 
         public signal void @in();
 
@@ -50,23 +47,23 @@ namespace XSAA
                 throw new SocketError.INVALID_NAME("error socket name is empty");
             }
             filename = socket_name;
-            
-            fd = socket(PF_UNIX, SOCK_STREAM, 0);
+
+            fd = Os.socket(Os.PF_UNIX, Os.SOCK_STREAM, 0);
             if (fd < 0)
             {
                 throw new SocketError.CREATE("error on create socket %s", 
                                              socket_name);
             }
 
-            if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, out state, sizeof(int)) != 0)
+            if (Os.setsockopt(fd, Os.SOL_SOCKET, Os.SO_REUSEADDR, out state, sizeof(int)) != 0)
             {
                 throw new SocketError.CREATE("error on setsockopt socket %s", 
                                              socket_name);
             }
 
-            saddr = Posix.SockAddrUn();
-            saddr.sun_family = AF_UNIX;
-            memcpy(saddr.sun_path, socket_name, socket_name.length);
+            saddr = Os.SockAddrUn();
+            saddr.sun_family = Os.AF_UNIX;
+            GLib.Memory.copy(saddr.sun_path, socket_name, socket_name.length);
 
             try
             {
@@ -84,7 +81,7 @@ namespace XSAA
 
         ~Socket()
         {
-            if (fd > 0) close(fd);
+            if (fd > 0) Os.close(fd);
         }
 
         private bool
@@ -98,7 +95,7 @@ namespace XSAA
         public bool
         send(string message)
         {
-            return write (fd, message, message.length + 1) > 0;
+            return Os.write (fd, message, message.length + 1) > 0;
         }
 
         public bool

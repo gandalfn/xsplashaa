@@ -21,40 +21,42 @@
 
 namespace XSAA
 {
-    class Throbber : Gtk.Image
+    public class Throbber : Gtk.Image
     {
-        uint interval;
-        uint id_timeout;
-        int steps;
-        int current = 0;
-        Gdk.Pixbuf initial;
-        Gdk.Pixbuf finish;
-        Gdk.Pixbuf[] pixbufs;
-        
+        // properties
+        private uint         m_Interval;
+        private uint         m_IdTimeout;
+        private int          m_Steps;
+        private int          m_Current = 0;
+        private Gdk.Pixbuf   m_Initial;
+        private Gdk.Pixbuf   m_Finish;
+        private Gdk.Pixbuf[] m_Pixbufs;
+
+        // methods
         public Throbber (string name, uint interval) throws GLib.Error
         {
             Gdk.Pixbuf spinner = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + name + "/throbber-spinner.png");
 
-            initial = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + name + "/throbber-initial.png");
-            finish = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + name + "/throbber-finish.png");
+            m_Initial = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + name + "/throbber-initial.png");
+            m_Finish = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + name + "/throbber-finish.png");
 
-            uint size = initial.get_width() > initial.get_height() ?
-                        initial.get_width() : initial.get_height();
+            uint size = m_Initial.get_width() > m_Initial.get_height() ?
+                        m_Initial.get_width() : m_Initial.get_height();
 
             int nb_steps = (spinner.get_height() * spinner.get_width()) / (int)size ;
 
-            pixbufs = new Gdk.Pixbuf[nb_steps];
+            m_Pixbufs = new Gdk.Pixbuf[nb_steps];
             for (uint i = 0; i < spinner.get_height(); i += size)
             {
-                for (uint j = 0; j < spinner.get_width(); j += size, steps++)
+                for (uint j = 0; j < spinner.get_width(); j += size, m_Steps++)
                 {
-                    pixbufs[steps] = new Gdk.Pixbuf.subpixbuf(spinner, (int)j, 
-                                                              (int)i, (int)size, 
-                                                              (int)size);
+                    m_Pixbufs[m_Steps] = new Gdk.Pixbuf.subpixbuf(spinner, (int)j, 
+                                                                (int)i, (int)size, 
+                                                                (int)size);
                 }
             }
-            this.interval = interval;
-            set_from_pixbuf(initial);
+            m_Interval = interval;
+            set_from_pixbuf(m_Initial);
         }
 
         ~Throbber()
@@ -65,19 +67,19 @@ namespace XSAA
         public void
         start()
         {
-            if (id_timeout == 0)
+            if (m_IdTimeout == 0)
             {
-                id_timeout = GLib.Timeout.add(interval, on_timer);
+                m_IdTimeout = GLib.Timeout.add(m_Interval, on_timer);
             }
         }
 
         public void
         stop()
         {
-            if (id_timeout != 0)
+            if (m_IdTimeout != 0)
             {
-                GLib.Source.remove(id_timeout);
-                id_timeout = 0;
+                GLib.Source.remove(m_IdTimeout);
+                m_IdTimeout = 0;
             }
         }
 
@@ -85,14 +87,14 @@ namespace XSAA
         finished()
         {
             stop();
-            set_from_pixbuf(finish);
+            set_from_pixbuf(m_Finish);
         }
 
         private bool
         on_timer()
         {
-            if (++current == steps) current = 1;
-            set_from_pixbuf(pixbufs[current]);
+            if (++m_Current == m_Steps) m_Current = 1;
+            set_from_pixbuf(m_Pixbufs[m_Current]);
             
             return true;
         }

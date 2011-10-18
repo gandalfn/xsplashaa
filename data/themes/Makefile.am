@@ -1,1 +1,1 @@
-SUBDIRS = aixplorer chicken-curie donut-doopler debian
+SUBDIRS = aixplorer chicken-curie donut-doopler debian leaves

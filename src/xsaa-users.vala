@@ -26,98 +26,100 @@ namespace XSAA
     [DBus (name = "fr.supersonicimagine.XSAA.Manager.User")]
     public class User : GLib.Object
     {
-        private string          _login;
-        private string          _real_name;
-        private string          _face_icon_filename;
-        private Posix.key_t     _face_icon_shm_key;
-        private int             _face_icon_shm_id;
-        private unowned uchar[] _face_icon_pixels;
-        public uint             _frequency;
+        // properties
+        private string          m_Login;
+        private string          m_RealName;
+        private string          m_FaceIconFilename;
+        private Os.key_t        m_FaceIconShmKey;
+        private int             m_FaceIconShmId;
+        private unowned uchar[] m_FaceIconPixels;
+        public uint             m_Frequency;
 
-        public Posix.uid_t  uid;
-        public Posix.gid_t  gid;
-        public string       home_dir;
-        public string       shell;
-        
+        public Os.uid_t         uid;
+        public Os.gid_t         gid;
+        public string           home_dir;
+        public string           shell;
 
+        // accessors
         public string login {
             get {
-                return _login;
+                return m_Login;
             }
         }
 
         public string real_name {
             get {
-                return _real_name;
+                return m_RealName;
             }
         }
 
         public uint frequency {
             get {
-                return (int)_frequency;
+                return (int)m_Frequency;
             }
         }
 
         public int face_icon_shm_id {
             get {
-                return _face_icon_shm_id;
+                return m_FaceIconShmId;
             }
         }
 
-        public User (Posix.Passwd entry)
+        // methods
+        public User (Os.Passwd inEntry)
         {
-            _login    = entry.pw_name;
-            uid      = entry.pw_uid;
-            gid      = entry.pw_gid;
-            home_dir = entry.pw_dir;
-            shell    = entry.pw_shell;
+            m_Login  = inEntry.pw_name;
+            uid      = inEntry.pw_uid;
+            gid      = inEntry.pw_gid;
+            home_dir = inEntry.pw_dir;
+            shell    = inEntry.pw_shell;
 
-            _real_name = entry.pw_name;
-            if (entry.pw_gecos != null)
+            m_RealName = inEntry.pw_name;
+            if (inEntry.pw_gecos != null)
             {
-                _real_name = entry.pw_gecos.split (",")[0];
-                if (_real_name == null || _real_name[0] == '\0')
+                m_RealName = inEntry.pw_gecos.split (",")[0];
+                if (m_RealName == null || m_RealName[0] == '\0')
                 {
-                    _real_name = entry.pw_name;
+                    m_RealName = inEntry.pw_name;
                 }
             }
 
-            _face_icon_filename = entry.pw_dir + "/.face";
-            if (!FileUtils.test(_face_icon_filename, FileTest.EXISTS))
+            m_FaceIconFilename = inEntry.pw_dir + "/.face";
+            if (!FileUtils.test(m_FaceIconFilename, FileTest.EXISTS))
             {
-                _face_icon_filename = entry.pw_dir + "/.face.icon";
-                if (!FileUtils.test(_face_icon_filename, FileTest.EXISTS))
+                m_FaceIconFilename = inEntry.pw_dir + "/.face.icon";
+                if (!FileUtils.test(m_FaceIconFilename, FileTest.EXISTS))
                 {
-                    _face_icon_filename = null;
+                    m_FaceIconFilename = null;
                 }
             }
 
             create_face_icon_shm ();
 
-            _frequency = 0;
+            m_Frequency = 0;
         }
 
         ~User ()
         {
-            Posix.shmdt (_face_icon_pixels);
+            Os.shmdt (m_FaceIconPixels);
         }
 
         private void
         create_face_icon_shm ()
         {
             Gdk.Pixbuf? face_pixbuf = null;
-            if (_face_icon_filename != null)
+            if (m_FaceIconFilename != null)
             {
                 try
                 {
-                    face_pixbuf = new Gdk.Pixbuf.from_file_at_scale (_face_icon_filename,
+                    face_pixbuf = new Gdk.Pixbuf.from_file_at_scale (m_FaceIconFilename,
                                                                      ICON_SIZE,
                                                                      ICON_SIZE,
                                                                      true);
                 }
                 catch (GLib.Error err)
                 {
-                    GLib.warning ("error on load %s", _face_icon_filename);
+                    GLib.warning ("error on load %s", m_FaceIconFilename);
                 }
             }
 
@@ -143,41 +145,42 @@ namespace XSAA
                 ctx.paint ();
                 surface.finish ();
 
-                _face_icon_shm_key = GLib.Quark.from_string (login);
-                _face_icon_shm_id = Posix.shmget(_face_icon_shm_key,
-                                                 ICON_SIZE * ICON_SIZE *  4,
-                                                 Posix.IPC_CREAT | 0666);
+                m_FaceIconShmKey = GLib.Quark.from_string (login);
+                m_FaceIconShmId = Os.shmget(m_FaceIconShmKey,
+                                            ICON_SIZE * ICON_SIZE *  4,
+                                            Os.IPC_CREAT | 0666);
 
                 GLib.debug ("Face icon %s: key = 0x%x, id = %i",
-                            login, (int)_face_icon_shm_key, _face_icon_shm_id);
+                            login, (int)m_FaceIconShmKey, m_FaceIconShmId);
 
-                _face_icon_pixels = (uchar[])Posix.shmat(face_icon_shm_id, null, 0);
+                m_FaceIconPixels = (uchar[])Os.shmat(face_icon_shm_id, null, 0);
 
-                GLib.Memory.copy (_face_icon_pixels, surface.get_data (), ICON_SIZE * ICON_SIZE * 4);
+                GLib.Memory.copy (m_FaceIconPixels, surface.get_data (), ICON_SIZE * ICON_SIZE * 4);
             }
         }
 
         internal int
-        compare (User other)
+        compare (User inOther)
         {
-            if (_frequency > other._frequency)
+                if (m_Frequency > inOther.m_Frequency)
                 return -1;
 
-            if (_frequency < other._frequency)
+            if (m_Frequency < inOther.m_Frequency)
                 return 1;
 
-            if (uid < other.uid)
+            if (uid < inOther.uid)
                 return -1;
 
-            if (uid > other.uid)
+            if (uid > inOther.uid)
                 return 1;
 
-            return GLib.strcmp (_real_name, other._real_name);
+            return GLib.strcmp (m_RealName, inOther.m_RealName);
         }
     }
 
     public class Users
     {
+        // types
         private struct Node
         {
             public User val;
@@ -185,13 +188,15 @@ namespace XSAA
 
         public class Iterator
         {
-            private Users users;
-            private int index;
+            // properties
+            private Users m_Users;
+            private int   m_Index;
 
-            internal Iterator (Users users)
+            // methods
+            internal Iterator (Users inUsers)
             {
-                this.users = users;
-                this.index = -1;
+                m_Users = inUsers;
+                m_Index = -1;
             }
 
             public bool
@@ -199,15 +204,15 @@ namespace XSAA
             {
                 bool ret = false;
 
-                if (index == -1 && users.size > 0)
+                if (m_Index == -1 && m_Users.m_Size > 0)
                 {
-                    index = 0;
+                    m_Index = 0;
                     ret = true;
                 }
-                else if (index < users.size)
+                else if (m_Index < m_Users.m_Size)
                 {
-                    index++;
-                    ret = index < users.size;
+                    m_Index++;
+                    ret = m_Index < m_Users.m_Size;
                 }
 
                 return ret;
@@ -215,51 +220,54 @@ namespace XSAA
 
             public unowned User?
             get ()
-                requires (index >= 0)
-                requires (index < users.size)
+                requires (m_Index >= 0)
+                requires (m_Index < m_Users.m_Size)
             {
-                return users.content[index].val;
+                return m_Users.m_Content[m_Index].val;
             }
         }
 
-        private DBus.Connection connection;
-        private int             size = 0;
-        private int             reserved = 4;
-        private Node*           content;
-        private string          ignore_users = "nobody nobody4 noaccess";
-        private string          ignore_shells = "/bin/false /usr/sbin/nologin";
-        private int             minimum_uid = 1000;
+        // properties
+        private DBus.Connection m_Connection;
+        private int             m_Size = 0;
+        private int             m_Reserved = 4;
+        private Node*           m_Content;
+        private string          m_IgnoreUsers = "nobody nobody4 noaccess";
+        private string          m_IgnoreShells = "/bin/false /usr/sbin/nologin";
+        private int             m_MinimumUid = 1000;
 
+        // accessors
         public int nb_users {
             get {
-                return size;
+                return m_Size;
             }
         }
 
-        public Users (DBus.Connection conn)
+        // methods
+        public Users (DBus.Connection inConn)
         {
-            connection = conn;
+            m_Connection = inConn;
 
-            content = new Node [reserved];
+            m_Content = new Node [m_Reserved];
 
             load_config ();
 
-            Posix.setpwent ();
+            Os.setpwent ();
             while (true)
             {
-                unowned Posix.Passwd? entry = Posix.getpwent ();
+                unowned Os.Passwd? entry = Os.getpwent ();
                 if (entry == null)
                     break;
 
                 User user = new User (entry);
 
-                if (user.uid < minimum_uid)
+                if (user.uid < m_MinimumUid)
                     continue;
 
                 if (user.shell != null)
                 {
                     bool found = false;
-                    foreach (string shell in ignore_shells.split (" "))
+                    foreach (string shell in m_IgnoreShells.split (" "))
                     {
                         if (shell == user.shell)
                         {
@@ -271,7 +279,7 @@ namespace XSAA
                 }
 
                 bool found = false;
-                foreach (string hidden in ignore_users.split (" "))
+                foreach (string hidden in m_IgnoreUsers.split (" "))
                 {
                     if (hidden == user.login)
                     {
@@ -283,7 +291,7 @@ namespace XSAA
 
                 add (user);
             }
-            Posix.endpwent ();
+            Os.endpwent ();
         }
 
         private void
@@ -297,9 +305,9 @@ namespace XSAA
                 {
                     KeyFile config = new KeyFile();
                     config.load_from_file(Config.PACKAGE_CONFIG_FILE, KeyFileFlags.NONE);
-                    minimum_uid = config.get_integer ("users", "minimum-uid");
-                    ignore_users = config.get_string ("users", "hidden-users");
-                    ignore_shells = config.get_string ("users", "hidden-shells");
+                    m_MinimumUid = config.get_integer ("users", "minimum-uid");
+                    m_IgnoreUsers = config.get_string ("users", "hidden-users");
+                    m_IgnoreShells = config.get_string ("users", "hidden-shells");
                 }
                 catch (GLib.Error err)
                 {
@@ -316,19 +324,19 @@ namespace XSAA
         private int
         get_nearest_user (User user)
         {
-            int ret = size;
-            int left = 0, right = size - 1;
+            int ret = m_Size;
+            int left = 0, right = m_Size - 1;
 
             if (right != -1)
             {
                 while (right >= left)
                 {
                     int medium = (left + right) / 2;
-                    int res = content[medium].val.compare (user);
+                    int res = m_Content[medium].val.compare (user);
 
                     if (res == 0)
                     {
-                        while (medium < size && content[medium].val.compare (user) == 0)
+                        while (medium < m_Size && m_Content[medium].val.compare (user) == 0)
                             medium++;
                         return medium;
                     }
@@ -341,7 +349,7 @@ namespace XSAA
                         left = medium + 1;
                     }
 
-                    ret = (int)Posix.ceil((double)(left + right) / 2);
+                    ret = (int)GLib.Math.ceil((double)(left + right) / 2);
                 }
             }
 
@@ -351,12 +359,12 @@ namespace XSAA
         private void
         grow ()
         {
-            if (size > reserved)
+            if (m_Size > m_Reserved)
             {
-                int oldReserved = reserved;
-                reserved = 2 * reserved;
-                content = GLib.realloc (content, reserved * sizeof (Node));
-                GLib.Memory.set (&content[oldReserved], 0, oldReserved * sizeof (Node));
+                int oldReserved = m_Reserved;
+                m_Reserved = 2 * m_Reserved;
+                m_Content = GLib.realloc (m_Content, m_Reserved * sizeof (Node));
+                GLib.Memory.set (&m_Content[oldReserved], 0, oldReserved * sizeof (Node));
             }
         }
 
@@ -367,19 +375,19 @@ namespace XSAA
 
             int pos = get_nearest_user (user);
 
-            size++;
+            m_Size++;
             grow ();
 
-            if (pos < size - 1)
-                GLib.Memory.move (&content[pos + 1], &content[pos],
-                                  (size - pos - 1) * sizeof (Node));
+            if (pos < m_Size - 1)
+                GLib.Memory.move (&m_Content[pos + 1], &m_Content[pos],
+                                  (m_Size - pos - 1) * sizeof (Node));
 
-            content[pos].val = user;
+            m_Content[pos].val = user;
 
             DBus.ObjectPath path = new DBus.ObjectPath ("/fr/supersonicimagine/XSAA/Manager/User/" +
                                                         pos.to_string());
 
-            connection.register_object(path, user);
+            m_Connection.register_object(path, user);
         }
 
         public unowned User?
@@ -394,7 +402,7 @@ namespace XSAA
             return null;
         }
 
-		public Iterator
+        public Iterator
         iterator ()
         {
             return new Iterator (this);

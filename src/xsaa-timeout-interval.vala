@@ -22,10 +22,12 @@ internal delegate bool XSAA.TimeoutFunc(void* inData);
 
 internal struct XSAA.TimeoutInterval
 {
+    // properties
     public TimeVal m_StartTime;
     public uint    m_FrameCount;
     public uint    m_Fps;
 
+    // methods
     public TimeoutInterval(uint inFps)
     {
         m_StartTime.get_current_time();

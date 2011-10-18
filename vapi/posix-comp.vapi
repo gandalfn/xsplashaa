@@ -25,8 +25,12 @@ namespace Posix
     [CCode (cheader_filename = "sys/socket.h", sentinel = "")]
     public int setsockopt(int fd, int level, int optname, ...);
 
+    [CCode (cname = "struct sockaddr", cheader_filename = "sys/socket.h", destroy_function = "")]
+    public struct SockAddr {
+    }
+
     [CCode (cheader_filename = "sys/un.h", cname = "struct sockaddr_un", destroy_function="")]
-    public struct SockAddrUn : Posix.SockAddr {
+    public struct SockAddrUn : SockAddr {
         public int sun_family;
         public char sun_path[108];
     }

@@ -21,7 +21,7 @@
 
 namespace XSAA
 {
-    errordomain PamError
+    public errordomain PamError
     {
         START,
         AUTHENTICATE,
@@ -30,15 +30,15 @@ namespace XSAA
         OPEN_SESSION
     }
 
-    static int
-    on_pam_conversation(int num_msg, [CCode (array_length = false)]Pam.Message[] messages, out Pam.Response* resp, void* appdata_ptr)
+    private static int
+    on_pam_conversation(int inNumMsg, [CCode (array_length = false)]Pam.Message[] inMessages, out Pam.Response* outResp, void* inAppdataPtr)
     {
-        unowned PamSession pam = (PamSession)appdata_ptr;
-        resp = new Pam.Response[num_msg];
+        unowned PamSession pam = (PamSession)inAppdataPtr;
+        outResp = new Pam.Response[inNumMsg];
 
-        for (int i = 0; i < num_msg; i++)
+        for (int i = 0; i < inNumMsg; i++)
         {
-            unowned Pam.Message msg = messages[i];
+            unowned Pam.Message msg = inMessages[i];
             switch (msg.msg_style)
             {
                 case Pam.PROMPT_ECHO_ON:
@@ -49,13 +49,13 @@ namespace XSAA
                     string pass = pam.passwd ();
                     if (pass != null)
                     {
-                        resp[i].resp = Memory.dup(pass, (uint)pass.length);
-                        resp[i].resp_retcode = Pam.SUCCESS;
+                        outResp[i].resp = Memory.dup(pass, (uint)pass.length);
+                        outResp[i].resp_retcode = Pam.SUCCESS;
                     }
                     else
                     {
-                        resp[i].resp = null;
-                        resp[i].resp_retcode = Pam.AUTH_ERR;
+                        outResp[i].resp = null;
+                        outResp[i].resp_retcode = Pam.AUTH_ERR;
                     }
                     break;
                 case Pam.TEXT_INFO:
@@ -77,53 +77,53 @@ namespace XSAA
 
     public class PamSession : GLib.Object
     {
-        string user;
-        string pass;
-        bool accredited = false;
-        bool openned = false;
-        Pam.Handle pam_handle = null;
-        Pam.Conv conv;
-        internal GLib.MainLoop wait_passwd_loop;
-        public Vala.Map <string, string> envs;
+        // properties
+        private string          m_User;
+        private bool            m_Accredited = false;
+        private bool            m_Openned = false;
+        private Pam.Handle      m_PamHandle = null;
+        private Pam.Conv        m_Conv;
 
+        public  GLib.HashTable <string, string> m_Envs;
+
+        // signals
         public signal string passwd ();
         public signal void face_authentication ();
         public signal void authenticated();
         public signal void info(string text);
         public signal void error_msg(string text);
 
-        public PamSession(string service, string username, int display, string xauth_file, string device) throws PamError
+        // methods
+        public PamSession(string inService, string inUsername, int inDisplay, string inXauthFile, string inDevice) throws PamError
         {
-            GLib.debug ("Create pam session for %s", username);
-            wait_passwd_loop = new GLib.MainLoop ();
-            user = username;
-            pass = null;
+            GLib.debug ("Create pam session for %s", inUsername);
+            m_User = inUsername;
 
-            conv = Pam.Conv();
-            conv.conv = (void*)on_pam_conversation;
-            conv.appdata_ptr = this;
+            m_Conv = Pam.Conv();
+            m_Conv.conv = (void*)on_pam_conversation;
+            m_Conv.appdata_ptr = this;
 
-            if (Pam.start(service, username, conv, out pam_handle) != Pam.SUCCESS)
+            if (Pam.start(inService, inUsername, m_Conv, out m_PamHandle) != Pam.SUCCESS)
             {
                 throw new PamError.START("Error on pam start");
             }
 
-            if (pam_handle.set_item(Pam.TTY, device) != Pam.SUCCESS)
+            if (m_PamHandle.set_item(Pam.TTY, inDevice) != Pam.SUCCESS)
             {
                 throw new PamError.START("Error on set tty");
             }
 
-            if (pam_handle.set_item(Pam.RHOST, "localhost") != Pam.SUCCESS)
+            if (m_PamHandle.set_item(Pam.RHOST, "localhost") != Pam.SUCCESS)
             {
                 throw new PamError.START("Error on set rhost");
             }
 
-            if (pam_handle.set_item(Pam.XDISPLAY, ":"+display.to_string()) != Pam.SUCCESS)
+            if (m_PamHandle.set_item(Pam.XDISPLAY, ":" + inDisplay.to_string()) != Pam.SUCCESS)
             {
                 throw new PamError.START("Error on set display");
             }
 
-            FileStream f = FileStream.open(xauth_file, "r");
+            FileStream f = FileStream.open(inXauthFile, "r");
             weak X.Auth? auth = X.Auth.read(f);
             if (auth != null)
             {
@@ -133,26 +133,26 @@ namespace XSAA
                 pam_xauth.datalen = auth.data_length;
                 pam_xauth.data = auth.data;
                 auth.dispose();
-                if (pam_handle.set_item(Pam.XAUTHDATA, &pam_xauth) != Pam.SUCCESS)
+                if (m_PamHandle.set_item(Pam.XAUTHDATA, &pam_xauth) != Pam.SUCCESS)
                 {
                     throw new PamError.START("Error on set xauth");
                 }
             }
 
-            unowned Posix.Passwd passwd = Posix.getpwnam(user);
-            envs = new Vala.HashMap <string, string> (GLib.str_hash, GLib.str_equal);
+            unowned Os.Passwd passwd = Os.getpwnam(m_User);
+            m_Envs = new GLib.HashTable <string, string> (GLib.str_hash, GLib.str_equal);
 
-            envs.set("USER", passwd.pw_name);
-            envs.set("USERNAME", passwd.pw_name);
-            envs.set("LOGNAME", passwd.pw_name);
-            envs.set("HOME", passwd.pw_dir);
-            envs.set("SHELL", passwd.pw_shell);
+            m_Envs.insert ("USER", passwd.pw_name);
+            m_Envs.insert ("USERNAME", passwd.pw_name);
+            m_Envs.insert ("LOGNAME", passwd.pw_name);
+            m_Envs.insert ("HOME", passwd.pw_dir);
+            m_Envs.insert ("SHELL", passwd.pw_shell);
         }
 
         public void
         authenticate ()
         {
-            unowned Posix.Passwd passwd = Posix.getpwnam(user);
+            unowned Os.Passwd passwd = Os.getpwnam(m_User);
             string face_authentication_dir = passwd.pw_dir + "/.pam-face-authentication/faces";
             GLib.debug ("check if %s exist", face_authentication_dir);
             if (GLib.FileUtils.test (face_authentication_dir, GLib.FileTest.EXISTS))
@@ -179,7 +179,7 @@ namespace XSAA
                 if (found) face_authentication ();
             }
 
-            if (pam_handle.authenticate(0) != Pam.SUCCESS)
+            if (m_PamHandle.authenticate(0) != Pam.SUCCESS)
             {
                 error_msg ("Authentification failure");
             }
@@ -192,85 +192,85 @@ namespace XSAA
         public void
         open_session() throws PamError
         {
-            unowned Posix.Passwd passwd = Posix.getpwnam(user);
+            unowned Os.Passwd passwd = Os.getpwnam(m_User);
             if (passwd == null)
             {
                 throw new PamError.AUTHORIZE("User is not authorized to log in");
             }
 
-            if (pam_handle.acct_mgmt(0) != Pam.SUCCESS)
+            if (m_PamHandle.acct_mgmt(0) != Pam.SUCCESS)
             {
                 throw new PamError.AUTHORIZE("User is not authorized to log in");
             }
 
-            if (pam_handle.open_session(0) != Pam.SUCCESS)
+            if (m_PamHandle.open_session(0) != Pam.SUCCESS)
             {
                 throw new PamError.OPEN_SESSION("Error on pam open session");
             }
-            openned = true;
+            m_Openned = true;
 
-            if (pam_handle.setcred(Pam.ESTABLISH_CRED) != Pam.SUCCESS)
+            if (m_PamHandle.setcred(Pam.ESTABLISH_CRED) != Pam.SUCCESS)
             {
                 throw new PamError.CREDENTIALS("User is not authorized to log in");
             }
-            accredited = true;
+            m_Accredited = true;
 
-            if (Posix.initgroups (user, passwd.pw_gid) < 0) 
-            {
-                throw new PamError.CREDENTIALS("User is not authorized to log in");
-            }
-
-            if (Posix.setgid(passwd.pw_gid) < 0)
+            if (Os.initgroups (m_User, passwd.pw_gid) < 0) 
             {
                 throw new PamError.CREDENTIALS("User is not authorized to log in");
             }
 
-            if (Posix.setuid(passwd.pw_uid) < 0)
+            if (Os.setgid(passwd.pw_gid) < 0)
             {
                 throw new PamError.CREDENTIALS("User is not authorized to log in");
             }
 
-            Posix.setenv("USER", passwd.pw_name, 1);
-            Posix.setenv("USERNAME", passwd.pw_name, 1);
-            Posix.setenv("LOGNAME", passwd.pw_name, 1);
-            Posix.setenv("HOME", passwd.pw_dir, 1);
-            Posix.setenv("SHELL", passwd.pw_shell, 1);
+            if (Os.setuid(passwd.pw_uid) < 0)
+            {
+                throw new PamError.CREDENTIALS("User is not authorized to log in");
+            }
 
-            foreach (string env in pam_handle.getenvlist())
+            Os.setenv("USER", passwd.pw_name, 1);
+            Os.setenv("USERNAME", passwd.pw_name, 1);
+            Os.setenv("LOGNAME", passwd.pw_name, 1);
+            Os.setenv("HOME", passwd.pw_dir, 1);
+            Os.setenv("SHELL", passwd.pw_shell, 1);
+
+            foreach (string env in m_PamHandle.getenvlist())
             {
                 string[] e = env.split("=");
-                envs.set(e[0], e[1]);
+                m_Envs.insert (e[0], e[1]);
             }
         }
 
         ~PamSession()
         {
-            if (openned)
+            if (m_Openned)
             {
-                pam_handle.close_session(0);
+                m_PamHandle.close_session(0);
             }
-            if (accredited)
+            if (m_Accredited)
             {
-                pam_handle.setcred(Pam.DELETE_CRED);
+                m_PamHandle.setcred(Pam.DELETE_CRED);
             }
 
-            pam_handle.end(Pam.SUCCESS);
+            m_PamHandle.end(Pam.SUCCESS);
             GLib.debug ("close pam session");
         }
 
         public void
         add_env (string inKey, string inValue)
         {
-            envs.set(inKey, inValue);
+            m_Envs.insert (inKey, inValue);
         }
 
         public void
         set_env()
         {
-            foreach (string key in envs.get_keys())
+            foreach (string key in m_Envs.get_keys())
             {
-                Posix.setenv(key, envs.get(key), 1);
-                GLib.debug ("pam env %s=%s", key, envs.get(key));
+                Os.setenv(key, m_Envs.lookup (key), 1);
+                GLib.debug ("pam env %s=%s", key, m_Envs.lookup (key));
             }
         }
     }

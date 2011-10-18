@@ -58,10 +58,10 @@ mkdir -p ${DESTDIR}/sbin
 mkdir -p ${DESTDIR}/bin
 mkdir -p ${DESTDIR}/usr/bin
 mkdir -p ${DESTDIR}/usr/sbin
-mkdir -p ${DESTDIR}/usr/lib/pango/1.6.0/modules/
-mkdir -p ${DESTDIR}/usr/lib/pango/1.6.0/module-files.d/
-mkdir -p ${DESTDIR}/usr/lib/gtk-2.0/2.10.0/loaders/
-mkdir -p ${DESTDIR}/usr/lib/gtk-2.0/2.10.0/loader-files.d/
+mkdir -p ${DESTDIR}/usr/lib/$ARCH
+mkdir -p ${DESTDIR}/usr/lib/$ARCH/pango/1.6.0/modules
+mkdir -p ${DESTDIR}/usr/lib/$ARCH/pango/1.6.0/module-files.d
+mkdir -p ${DESTDIR}/usr/lib/$ARCH/gdk-pixbuf-2.0/2.10.0/loaders
 mkdir -p ${DESTDIR}/usr/lib/gtk-2.0/2.10.0/engines
 mkdir -p ${DESTDIR}/usr/lib/xorg/modules/input
 mkdir -p ${DESTDIR}/usr/lib/xorg/modules/fonts

@@ -1,12 +1,12 @@
 /* xsaa-display.vala
  *
  * Copyright (C) 2009-2010  Nicolas Bruguier
- *
+     *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+     *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -21,31 +21,47 @@
 
 namespace XSAA
 {
-    errordomain DisplayError
+    public errordomain DisplayError
     {
         COMMAND,
         LAUNCH
     }
 
-    class Display : GLib.Object
+    public class Display : GLib.Object
     {
-        uint sig_handled = 0;
-        uint child_watch = 0;
-        static bool is_ready = false;
-        Pid pid = (Pid)0;
-        int number;
-        X.Display xdisplay = null;
+        // static properties
+        private static bool s_IsReady = false;
 
+        // properties
+        private uint m_SigHandled = 0;
+        private uint m_ChildWatch = 0;
+        private GLib.Pid m_Pid = (GLib.Pid)0;
+        private int m_Number;
+        private X.Display m_XDisplay = null;
+
+        // signals
         public signal void ready();
         public signal void exited();
         public signal void died();
 
-        public Display(string cmd, int number) throws DisplayError
+        // static methods
+        private static void
+        on_sig_usr1(int inSigNum)
         {
-            GLib.debug ("create display %i: %s", number, cmd);
-            this.number = number;
+            if (inSigNum == Os.SIGUSR1)
+            {
+                GLib.debug ("received display is ready");
+                s_IsReady = true;
+            }
+        }
 
-            if (sig_handled == 0)
+        // methods
+        public Display(string inCmd, int inNumber) throws DisplayError
+        {
+            GLib.debug ("create display %i: %s", inNumber, inCmd);
+            m_Number = inNumber;
+
+            if (m_SigHandled == 0)
             {
                 if (!get_running_pid())
                 {
@@ -53,42 +69,42 @@ namespace XSAA
 
                     try
                     {
-                        Shell.parse_argv(cmd, out argvp);
+                        Shell.parse_argv(inCmd, out argvp);
                     }
                     catch (ShellError err)
                     {
                         throw new DisplayError.COMMAND("Invalid %s command !!", 
-                                                       cmd);
+                                                       inCmd);
                     }
 
-                    sig_handled = Idle.add(on_wait_is_ready);
-                    Posix.signal(Posix.SIGUSR1, on_sig_usr1);
+                    m_SigHandled = Idle.add(on_wait_is_ready);
+                    Os.signal(Os.SIGUSR1, on_sig_usr1);
 
                     try
                     {
-                        GLib.message ("launch display command: %s", cmd);
+                        GLib.message ("launch display command: %s", inCmd);
                         Process.spawn_async(null, argvp, null, 
                                             SpawnFlags.SEARCH_PATH |
                                             SpawnFlags.DO_NOT_REAP_CHILD, 
-                                            on_child_setup, out pid);
-                        child_watch = ChildWatch.add((Pid)pid, on_child_watch);
+                                            on_child_setup, out m_Pid);
+                        m_ChildWatch = ChildWatch.add((GLib.Pid)m_Pid, on_m_ChildWatch);
                     }
                     catch (SpawnError err)
                     {
-                        GLib.Source.remove(sig_handled);
-                        sig_handled = -1;
-                        Posix.signal(Posix.SIGUSR1, Posix.SIG_IGN);
+                        GLib.Source.remove(m_SigHandled);
+                        m_SigHandled = -1;
+                        Os.signal(Os.SIGUSR1, Os.SIG_IGN);
                         throw new DisplayError.LAUNCH(err.message);
                     }
                 }
                 else
                 {
-                    sig_handled = Idle.add(on_wait_is_ready);
-                    is_ready = true;
+                    m_SigHandled = Idle.add(on_wait_is_ready);
+                    s_IsReady = true;
                 }
             }
         }
-        
+
         ~Display ()
         {
             GLib.debug ("destroy display");
@@ -100,80 +116,69 @@ namespace XSAA
         on_child_setup()
         {
             GLib.debug ("display child setup");
-            Posix.signal(Posix.SIGUSR1, Posix.SIG_IGN);
-            Posix.signal(Posix.SIGINT, Posix.SIG_IGN);
-            Posix.signal(Posix.SIGTTIN, Posix.SIG_IGN);
-            Posix.signal(Posix.SIGTTOU, Posix.SIG_IGN);
+            Os.signal(Os.SIGUSR1, Os.SIG_IGN);
+            Os.signal(Os.SIGINT, Os.SIG_IGN);
+            Os.signal(Os.SIGTTIN, Os.SIG_IGN);
+            Os.signal(Os.SIGTTOU, Os.SIG_IGN);
         }
 
         private void
-        on_child_watch(Pid pid, int status)
+        on_m_ChildWatch(GLib.Pid inPid, int inStatus)
         {
-            GLib.debug ("display child watch %lu: %i", pid, status);
+            GLib.debug ("display child watch %lu: %i", inPid, inStatus);
 
-            if (child_watch != 0)
+            if (m_ChildWatch != 0)
             {
-                if (Process.if_exited(status))
+                if (Process.if_exited(inStatus))
                 {
-                    GLib.message ("display exited : %i", status);
+                    GLib.message ("display exited : %i", inStatus);
                     exited();
                 }
-                else if (Process.if_signaled(status))
+                else if (Process.if_signaled(inStatus))
                 {
-                    GLib.message ("display signaled : %i", status);
+                    GLib.message ("display signaled : %i", inStatus);
                     died();
                 }
 
-                Process.close_pid(pid);
-                this.pid = (Pid)0;
-                this.xdisplay = null;
-                child_watch = 0;
+                Process.close_pid(inPid);
+                m_Pid = (Pid)0;
+                m_XDisplay = null;
+                m_ChildWatch = 0;
             }
         }
 
         private bool
         on_wait_is_ready()
         {
-            if (is_ready) ready();
-            sig_handled = 0;
-            return !is_ready;
-        }
-
-        static void
-        on_sig_usr1(int signum)
-        {
-            if (signum == Posix.SIGUSR1)
-            {
-                GLib.debug ("received display is ready");
-                is_ready = true;
-            }
+            if (s_IsReady) ready();
+            m_SigHandled = 0;
+            return !s_IsReady;
         }
 
         private bool
         get_running_pid()
         {
-            if (xdisplay == null)
-                xdisplay = new X.Display (":" + number.to_string ());
+            if (m_XDisplay == null)
+                m_XDisplay = new X.Display (":" + m_Number.to_string ());
 
-            if (xdisplay == null)
+            if (m_XDisplay == null)
             {
-                pid = 0;
+                m_Pid = 0;
                 return false;
             }
 
-            Posix.UCred ucr;
-            size_t ucr_len = sizeof (Posix.UCred);
+            Os.UCred ucr;
+            size_t ucr_len = sizeof (Os.UCred);
 
-            if (Posix.getsockopt (xdisplay.connection_number (),
-                                  Posix.SOL_SOCKET, Posix.SO_PEERCRED,
-                                  out ucr, out ucr_len) == 0 &&
-                ucr_len == sizeof (Posix.UCred))
+            if (Os.getsockopt (m_XDisplay.connection_number (), Os.SOL_SOCKET,
+                               Os.SO_PEERCRED, out ucr, out ucr_len) == 0 &&
+                ucr_len == sizeof (Os.UCred))
             {
-                pid = ucr.pid;
-                GLib.message ("found running display : %lu", pid);
+                m_Pid = ucr.pid;
+                GLib.message ("found running display : %lu", m_Pid);
             }
 
-            return pid > 0;
+            return m_Pid > 0;
         }
 
         public string?
@@ -181,16 +186,16 @@ namespace XSAA
         {
             string device = null;
 
-            if (xdisplay == null)
-                xdisplay = new X.Display (":" + number.to_string ());
+            if (m_XDisplay == null)
+                m_XDisplay = new X.Display (":" + m_Number.to_string ());
 
-            if (xdisplay != null)
+            if (m_XDisplay != null)
             {
-                X.Window root = xdisplay.default_root_window ();
+                X.Window root = m_XDisplay.default_root_window ();
                 if (root == X.None)
                     return null;
 
-                X.Atom xfree86_vt_atom = xdisplay.intern_atom ("XFree86_VT", true);
+                X.Atom xfree86_vt_atom = m_XDisplay.intern_atom ("XFree86_VT", true);
                 if (xfree86_vt_atom == X.None)
                     return null;
 
@@ -199,9 +204,9 @@ namespace XSAA
                 ulong return_count, bytes_left;
                 uchar* return_value;
 
-                if (xdisplay.get_window_property (root, xfree86_vt_atom, 0L, 1L, false,
-                                                  X.XA_INTEGER, out return_type_atom, out return_format,
-                                                  out return_count, out bytes_left, out return_value) != X.Success)
+                if (m_XDisplay.get_window_property (root, xfree86_vt_atom, 0L, 1L, false,
+                                                    X.XA_INTEGER, out return_type_atom, out return_format,
+                                                    out return_count, out bytes_left, out return_value) != X.Success)
                     return null;
 
                 long vt = *(long*)return_value;
@@ -209,32 +214,32 @@ namespace XSAA
                 device = "/dev/tty" + vt.to_string();
 
                 GLib.message ("open display device %s", device);
-                int fd = Posix.open(device, Posix.O_RDWR);
+                int fd = Os.open(device, Os.O_RDWR);
                 if (fd > 0)
                 {
-                    if (Posix.ioctl(fd, Posix.KDSETMODE, Posix.KD_GRAPHICS) < 0)
+                    if (Os.ioctl(fd, Os.KDSETMODE, Os.KD_GRAPHICS) < 0)
                         GLib.critical ("KDSETMODE KD_GRAPHICS failed !");  
-                    if (Posix.ioctl(fd, Posix.KDSKBMODE, Posix.K_RAW) < 0)
+                    if (Os.ioctl(fd, Os.KDSKBMODE, Os.K_RAW) < 0)
                         GLib.critical ("KDSETMODE KD_RAW failed !"); 
 
-                    Posix.termios? tty_attr = Posix.termios ();
-                    Posix.ioctl(fd, Posix.KDGKBMODE, tty_attr);
-                    tty_attr.c_iflag = (Posix.IGNPAR | Posix.IGNBRK) & (~Posix.PARMRK) & (~Posix.ISTRIP);
+                    Os.termios? tty_attr = Os.termios ();
+                    Os.ioctl(fd, Os.KDGKBMODE, tty_attr);
+                    tty_attr.c_iflag = (Os.IGNPAR | Os.IGNBRK) & (~Os.PARMRK) & (~Os.ISTRIP);
                     tty_attr.c_oflag = 0;
-                    tty_attr.c_cflag = Posix.CREAD | Posix.CS8;
+                    tty_attr.c_cflag = Os.CREAD | Os.CS8;
                     tty_attr.c_lflag = 0;
-                    tty_attr.c_cc[Posix.VTIME]=0;
-                    tty_attr.c_cc[Posix.VMIN]=1;
-                    Posix.cfsetispeed(tty_attr, 9600);
-                    Posix.cfsetospeed(tty_attr, 9600);
-                    Posix.tcsetattr(fd, Posix.TCSANOW, tty_attr);
+                    tty_attr.c_cc[Os.VTIME]=0;
+                    tty_attr.c_cc[Os.VMIN]=1;
+                    Os.cfsetispeed(tty_attr, 9600);
+                    Os.cfsetospeed(tty_attr, 9600);
+                    Os.tcsetattr(fd, Os.TCSANOW, tty_attr);
 
-                    Posix.close(fd);
+                    Os.close(fd);
                 }
             }
             else
             {
-                GLib.critical ("cannot open display :%i", number);
+                GLib.critical ("cannot open display :%i", m_Number);
             }
 
             return device;
@@ -243,12 +248,12 @@ namespace XSAA
         public void
         kill ()
         {
-            if (child_watch != 0)
-                GLib.Source.remove (child_watch);
-            if ((int)pid > 0)
+            if (m_ChildWatch != 0)
+                GLib.Source.remove (m_ChildWatch);
+            if ((int)m_Pid > 0)
             {
-                GLib.debug ("killing display server %lu", pid);
-                Posix.kill((Posix.pid_t)pid, Posix.SIGTERM);
+                GLib.debug ("killing display server %lu", m_Pid);
+                Os.kill((Os.pid_t)m_Pid, Os.SIGTERM);
             }
         }
     }

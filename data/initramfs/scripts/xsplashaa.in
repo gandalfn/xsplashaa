@@ -31,21 +31,34 @@ done
 
 if [ $SPLASH = "true" ]; then
     mkdir -p $JAIL
-    cp -dR /etc $JAIL
-    cp -dR /bin $JAIL
-    cp -dR /sbin $JAIL
-    cp -dR /lib $JAIL
-    cp -dR /lib64 $JAIL
-    cp -dR /usr $JAIL
+    cp -dR /lib64 $JAIL &
+    mkdir -p $JAIL/bin
+    cp /bin/sh $JAIL/bin &
+    mkdir -p $JAIL/usr
+    cp -dR /usr/bin $JAIL/usr/bin &
+    cp -dR /usr/lib $JAIL/usr/lib &
+    cp -dR /usr/share $JAIL/usr/share &
+    mkdir -p $JAIL/etc
+    cp /etc/passwd $JAIL/etc &
+    cp /etc/group $JAIL/etc &
+    cp /etc/shadow $JAIL/etc &
+    cp -dR /etc/X11 $JAIL/etc &
+    cp -dR /etc/xsplashaa $JAIL/etc &
+    mkdir -p $JAIL/lib
+    cp /lib/* $JAIL/lib &
+    mkdir -p $JAIL/lib/x86_64-linux-gnu
+    cp /lib/x86_64-linux-gnu/* $JAIL/lib/x86_64-linux-gnu/ &
     mkdir -p $JAIL/dev
-    mount -o bind /dev $JAIL/dev
+    mount -o bind /dev $JAIL/dev &
     mkdir -p $JAIL/sys
-    mount -t sysfs none $JAIL/sys
+    mount -t sysfs -o nodev,noexec,nosuid none $JAIL/sys &
     mkdir -p $JAIL/proc
-    mount -t proc none $JAIL/proc
+    mount -t proc -o nodev,noexec,nosuid none $JAIL/proc &
     mkdir -p $JAIL/tmp
     mkdir -p $JAIL/var/lib/xkb
-    cp -dR /var/lib/defoma $JAIL/var/lib/defoma
+    cp -dR /var/lib/defoma $JAIL/var/lib/defoma &
+    wait
 
     chroot $JAIL /usr/bin/xsplashaa
 fi
+
