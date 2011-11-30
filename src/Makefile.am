@@ -6,6 +6,7 @@ INCLUDES = \
     -D_GNU_SOURCE
 
 VALAFLAGS = \
+    --thread \
     --vapidir=${top_srcdir}/vapi \
     --pkg=config \
     --pkg=source \

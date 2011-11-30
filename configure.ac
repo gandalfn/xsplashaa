@@ -45,17 +45,20 @@ dnl Check for packages
 dnl ****************************************************************************
 PKG_CHECK_MODULES(XSPLASHAA, [x11
                               glib-2.0 >= $GLIB_REQUIRED 
+                              gthread-2.0 >= $GLIB_REQUIRED 
                               gobject-2.0 >= $GLIB_REQUIRED 
                               gtk+-2.0 >= $GTK_REQUIRED
                               dbus-glib-1])
 
 PKG_CHECK_MODULES(XSPLASHAA_SESSION_DAEMON, [glib-2.0 >= $GLIB_REQUIRED,
                                              gobject-2.0 >= $GLIB_REQUIRED
+                              		         gthread-2.0 >= $GLIB_REQUIRED 
                                              gtk+-2.0 >= $GTK_REQUIRED
                                              dbus-glib-1
                                              xau])
 
 PKG_CHECK_MODULES(XSPLASHAA_CLIENT, [glib-2.0 >= $GLIB_REQUIRED,
+                                     gthread-2.0 >= $GLIB_REQUIRED 
                                      gobject-2.0 >= $GLIB_REQUIRED])
 
 AC_SUBST(XSPLASHAA_CFLAGS)

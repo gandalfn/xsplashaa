@@ -58,10 +58,10 @@ mkdir -p ${DESTDIR}/sbin
 mkdir -p ${DESTDIR}/bin
 mkdir -p ${DESTDIR}/usr/bin
 mkdir -p ${DESTDIR}/usr/sbin
-mkdir -p ${DESTDIR}/usr/lib/$ARCH
-mkdir -p ${DESTDIR}/usr/lib/$ARCH/pango/1.6.0/modules
-mkdir -p ${DESTDIR}/usr/lib/$ARCH/pango/1.6.0/module-files.d
-mkdir -p ${DESTDIR}/usr/lib/$ARCH/gdk-pixbuf-2.0/2.10.0/loaders
+mkdir -p ${DESTDIR}/usr/lib
+mkdir -p ${DESTDIR}/usr/lib/pango/1.6.0/modules
+mkdir -p ${DESTDIR}/usr/lib/pango/1.6.0/module-files.d
+mkdir -p ${DESTDIR}/usr/lib/gtk-2.0/2.10.0/loaders
 mkdir -p ${DESTDIR}/usr/lib/gtk-2.0/2.10.0/engines
 mkdir -p ${DESTDIR}/usr/lib/xorg/modules/input
 mkdir -p ${DESTDIR}/usr/lib/xorg/modules/fonts
@@ -97,6 +97,7 @@ then
     copy_exec_if_exist /etc/X11/xorg.conf /etc/X11
 fi
 copy_exec_if_exist /etc/X11/xkb/base.xml /etc/X11/xkb
+copy_exec_if_exist /etc/xsplashaa/Xsession /etc/xsplashaa
 copy_exec_if_exist /etc/xsplashaa/xsplashaa.conf /etc/xsplashaa
 copy_exec_if_exist /usr/lib/libGL.so /usr/lib
 copy_exec_if_exist /usr/lib/xorg/protocol.txt /usr/lib/xorg
@@ -104,6 +105,7 @@ copy_exec_if_exist /usr/lib/xorg/modules/drivers/fbdev_drv.so /usr/lib/xorg/modu
 copy_exec_if_exist /usr/lib/xorg/modules/drivers/vesa_drv.so /usr/lib/xorg/modules/drivers
 copy_exec_if_exist /usr/lib/xorg/modules/linux/libfbdevhw.so /usr/lib/xorg/modules/linux
 copy_exec_if_exist /usr/lib/xorg/modules/input/evdev_drv.so /usr/lib/xorg/modules/input
+copy_exec_if_exist /usr/lib/xorg/modules/input/evtouch2_drv.so /usr/lib/xorg/modules/input
 copy_exec_if_exist /usr/lib/xorg/modules/input/synaptics_drv.so /usr/lib/xorg/modules/input
 copy_exec_if_exist /usr/lib/xorg/modules/input/wacom_drv.so /usr/lib/xorg/modules/input
 copy_exec_if_exist /usr/lib/xorg/modules/extensions/libextmod.so /usr/lib/xorg/modules/extensions
