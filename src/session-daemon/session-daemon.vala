@@ -21,17 +21,17 @@
 
 public const string PACKAGE_XAUTH_DIR = "/tmp/xsplashaa-xauth";
 
-[DBus (name = "org.freedesktop.ConsoleKit.Session")] 
-public interface ConsoleKit.Session : DBus.Object 
+[DBus (name = "org.freedesktop.ConsoleKit.Session")]
+public interface ConsoleKit.Session : DBus.Object
 {
     public abstract void activate() throws DBus.Error;
 }
 
-[DBus (name = "org.freedesktop.ConsoleKit.Manager")] 
-public interface ConsoleKit.Manager : DBus.Object 
+[DBus (name = "org.freedesktop.ConsoleKit.Manager")]
+public interface ConsoleKit.Manager : DBus.Object
 {
-    public abstract string 
-    open_session_with_parameters (ConsoleKit.SessionParameter[] inParameters) throws DBus.Error; 
+    public abstract string
+    open_session_with_parameters (ConsoleKit.SessionParameter[] inParameters) throws DBus.Error;
 
     public abstract bool
     close_session(string inCookie) throws DBus.Error;
@@ -65,7 +65,7 @@ namespace XSAA
         {
             m_Connection = inConn;
 
-            m_Manager = (ConsoleKit.Manager)m_Connection.get_object ("org.freedesktop.ConsoleKit", 
+            m_Manager = (ConsoleKit.Manager)m_Connection.get_object ("org.freedesktop.ConsoleKit",
                                                                      "/org/freedesktop/ConsoleKit/Manager",
                                                                      "/org/freedesktop/ConsoleKit/Manager");
 
@@ -75,8 +75,8 @@ namespace XSAA
             m_Users = new Users (m_Connection);
         }
 
-        private void 
-        on_client_lost (DBus.Object inSender, string iName, string inPrev, string inNewp) 
+        private void
+        on_client_lost (DBus.Object inSender, string iName, string inPrev, string inNewp)
         {
             m_Sessions.remove (inPrev);
         }
@@ -148,7 +148,7 @@ namespace XSAA
         }
     }
 
-    const GLib.OptionEntry[] c_OptionEntries = 
+    const GLib.OptionEntry[] c_OptionEntries =
     {
         { "no-daemonize", 'd', 0, GLib.OptionArg.NONE, ref s_NoDaemon, "Do not run xsplashaa-session-daemon as a daemonn", null },
         { null }
@@ -157,9 +157,9 @@ namespace XSAA
     static bool s_NoDaemon = false;
 
     static int
-    main (string[] inArgs) 
+    main (string[] inArgs)
     {
-        GLib.Log.set_default_handler (Log.syslog_log_handler);
+        XSAA.Log.set_default_logger (new XSAA.Log.Syslog (XSAA.Log.Level.DEBUG, "xsaa-session-daemon"));
 
         GLib.debug ("start");
 
@@ -170,7 +170,7 @@ namespace XSAA
             opt_context.add_main_entries(c_OptionEntries, "xsplasaa-session-daemon");
             opt_context.parse(ref inArgs);
         }
-        catch (GLib.OptionError err) 
+        catch (GLib.OptionError err)
         {
             GLib.critical ("option parsing failed: %s", err.message);
             return -1;
@@ -201,11 +201,11 @@ namespace XSAA
 
             if (r1 == DBus.RequestNameReply.PRIMARY_OWNER &&
                 r2 == DBus.RequestNameReply.PRIMARY_OWNER &&
-                r3 == DBus.RequestNameReply.PRIMARY_OWNER) 
+                r3 == DBus.RequestNameReply.PRIMARY_OWNER)
             {
                 var service = new SessionManager (conn, bus);
 
-                conn.register_object ("/fr/supersonicimagine/XSAA/Manager", 
+                conn.register_object ("/fr/supersonicimagine/XSAA/Manager",
                                       service);
 
                 sLoop.run();

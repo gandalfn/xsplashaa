@@ -1,5 +1,5 @@
 AC_INIT([xsplashaa], [0.4.1], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
-AC_CONFIG_SRCDIR(src/xsaa-main.vala)
+AC_CONFIG_SRCDIR(src/splash/main.vala)
 AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE([dist-bzip2])
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
@@ -44,21 +44,21 @@ dnl ****************************************************************************
 dnl Check for packages
 dnl ****************************************************************************
 PKG_CHECK_MODULES(XSPLASHAA, [x11
-                              glib-2.0 >= $GLIB_REQUIRED 
-                              gthread-2.0 >= $GLIB_REQUIRED 
-                              gobject-2.0 >= $GLIB_REQUIRED 
+                              glib-2.0 >= $GLIB_REQUIRED
+                              gthread-2.0 >= $GLIB_REQUIRED
+                              gobject-2.0 >= $GLIB_REQUIRED
                               gtk+-2.0 >= $GTK_REQUIRED
                               dbus-glib-1])
 
 PKG_CHECK_MODULES(XSPLASHAA_SESSION_DAEMON, [glib-2.0 >= $GLIB_REQUIRED,
                                              gobject-2.0 >= $GLIB_REQUIRED
-                              		         gthread-2.0 >= $GLIB_REQUIRED 
+                              		         gthread-2.0 >= $GLIB_REQUIRED
                                              gtk+-2.0 >= $GTK_REQUIRED
                                              dbus-glib-1
                                              xau])
 
 PKG_CHECK_MODULES(XSPLASHAA_CLIENT, [glib-2.0 >= $GLIB_REQUIRED,
-                                     gthread-2.0 >= $GLIB_REQUIRED 
+                                     gthread-2.0 >= $GLIB_REQUIRED
                                      gobject-2.0 >= $GLIB_REQUIRED])
 
 AC_SUBST(XSPLASHAA_CFLAGS)
@@ -93,6 +93,14 @@ AC_SUBST(initdir)
 AC_CONFIG_FILES([
     Makefile
     src/Makefile
+    src/log/Makefile
+    src/socket/Makefile
+    src/client/Makefile
+    src/graphics/Makefile
+    src/session-daemon/Makefile
+    src/timeline/Makefile
+    src/widgets/Makefile
+    src/splash/Makefile
     po/Makefile.in
     data/Makefile
     data/xsplashaa.desktop
@@ -120,3 +128,4 @@ AC_CONFIG_FILES([
     data/themes/leaves/Makefile])
 
 AC_OUTPUT
+

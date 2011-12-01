@@ -1,6 +1,6 @@
 /* xsaa-client.vala
  *
- * Copyright (C) 2009-2010  Nicolas Bruguier
+ * Copyright (C) 2009-2011  Nicolas Bruguier
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -30,18 +30,18 @@ namespace XSAA
 
             base(inSocketName);
 
-            Os.fcntl(fd, Os.O_NONBLOCK);
+            Os.fcntl(m_Fd, Os.O_NONBLOCK);
 
-            if (Os.connect(fd, &saddr, 110) != 0)
+            if (Os.connect(m_Fd, &m_SAddr, 110) != 0)
             {
-                throw new SocketError.CREATE("error on connect %s", 
+                throw new SocketError.CREATE("error on connect %s",
                                              inSocketName);
             }
         }
     }
 
 
-    const OptionEntry[] cOptionEntries = 
+    const OptionEntry[] cOptionEntries =
     {
         { "ping", 'p', 0, OptionArg.NONE, ref sPing, "Ping", null },
         { "pulse", 'u', 0, OptionArg.NONE, ref sPulse, "Pulse", null },
@@ -185,20 +185,20 @@ namespace XSAA
         return 0;
     }
 
-    static int 
-    main (string[] args) 
+    static int
+    main (string[] args)
     {
-        GLib.Log.set_default_handler (Log.syslog_log_handler);
+        XSAA.Log.set_default_logger (new XSAA.Log.Syslog (XSAA.Log.Level.DEBUG, "xsaa-client"));
 
         sSocketName = "/tmp/xsplashaa-socket";
-        try 
+        try
         {
             var opt_context = new OptionContext("- Xsplashaa client");
             opt_context.set_help_enabled(true);
             opt_context.add_main_entries(cOptionEntries, "xsplasaa");
             opt_context.parse(ref args);
-        } 
-        catch (OptionError err) 
+        }
+        catch (OptionError err)
         {
             GLib.warning ("option parsing failed: %s", err.message);
             return -1;
@@ -213,13 +213,13 @@ namespace XSAA
             return -1;
         }
 
-        if (sQuit) 
+        if (sQuit)
             return handle_quit();
-        else if (sPing) 
+        else if (sPing)
             return handle_ping();
-        else if (sDBus) 
+        else if (sDBus)
             return handle_dbus();
-        else if (sSession) 
+        else if (sSession)
             return handle_session();
         else if (sPhase > 0)
             return handle_phase();

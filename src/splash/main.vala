@@ -19,21 +19,21 @@
  * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
-[DBus (name = "fr.supersonicimagine.XSAA.Manager")] 
-public interface XSAA.Manager : DBus.Object 
+[DBus (name = "fr.supersonicimagine.XSAA.Manager")]
+public interface XSAA.Manager : DBus.Object
 {
     public abstract bool open_session (string inUser, int inDisplay, string inDevice,
                                        bool inFaceAuthentication, bool inAutologin,
-                                       out DBus.ObjectPath? inPath) throws DBus.Error; 
+                                       out DBus.ObjectPath? inPath) throws DBus.Error;
     public abstract void close_session(DBus.ObjectPath inPath) throws DBus.Error;
     public abstract void reboot() throws DBus.Error;
     public abstract void halt() throws DBus.Error;
     public abstract int get_nb_users () throws DBus.Error;
 }
 
-[DBus (name = "fr.supersonicimagine.XSAA.Manager.Session")] 
-public interface XSAA.Session : DBus.Object 
-{ 
+[DBus (name = "fr.supersonicimagine.XSAA.Manager.Session")]
+public interface XSAA.Session : DBus.Object
+{
     public signal void died();
     public signal void exited();
 
@@ -48,8 +48,8 @@ public interface XSAA.Session : DBus.Object
     public abstract void launch(string cmd) throws DBus.Error;
 }
 
-[DBus (name = "fr.supersonicimagine.XSAA.Manager.User")] 
-public interface XSAA.User : DBus.Object 
+[DBus (name = "fr.supersonicimagine.XSAA.Manager.User")]
+public interface XSAA.User : DBus.Object
 {
     public abstract string login          { owned get; }
     public abstract string real_name      { owned get; }
@@ -232,7 +232,7 @@ namespace XSAA
         {
             GLib.debug ("display ready");
 
-            if (!m_TestOnly) 
+            if (!m_TestOnly)
             {
                 Os.putenv("DISPLAY=:" + m_Number.to_string());
 
@@ -254,9 +254,9 @@ namespace XSAA
             m_Splash.shutdown.connect(on_shutdown_request);
             m_Splash.show();
             s_Shutdown |= GLib.FileUtils.test(SHUTDOWN_FILENAME, GLib.FileTest.EXISTS);
-            if (s_Shutdown) 
+            if (s_Shutdown)
                 on_init_shutdown();
-            else if (!m_FirstStart) 
+            else if (!m_FirstStart)
                 on_dbus_ready();
         }
 
@@ -365,7 +365,7 @@ namespace XSAA
 
                 if (m_Manager == null)
                 {
-                    m_Manager = (XSAA.Manager)m_Connection.get_object ("fr.supersonicimagine.XSAA.Manager", 
+                    m_Manager = (XSAA.Manager)m_Connection.get_object ("fr.supersonicimagine.XSAA.Manager",
                                                                        "/fr/supersonicimagine/XSAA/Manager",
                                                                        "/fr/supersonicimagine/XSAA/Manager");
                 }
@@ -435,7 +435,7 @@ namespace XSAA
                 catch (GLib.Error err)
                 {
                     GLib.warning ("error on create: %s", SHUTDOWN_FILENAME);
-                }  
+                }
                 s_Shutdown = true;
             }
             m_Splash.show();
@@ -635,7 +635,7 @@ namespace XSAA
     }
 
     // constants
-    private const OptionEntry[] cOptionEntries = 
+    private const OptionEntry[] cOptionEntries =
     {
         { "test-only", 't', 0, OptionArg.NONE, ref sTestOnly, "Test only", null },
         { "xnest", 'x', 0, OptionArg.NONE, ref sXnest, "Xnest", null },
@@ -655,7 +655,7 @@ namespace XSAA
         GLib.critical ("DISPLAY error !!");
         s_Daemon = null;
         return -1;
-    } 
+    }
 
     private static void
     on_sig_term(int inSigNum)
@@ -667,22 +667,22 @@ namespace XSAA
         else
             Os.exit (-1);
     }
-    
-    static int 
-    main (string[] args) 
+
+    static int
+    main (string[] args)
     {
-        GLib.Log.set_default_handler (Log.kmsg_log_handler);
+        XSAA.Log.set_default_logger (new XSAA.Log.KMsg (XSAA.Log.Level.DEBUG, "xsaa-client"));
 
         GLib.debug ("starting");
 
-        try 
+        try
         {
             OptionContext opt_context = new OptionContext("- Xsplashaa");
             opt_context.set_help_enabled(true);
             opt_context.add_main_entries(cOptionEntries, "xsplashaa");
             opt_context.parse(ref args);
-        } 
-        catch (OptionError err) 
+        }
+        catch (OptionError err)
         {
             GLib.critical ("option parsing failed: %s", err.message);
             return -1;

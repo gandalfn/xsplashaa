@@ -1,6 +1,6 @@
 namespace XSAA
 {
-    [CCode (cheader_filename = "xsaa-source.h", ref_function = "xsaa_source_ref", unref_function = "xsaa_source_unref")]
+    [CCode (cheader_filename = "source.h", ref_function = "xsaa_source_ref", unref_function = "xsaa_source_unref")]
     public class Source : GLib.Source
     {
         public Source(SourceFuncs inFuncs, void* inData);
@@ -10,22 +10,22 @@ namespace XSAA
         public void destroy();
     }
 
-    [CCode (cheader_filename = "xsaa-source.h", has_target = false)]
+    [CCode (cheader_filename = "source.h", has_target = false)]
     public delegate bool SourcePrepareFunc (void* inData, out int outTimeout);
-    [CCode (cheader_filename = "xsaa-source.h", has_target = false)]
+    [CCode (cheader_filename = "source.h", has_target = false)]
     public delegate bool SourceCheckFunc (void* inData);
-    [CCode (cheader_filename = "xsaa-source.h", has_target = false)]
+    [CCode (cheader_filename = "source.h", has_target = false)]
     public delegate bool SourceDispatchFunc (void* inData, GLib.SourceFunc inCallback);
-    [CCode (cheader_filename = "xsaa-source.h", has_target = false)]
+    [CCode (cheader_filename = "source.h", has_target = false)]
     public delegate void SourceFinalizeFunc (void* inData);
 
     [SimpleType]
-    [CCode (cheader_filename = "xsaa-source.h")]
-    public struct SourceFuncs 
+    [CCode (cheader_filename = "source.h")]
+    public struct SourceFuncs
     {
         public SourcePrepareFunc prepare;
         public SourceCheckFunc check;
         public SourceDispatchFunc dispatch;
         public SourceFinalizeFunc finalize;
     }
-} 
+}

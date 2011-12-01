@@ -45,14 +45,14 @@ namespace XSAA
 
             base(inSocketName);
 
-            Os.fcntl(fd, Os.F_SETFD, Os.FD_CLOEXEC);
+            Os.fcntl(m_Fd, Os.F_SETFD, Os.FD_CLOEXEC);
 
-            if (Os.bind(fd, &saddr, 110) != 0)
+            if (Os.bind(m_Fd, &m_SAddr, 110) != 0)
             {
                 throw new SocketError.CREATE("error on bind socket");
             }
 
-            if (Os.listen (fd, 5) != 0)
+            if (Os.listen (m_Fd, 5) != 0)
             {
                 throw new SocketError.CREATE("error on listen socket");
             }
@@ -64,15 +64,15 @@ namespace XSAA
 
         ~Server()
         {
-            GLib.FileUtils.unlink(filename);
+            GLib.FileUtils.unlink(m_Filename);
         }
 
-        private void 
+        private void
         on_client_connect ()
         {
             GLib.debug ("client connected");
 
-            int client = Os.accept(fd, null, 0);
+            int client = Os.accept(m_Fd, null, 0);
             if (client > 0)
             {
                 try
@@ -92,7 +92,7 @@ namespace XSAA
             }
         }
 
-        private bool 
+        private bool
         on_client_message (GLib.IOChannel inClient, GLib.IOCondition inCondition)
         {
             GLib.debug ("received client message");
@@ -118,7 +118,7 @@ namespace XSAA
             return false;
         }
 
-        private void 
+        private void
         handle_client_message(GLib.IOChannel inClient, string inBuffer)
         {
             GLib.debug ("handle client message");
