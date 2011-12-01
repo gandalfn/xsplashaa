@@ -121,11 +121,11 @@ namespace Os
     public struct gid_t {
     }
 
-    [CCode (cname = "struct sockaddr", cheader_filename = "sys/socket.h", destroy_function = "")]
+    [CCode (cname = "struct sockaddr", cheader_filename = "sys/un.h,sys/types.h,sys/socket.h", has_type_id = false, free_function = "")]
     public struct SockAddr {
     }
 
-    [CCode (cheader_filename = "sys/un.h", cname = "struct sockaddr_un", destroy_function="")]
+    [CCode (cheader_filename = "sys/un.h,sys/types.h,sys/socket.h", cname = "struct sockaddr_un", has_type_id = false, free_function="")]
     public struct SockAddrUn : SockAddr {
         public int sun_family;
         public char sun_path[108];
@@ -709,5 +709,4 @@ namespace Os
     [CCode (cheader_filename = "sys/wait.h")]
     public pid_t wait (out int status);
 }
-
 

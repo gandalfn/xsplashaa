@@ -19,19 +19,6 @@
  * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
-public struct ConsoleKit.SessionParameter
-{
-    // properties
-    public string       key;
-    public GLib.Value?  value ;
-
-    public SessionParameter (string a, Value? b)
-    {
-        key = a;
-        value = b;
-    }
-}
-
 namespace XSAA
 {
     [DBus (name = "fr.supersonicimagine.XSAA.Manager.SessionError")]
@@ -73,10 +60,10 @@ namespace XSAA
         }
 
         // properties
-        private ConsoleKit.Manager m_CkManager;
-        private string             m_Cookie;
-        private string             m_DisplayNum;
-        private string             m_DeviceNum;
+        private FreeDesktop.ConsoleKit.Manager m_CkManager;
+        private string                         m_Cookie;
+        private string                         m_DisplayNum;
+        private string                         m_DeviceNum;
 
         private GLib.Pid           m_Pid = (GLib.Pid)0;
         unowned Os.Passwd          m_Passwd;
@@ -97,7 +84,7 @@ namespace XSAA
         public signal void error_msg (string msg);
 
         // methods
-        public Session(DBus.Connection inConn, ConsoleKit.Manager inManager, 
+        public Session(DBus.Connection inConn, FreeDesktop.ConsoleKit.Manager inManager,
                        string inService, string inUser, int inDisplay, string inDevice) throws SessionError
         {
             GLib.debug ("create ck session");
@@ -163,7 +150,7 @@ namespace XSAA
             }
 
             FileStream f = FileStream.open(m_XauthFile, "w");
-                        
+
             X.Auth auth = X.Auth();
 
             auth.family = X.FamilyLocal;
@@ -183,10 +170,10 @@ namespace XSAA
             auth.data = string.nfill(16, ' ');
             Memory.copy(auth.data, data, 16);
             auth.data_length = 16;
-            
+
             auth.write(f);
             f.flush();
-            
+
             if (Os.chown(m_XauthFile, m_Passwd.pw_uid, m_Passwd.pw_gid) < 0)
             {
                 throw new SessionError.XAUTH("Error on generate " + m_XauthFile);
@@ -200,38 +187,33 @@ namespace XSAA
 
             Value user_val = Value (typeof(int));
             user_val.set_int((int)m_Passwd.pw_uid);
-            ConsoleKit.SessionParameter unixuser = 
-                ConsoleKit.SessionParameter ("unix-user", user_val);
+            FreeDesktop.ConsoleKit.SessionParameter unixuser = FreeDesktop.ConsoleKit.SessionParameter ("unix-user", user_val);
 
             Value display_val = Value (typeof(string));
             display_val.set_string(m_DisplayNum);
-            ConsoleKit.SessionParameter x11display = 
-                ConsoleKit.SessionParameter("x11-display", display_val);
+            FreeDesktop.ConsoleKit.SessionParameter x11display = FreeDesktop.ConsoleKit.SessionParameter("x11-display", display_val);
 
             Value display_dev_val = Value (typeof(string));
             display_dev_val.set_string(m_DeviceNum);
-            ConsoleKit.SessionParameter x11displaydev = 
-                ConsoleKit.SessionParameter("x11-display-device", display_dev_val);
+            FreeDesktop.ConsoleKit.SessionParameter x11displaydev = FreeDesktop.ConsoleKit.SessionParameter("x11-display-device", display_dev_val);
 
             Value is_local_val = Value (typeof(bool));
             is_local_val.set_boolean(true);
-            ConsoleKit.SessionParameter islocal = 
-                ConsoleKit.SessionParameter("is-local", is_local_val);
+            FreeDesktop.ConsoleKit.SessionParameter islocal = FreeDesktop.ConsoleKit.SessionParameter("is-local", is_local_val);
 
             Value session_type_val = Value (typeof(string));
             session_type_val.set_string("xsplashaa");
-            ConsoleKit.SessionParameter session_type = 
-                ConsoleKit.SessionParameter("session-type", session_type_val);
+            FreeDesktop.ConsoleKit.SessionParameter session_type = FreeDesktop.ConsoleKit.SessionParameter("session-type", session_type_val);
 
-            ConsoleKit.SessionParameter[] parameters = {unixuser,
-                                                        x11display,
-                                                        x11displaydev,
-                                                        session_type,
-                                                        islocal};
+            FreeDesktop.ConsoleKit.SessionParameter[] parameters = {unixuser,
+                                                                    x11display,
+                                                                    x11displaydev,
+                                                                    session_type,
+                                                                    islocal};
 
             try
             {
-                m_Cookie = m_CkManager.open_session_with_parameters (parameters); 
+                m_Cookie = m_CkManager.open_session_with_parameters (parameters);
             }
             catch (GLib.Error err)
             {
@@ -270,7 +252,7 @@ namespace XSAA
 
             GLib.FileUtils.unlink (m_Passwd.pw_dir + "/.xsession-errors.old");
             Os.link (m_Passwd.pw_dir + "/.xsession-errors", m_Passwd.pw_dir + "/.xsession-errors.old");
-            fd = Os.open(m_Passwd.pw_dir + "/.xsession-errors", 
+            fd = Os.open(m_Passwd.pw_dir + "/.xsession-errors",
                          Os.O_TRUNC | Os.O_CREAT | Os.O_WRONLY, 0644);
             Os.dup2 (fd, 1);
             Os.dup2 (fd, 2);
@@ -468,15 +450,15 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                throw new SessionError.COMMAND("Invalid %s command !!", 
+                throw new SessionError.COMMAND("Invalid %s command !!",
                                                inCmd);
             }
 
             try
             {
-                Process.spawn_async(null, argvp, null, 
+                Process.spawn_async(null, argvp, null,
                                     SpawnFlags.SEARCH_PATH |
-                                    SpawnFlags.DO_NOT_REAP_CHILD, 
+                                    SpawnFlags.DO_NOT_REAP_CHILD,
                                     on_child_setup, out m_Pid);
                 ChildWatch.add((Pid)m_Pid, on_child_watch);
             }
@@ -487,3 +469,4 @@ namespace XSAA
         }
     }
 }
+

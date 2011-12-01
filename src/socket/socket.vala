@@ -33,12 +33,39 @@ namespace XSAA
     public class Socket : GLib.Object
     {
         // properties
-        private static int BUFFER_LENGTH = 200;
+        private static int     BUFFER_LENGTH = 1024;
+        private string         m_Filename;
+        private int            m_Fd = 0;
+        private Os.SockAddrUn  m_SAddr;
+        private GLib.IOChannel m_Channel;
 
-        protected string         m_Filename;
-        protected int            m_Fd = 0;
-        protected Os.SockAddrUn  m_SAddr;
-        protected GLib.IOChannel m_Channel;
+        // accessors
+        /**
+         * Unix socket filename
+         */
+        public string filename {
+            get {
+                return m_Filename;
+            }
+        }
+
+        /**
+         * Unix socket file descriptor
+         */
+        public int fd {
+            get {
+                return m_Fd;
+            }
+        }
+
+        /**
+         * Socket adress
+         */
+        public unowned Os.SockAddrUn? saddr {
+            get {
+                return m_SAddr;
+            }
+        }
 
         // signals
         public signal void @in();
@@ -108,9 +135,9 @@ namespace XSAA
          * @return ``true`` on success
          */
         public bool
-        send (string inMessage)
+        send (Message inMessage)
         {
-            return Os.write (m_Fd, inMessage, inMessage.length + 1) > 0;
+            return Os.write (m_Fd, inMessage.raw, inMessage.raw.length + 1) > 0;
         }
 
         /**
@@ -121,7 +148,7 @@ namespace XSAA
          * @return ``true`` if a message has been received
          */
         public bool
-        recv (out string outMessage)
+        recv (out Message outMessage)
         {
             char[] buffer = new char[BUFFER_LENGTH];
             size_t bytes_read = 0;
@@ -129,19 +156,20 @@ namespace XSAA
             try
             {
                 m_Channel.read_chars(buffer, out bytes_read);
-                if (bytes_read > 0 && bytes_read < 200)
+                if (bytes_read > 0 && bytes_read < BUFFER_LENGTH)
                 {
                     buffer[bytes_read] = (char)0;
-                    outMessage = (string)buffer;
-                    return true;
+                    outMessage = new Message ((string)buffer);
+                    return outMessage != null;
                 }
             }
             catch (GLib.Error err)
             {
-                GLib.critical ("error on read socket");
+                Log.critical ("error on read socket");
             }
 
             return false;
         }
     }
 }
+

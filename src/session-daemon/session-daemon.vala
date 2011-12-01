@@ -1,4 +1,4 @@
-/* xsaa-session-daemon.vala
+/* session-daemon.vala
  *
  * Copyright (C) 2009-2010  Nicolas Bruguier
  *
@@ -21,73 +21,79 @@
 
 public const string PACKAGE_XAUTH_DIR = "/tmp/xsplashaa-xauth";
 
-[DBus (name = "org.freedesktop.ConsoleKit.Session")]
-public interface ConsoleKit.Session : DBus.Object
-{
-    public abstract void activate() throws DBus.Error;
-}
-
-[DBus (name = "org.freedesktop.ConsoleKit.Manager")]
-public interface ConsoleKit.Manager : DBus.Object
-{
-    public abstract string
-    open_session_with_parameters (ConsoleKit.SessionParameter[] inParameters) throws DBus.Error;
-
-    public abstract bool
-    close_session(string inCookie) throws DBus.Error;
-
-    public abstract DBus.ObjectPath?
-    get_session_for_cookie(string inCookie) throws DBus.Error;
-
-    public abstract void
-    restart() throws DBus.Error;
-
-    public abstract void
-    stop() throws DBus.Error;
-}
-
 namespace XSAA
 {
     static MainLoop sLoop;
 
+    /**
+     * Session manager class
+     */
     [DBus (name = "fr.supersonicimagine.XSAA.Manager")]
     public class SessionManager : GLib.Object
     {
         // properties
-        private DBus.Connection    m_Connection;
-        private ConsoleKit.Manager m_Manager;
-        private Users              m_Users;
+        private DBus.Connection                m_Connection;
+        private FreeDesktop.ConsoleKit.Manager m_Manager;
+        private Users                          m_Users;
 
         public GLib.HashTable <string, Session> m_Sessions;
 
+        // accessors
+        public string splash_socket_name {
+            get {
+                return m_SplashSocketName;
+            }
+            set {
+                m_SplashSocketName = value;
+            }
+        }
+
         // methods
-        public SessionManager(DBus.Connection inConn, dynamic DBus.Object inBus)
+        /**
+         * Create a new session manager
+         *
+         * @param inConn dbus connection
+         * @param inBus dbus bus
+         */
+        public SessionManager(DBus.Connection inConn, FreeDesktop.DBusObject inBus)
         {
             m_Connection = inConn;
 
-            m_Manager = (ConsoleKit.Manager)m_Connection.get_object ("org.freedesktop.ConsoleKit",
-                                                                     "/org/freedesktop/ConsoleKit/Manager",
-                                                                     "/org/freedesktop/ConsoleKit/Manager");
+            m_Manager = (FreeDesktop.ConsoleKit.Manager)m_Connection.get_object ("org.freedesktop.ConsoleKit",
+                                                                                 "/org/freedesktop/ConsoleKit/Manager",
+                                                                                 "/org/freedesktop/ConsoleKit/Manager");
 
             m_Sessions = new GLib.HashTable <string, Session> (GLib.str_hash, GLib.str_equal);
-            inBus.NameOwnerChanged.connect (on_client_lost);
+            inBus.name_owner_changed.connect (on_client_lost);
 
             m_Users = new Users (m_Connection);
         }
 
         private void
-        on_client_lost (DBus.Object inSender, string iName, string inPrev, string inNewp)
+        on_client_lost (FreeDesktop.DBusObject inSender, string iName, string inPrev, string inNewp)
         {
             m_Sessions.remove (inPrev);
         }
 
+        /**
+         * Open a session for a user
+         *
+         * @param inUser login of user
+         * @param inDisplay display number where to open session
+         * @param inFaceAuthentication use face authentification for ask password
+         * @param inAutologin use autologin
+         * @param outPath the dbus object path of session object
+         *
+         * @return ``true`` on success
+         */
         public bool
         open_session(string inUser, int inDisplay, string inDevice, bool inFaceAuthentication, bool inAutologin, out DBus.ObjectPath? outPath)
         {
-            outPath = new DBus.ObjectPath ("/fr/supersonicimagine/XSAA/Manager/Session/" +
-                                           inUser + "/" + inDisplay.to_string());
+            // Create user session dbus object path
+            outPath = new DBus.ObjectPath ("/fr/supersonicimagine/XSAA/Manager/Session/" + inUser + "/" + inDisplay.to_string());
             try
             {
+                // Create session for user
                 string service = "xsplashaa";
                 if (inFaceAuthentication) service = "xsplashaa-face-authentication";
                 if (inAutologin) service = "xsplashaa-autologin";
@@ -106,6 +112,11 @@ namespace XSAA
             return true;
         }
 
+        /**
+         * Close session
+         *
+         * @param inPath dbus object path of session
+         */
         public void
         close_session(DBus.ObjectPath? inPath)
         {
@@ -113,6 +124,9 @@ namespace XSAA
             m_Sessions.remove(inPath);
         }
 
+        /**
+         * Launch reboot of system
+         */
         public void
         reboot()
         {
@@ -127,6 +141,9 @@ namespace XSAA
             }
         }
 
+        /**
+         * Launch system halt
+         */
         public void
         halt()
         {
@@ -141,10 +158,64 @@ namespace XSAA
             }
         }
 
+        /**
+         * Get the number of users than can be create for them
+         */
         public int
         get_nb_users ()
         {
             return m_Users.nb_users;
+        }
+
+        /**
+         * Show shutdown splash
+         */
+        public void
+        show_splash_shutdown ()
+        {
+            try
+            {
+                XSAA.Client client = new XSAA.Client (Config.PACKAGE_CHROOT_DIR);
+                client.send (new Message.close_session ());
+            }
+            catch (GLib.Error err)
+            {
+                Log.error ("Error on send shutdow to splash");
+            }
+        }
+
+        /**
+         * Show login splash
+         */
+        public void
+        show_splash_login ()
+        {
+            try
+            {
+                XSAA.Client client = new XSAA.Client (Config.PACKAGE_CHROOT_DIR);
+                client.send (new Message.dbus ());
+            }
+            catch (GLib.Error err)
+            {
+                Log.error ("Error on send dbus to splash");
+            }
+        }
+
+        /**
+         * Hide splash
+         */
+        public void
+        hide_splash ()
+        {
+            try
+            {
+                XSAA.Client client = new XSAA.Client (Config.PACKAGE_CHROOT_DIR);
+                client.send (new Message.session ());
+            }
+            catch (GLib.Error err)
+            {
+                Log.error ("Error on send session to splash");
+            }
         }
     }
 
@@ -191,22 +262,17 @@ namespace XSAA
 
             var conn = DBus.Bus.get (DBus.BusType.SYSTEM);
 
-            dynamic DBus.Object bus = conn.get_object ("org.freedesktop.DBus",
-                                                       "/org/freedesktop/DBus",
-                                                       "org.freedesktop.DBus");
+            FreeDesktop.DBusObject bus = (FreeDesktop.DBusObject)conn.get_object ("org.freedesktop.DBus",
+                                                                                  "/org/freedesktop/DBus",
+                                                                                  "org.freedesktop.DBus");
 
-            uint r1 = bus.request_name ("fr.supersonicimagine.XSAA.Manager.Session", (uint) 0);
-            uint r2 = bus.request_name ("fr.supersonicimagine.XSAA.Manager.User", (uint) 0);
-            uint r3 = bus.request_name ("fr.supersonicimagine.XSAA.Manager", (uint) 0);
+            uint r = bus.request_name ("fr.supersonicimagine.XSAA.Manager", (uint) 0);
 
-            if (r1 == DBus.RequestNameReply.PRIMARY_OWNER &&
-                r2 == DBus.RequestNameReply.PRIMARY_OWNER &&
-                r3 == DBus.RequestNameReply.PRIMARY_OWNER)
+            if (r == DBus.RequestNameReply.PRIMARY_OWNER)
             {
                 var service = new SessionManager (conn, bus);
 
-                conn.register_object ("/fr/supersonicimagine/XSAA/Manager",
-                                      service);
+                conn.register_object ("/fr/supersonicimagine/XSAA/Manager", service);
 
                 sLoop.run();
             }
@@ -222,3 +288,4 @@ namespace XSAA
         return 0;
     }
 }
+

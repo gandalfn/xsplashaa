@@ -1,24 +1,21 @@
-INCLUDES = \
-    $(XSPLASHAA_CFLAGS) \
-    --include $(CONFIG_HEADER) \
-    -DPACKAGE_CONFIG_FILE=\""$(sysconfdir)/xsplashaa/xsplashaa.conf"\" \
-    -DPACKAGE_DATA_DIR=\""$(datadir)/xsplashaa"\" \
-    -D_GNU_SOURCE
+XSPLASHAA_VAPI_DEPS = \
+    $(top_builddir)/src/log/xsaa-log.vapi
+
+include $(top_srcdir)/build/vala.am
 
 noinst_LTLIBRARIES = libxsaa-graphics.la
 
 libxsaa_graphics_la_VALAFLAGS = \
-    --thread \
     --header=graphics.h \
     --library=xsaa-graphics \
     --vapi=xsaa-graphics.vapi \
-    --vapidir=${top_srcdir}/vapi \
-    --pkg=config \
-    --pkg=os \
     --pkg=gtk+-2.0
 
 libxsaa_graphics_la_SOURCES = \
     cairo-context.vala
+
+libxsaa_graphics_la_LIBADD = \
+    $(XSPLASHAA_LIBS_DEPS)
 
 VALAFILES = \
     $(filter %.vala,$(libxsaa_graphics_la_SOURCES))

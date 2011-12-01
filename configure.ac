@@ -1,6 +1,10 @@
 AC_INIT([xsplashaa], [0.4.1], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
 AC_CONFIG_SRCDIR(src/splash/main.vala)
-AC_CONFIG_HEADERS(config.h)
+
+AC_CONFIG_AUX_DIR([build])
+AC_CONFIG_MACRO_DIR([build])
+AC_CONFIG_HEADERS(build/config.h)
+
 AM_INIT_AUTOMAKE([dist-bzip2])
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 AM_MAINTAINER_MODE

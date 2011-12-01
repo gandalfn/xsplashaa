@@ -1,6 +1,6 @@
-/* xsaa-splash.vala
+/* splash.vala
  *
- * Copyright (C) 2009-2010  Nicolas Bruguier
+ * Copyright (C) 2009-2011  Nicolas Bruguier
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -94,7 +94,7 @@ namespace XSAA
 
             if (m_Theme != null)
             {
-                string gtkrc = Config.PACKAGE_DATA_DIR + "/" + m_Theme + "/gtkrc"; 
+                string gtkrc = Config.PACKAGE_DATA_DIR + "/" + m_Theme + "/gtkrc";
                 if (GLib.FileUtils.test (gtkrc, FileTest.EXISTS))
                 {
                     GLib.debug ("Load theme %s", gtkrc);
@@ -253,7 +253,6 @@ namespace XSAA
             m_Socket.phase.connect(on_phase_changed);
             m_Socket.pulse.connect(on_start_pulse);
             m_Socket.progress.connect(on_progress);
-            m_Socket.progress_orientation.connect(on_progress_orientation);
         }
 
         private void
@@ -293,7 +292,7 @@ namespace XSAA
             GLib.Memory.copy (dst, src, ICON_SIZE * ICON_SIZE * 4);
             Os.shmdt (src);
 
-            Cairo.ImageSurface surface = new Cairo.ImageSurface.for_data (dst, 
+            Cairo.ImageSurface surface = new Cairo.ImageSurface.for_data (dst,
                                                                           Cairo.Format.ARGB32,
                                                                           ICON_SIZE, ICON_SIZE,
                                                                           Cairo.Format.ARGB32.stride_for_width (ICON_SIZE));
@@ -320,7 +319,7 @@ namespace XSAA
 
             for (int cpt = 0; cpt < inNbUsers; ++cpt)
             {
-                XSAA.User user = (XSAA.User)m_Connection.get_object ("fr.supersonicimagine.XSAA.Manager.User", 
+                XSAA.User user = (XSAA.User)m_Connection.get_object ("fr.supersonicimagine.XSAA.Manager",
                                                                      "/fr/supersonicimagine/XSAA/Manager/User/%i".printf (cpt),
                                                                      "fr.supersonicimagine.XSAA.Manager.User");
 
@@ -643,7 +642,7 @@ namespace XSAA
                         m_FaceAuthentication.queue_draw ();
                         break;
                     case FaceAuthenticationStatus.STOPPED:
-                        GLib.Idle.add (() => { 
+                        GLib.Idle.add (() => {
                             m_FaceAuthenticationRefresh.stop ();
                             m_FaceAuthenticationRefresh.rewind ();
 
@@ -663,10 +662,10 @@ namespace XSAA
         private void
         ipc_start ()
         {
-            m_FaceAuthenticationSemPixelsId = Os.semget (FACE_AUTHENTICATION_IPC_KEY_SEM_IMAGE, 
+            m_FaceAuthenticationSemPixelsId = Os.semget (FACE_AUTHENTICATION_IPC_KEY_SEM_IMAGE,
                                                          1, Os.IPC_CREAT | 0666);
 
-            m_FaceAuthenticationPixelsId = Os.shmget (FACE_AUTHENTICATION_IPC_KEY_IMAGE, 
+            m_FaceAuthenticationPixelsId = Os.shmget (FACE_AUTHENTICATION_IPC_KEY_IMAGE,
                                                        FACE_AUTHENTICATION_IMAGE_SIZE,
                                                        Os.IPC_CREAT | 0666);
             if ((int)m_FaceAuthenticationPixelsId != -1)
@@ -678,7 +677,7 @@ namespace XSAA
                 }
             }
 
-            m_FaceAuthenticationStatusId = Os.shmget (FACE_AUTHENTICATION_IPC_KEY_STATUS, 
+            m_FaceAuthenticationStatusId = Os.shmget (FACE_AUTHENTICATION_IPC_KEY_STATUS,
                                                       sizeof (int), Os.IPC_CREAT | 0666);
             if ((int)m_FaceAuthenticationStatusId != -1)
             {
@@ -698,8 +697,8 @@ namespace XSAA
             if ((int)m_FaceAuthenticationPixels == -1)
                 ipc_start ();
 
-            if ((int)m_FaceAuthenticationStatus != -1 && 
-                (int)m_FaceAuthenticationPixels != -1 && 
+            if ((int)m_FaceAuthenticationStatus != -1 &&
+                (int)m_FaceAuthenticationPixels != -1 &&
                 *m_FaceAuthenticationStatus == FaceAuthenticationStatus.STARTED)
             {
                 surface = new Cairo.ImageSurface (Cairo.Format.ARGB32,
@@ -742,12 +741,12 @@ namespace XSAA
                     ctx.paint ();
 
                     ctx.set_operator (Cairo.Operator.OVER);
-                    ctx.rounded_rectangle ((m_FaceAuthentication.parent.allocation.width - 320) / 2, 
+                    ctx.rounded_rectangle ((m_FaceAuthentication.parent.allocation.width - 320) / 2,
                                            0,
                                            320, 240, 10, CairoCorner.ALL);
                     ctx.clip ();
                     ctx.set_source_surface (surface,
-                                            (m_FaceAuthentication.parent.allocation.width - 320) / 2, 
+                                            (m_FaceAuthentication.parent.allocation.width - 320) / 2,
                                             0);
                     ctx.paint ();
                 }
@@ -764,13 +763,6 @@ namespace XSAA
             if (m_IdPulse > 0) GLib.Source.remove(m_IdPulse);
             m_IdPulse = 0;
             m_Progress.set_fraction((double)inVal / (double)100);
-        }
-
-        private void
-        on_progress_orientation(Gtk.ProgressBarOrientation inOrientation)
-        {
-            GLib.debug ("progress orientation");
-            m_Progress.set_orientation(inOrientation);
         }
 
         private void
@@ -1030,3 +1022,4 @@ namespace XSAA
         }
     }
 }
+

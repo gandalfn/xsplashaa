@@ -283,7 +283,7 @@ namespace XSAA
                                   inUserName, m_Number, m_Device, inAutologin.to_string ());
                     if (m_Manager.open_session (inUserName, m_Number, m_Device, inFaceAuthentication, inAutologin, out m_Path))
                     {
-                        m_Session = (XSAA.Session)m_Connection.get_object ("fr.supersonicimagine.XSAA.Manager.Session",
+                        m_Session = (XSAA.Session)m_Connection.get_object ("fr.supersonicimagine.XSAA.Manager",
                                                                            m_Path,
                                                                            "fr.supersonicimagine.XSAA.Manager.Session");
                         if (m_Session != null)
@@ -671,9 +671,9 @@ namespace XSAA
     static int
     main (string[] args)
     {
-        XSAA.Log.set_default_logger (new XSAA.Log.KMsg (XSAA.Log.Level.DEBUG, "xsaa-client"));
+        Log.set_default_logger (new XSAA.Log.Stderr (XSAA.Log.Level.DEBUG, "xsplashaa"));
 
-        GLib.debug ("starting");
+        Log.debug ("starting");
 
         try
         {
@@ -684,7 +684,7 @@ namespace XSAA
         }
         catch (OptionError err)
         {
-            GLib.critical ("option parsing failed: %s", err.message);
+            Log.critical ("option parsing failed: %s", err.message);
             return -1;
         }
 
@@ -792,3 +792,4 @@ namespace XSAA
         return 0;
      }
 }
+

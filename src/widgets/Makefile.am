@@ -1,9 +1,9 @@
-INCLUDES = \
-    $(XSPLASHAA_CFLAGS) \
-    --include $(CONFIG_HEADER) \
-    -DPACKAGE_CONFIG_FILE=\""$(sysconfdir)/xsplashaa/xsplashaa.conf"\" \
-    -DPACKAGE_DATA_DIR=\""$(datadir)/xsplashaa"\" \
-    -D_GNU_SOURCE
+XSPLASHAA_VAPI_DEPS = \
+    $(top_builddir)/src/log/xsaa-log.vapi \
+    $(top_builddir)/src/graphics/xsaa-graphics.vapi \
+    $(top_builddir)/src/timeline/xsaa-timeline.vapi
+
+include $(top_srcdir)/build/vala.am
 
 noinst_LTLIBRARIES = libxsaa-widgets.la
 
@@ -12,28 +12,20 @@ libxsaa_widgets_la_VALAFLAGS = \
     --header=widgets.h \
     --library=xsaa-widgets \
     --vapi=xsaa-widgets.vapi \
-    --vapidir=${top_srcdir}/vapi \
-    --vapidir=$(top_builddir)/src/log \
-    --vapidir=$(top_builddir)/src/graphics \
-    --vapidir=$(top_builddir)/src/timeline \
-    --pkg=config \
     --pkg=source \
+    --pkg=gdk-x11-2.0 \
     --pkg=gtk+-2.0 \
     --pkg=dbus-glib-1 \
-    --pkg=os \
     --pkg=pam \
     --pkg=x11 \
-    --pkg=X-comp \
-    --pkg=xsaa-log \
-    --pkg=xsaa-graphics \
-    --pkg=xsaa-timeline
-
-libxsaa_widgets_la_CFLAGS = \
-    -I${top_builddir}/src/timeline
+    --pkg=X-comp
 
 libxsaa_widgets_la_SOURCES = \
     slide-notebook.vala \
     throbber.vala
+
+libxsaa_widgets_la_LIBADD = \
+    $(XSPLASHAA_LIBS_DEPS)
 
 VALAFILES = \
     $(filter %.vala,$(libxsaa_widgets_la_SOURCES))

@@ -15,7 +15,7 @@ namespace X
         public string name;
         public ushort data_length;
         public string data;
-        
+
         [CCode (cheader_filename = "X11/Xauth.h", cname="XauReadAuth")]
         public static unowned Auth? read(FileStream f);
         [CCode (cheader_filename = "X11/Xauth.h", cname="XauWriteAuth", instance_pos=-1)]
@@ -25,7 +25,7 @@ namespace X
         [CCode (cheader_filename = "X11/Xauth.h", cname="XauUnlockAuth")]
         public static int unlock_auth(string filename);
     }
-    
+
     [CCode (cheader_filename = "X11/Xauth.h", cname="FamilyLocal")]
     public const ushort FamilyLocal;
 
@@ -36,5 +36,8 @@ namespace X
     public static int set_io_error_handler(IOErrorHandler handler);
 
     public const X.Atom XA_INTEGER;
+
+    [CCode (cname = "InputOnly")]
+    public const int InputOnly;
 }
 

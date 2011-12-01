@@ -1,9 +1,8 @@
-INCLUDES = \
-    $(XSPLASHAA_CFLAGS) \
-    --include $(CONFIG_HEADER) \
-    -DPACKAGE_CONFIG_FILE=\""$(sysconfdir)/xsplashaa/xsplashaa.conf"\" \
-    -DPACKAGE_DATA_DIR=\""$(datadir)/xsplashaa"\" \
-    -D_GNU_SOURCE
+XSPLASHAA_VAPI_DEPS = \
+    $(top_builddir)/src/log/xsaa-log.vapi \
+    $(top_builddir)/src/graphics/xsaa-graphics.vapi
+
+include $(top_srcdir)/build/vala.am
 
 noinst_HEADERS = source.h
 
@@ -14,18 +13,12 @@ libxsaa_timeline_la_VALAFLAGS = \
     --header=timeline.h \
     --library=xsaa-timeline \
     --vapi=xsaa-timeline.vapi \
-    --vapidir=${top_srcdir}/vapi \
-    --pkg=config \
     --pkg=source \
     --pkg=gtk+-2.0 \
     --pkg=dbus-glib-1 \
-    --pkg=os \
     --pkg=pam \
     --pkg=x11 \
     --pkg=X-comp
-
-libxsaa_timeline_la_CFLAGS = \
-    -I$(top_builddir)/src/graphics
 
 libxsaa_timeline_la_SOURCES = \
     source.c \
@@ -34,6 +27,9 @@ libxsaa_timeline_la_SOURCES = \
     timeout.vala \
     timeline.vala \
     animator.vala
+
+libxsaa_timeline_la_LIBADD = \
+    $(XSPLASHAA_LIBS_DEPS)
 
 VALAFILES = \
     $(filter %.vala,$(libxsaa_timeline_la_SOURCES))

@@ -1,9 +1,4 @@
-INCLUDES = \
-    $(XSPLASHAA_CFLAGS) \
-    --include $(CONFIG_HEADER) \
-    -DPACKAGE_CONFIG_FILE=\""$(sysconfdir)/xsplashaa/xsplashaa.conf"\" \
-    -DPACKAGE_DATA_DIR=\""$(datadir)/xsplashaa"\" \
-    -D_GNU_SOURCE
+include $(top_srcdir)/build/vala.am
 
 noinst_LTLIBRARIES = libxsaa-log.la
 
