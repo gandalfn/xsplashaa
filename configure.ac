@@ -28,6 +28,7 @@ GLIB_REQUIRED=2.12.0
 GTK_REQUIRED=2.10.0
 VALA_REQUIRED=0.12.0
 SSIGTKEXTRAS_REQUIRED=0.5.0
+GOOCANVAS_REQUIRED=0.15
 
 dnl ****************************************************************************
 dnl Check for vala
@@ -51,7 +52,9 @@ PKG_CHECK_MODULES(XSPLASHAA, [x11
                               glib-2.0 >= $GLIB_REQUIRED
                               gthread-2.0 >= $GLIB_REQUIRED
                               gobject-2.0 >= $GLIB_REQUIRED
+                              gmodule-2.0 >= $GLIB_REQUIRED
                               gtk+-2.0 >= $GTK_REQUIRED
+                              goocanvas >= $GOOCANVAS_REQUIRED
                               dbus-glib-1])
 
 PKG_CHECK_MODULES(XSPLASHAA_SESSION_DAEMON, [glib-2.0 >= $GLIB_REQUIRED,
@@ -105,6 +108,8 @@ AC_CONFIG_FILES([
     src/timeline/Makefile
     src/widgets/Makefile
     src/splash/Makefile
+    src/themes/Makefile
+    src/themes/aixplorer/Makefile
     po/Makefile.in
     data/Makefile
     data/xsplashaa.desktop

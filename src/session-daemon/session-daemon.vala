@@ -38,16 +38,6 @@ namespace XSAA
 
         public GLib.HashTable <string, Session> m_Sessions;
 
-        // accessors
-        public string splash_socket_name {
-            get {
-                return m_SplashSocketName;
-            }
-            set {
-                m_SplashSocketName = value;
-            }
-        }
-
         // methods
         /**
          * Create a new session manager
@@ -288,4 +278,3 @@ namespace XSAA
         return 0;
     }
 }
-
