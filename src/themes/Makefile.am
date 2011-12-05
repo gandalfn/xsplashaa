@@ -2,6 +2,7 @@ SUBDIRS = . aixplorer
 
 XSPLASHAA_VAPI_DEPS = \
     $(top_builddir)/src/log/xsaa-log.vapi \
+    $(top_builddir)/src/xml/xsaa-xml.vapi \
     $(top_builddir)/src/graphics/xsaa-graphics.vapi \
     $(top_builddir)/src/timeline/xsaa-timeline.vapi
 
@@ -23,7 +24,9 @@ libxsaa_engine_la_VALAFLAGS = \
     --pkg=X-comp
 
 libxsaa_engine_la_SOURCES = \
-    engine.vala
+    engine-item.vala \
+    engine.vala \
+    engine-loader.vala
 
 libxsaa_engine_la_LIBADD = \
     $(XSPLASHAA_LIBS_DEPS)

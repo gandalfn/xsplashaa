@@ -59,7 +59,7 @@ PKG_CHECK_MODULES(XSPLASHAA, [x11
 
 PKG_CHECK_MODULES(XSPLASHAA_SESSION_DAEMON, [glib-2.0 >= $GLIB_REQUIRED,
                                              gobject-2.0 >= $GLIB_REQUIRED
-                              		         gthread-2.0 >= $GLIB_REQUIRED
+                                             gthread-2.0 >= $GLIB_REQUIRED
                                              gtk+-2.0 >= $GTK_REQUIRED
                                              dbus-glib-1
                                              xau])
@@ -102,6 +102,7 @@ AC_CONFIG_FILES([
     src/Makefile
     src/log/Makefile
     src/socket/Makefile
+    src/xml/Makefile
     src/client/Makefile
     src/graphics/Makefile
     src/session-daemon/Makefile

@@ -1,7 +1,7 @@
 public class TestWindow : Gtk.Window
 {
     // properties
-    private XSAA.Engine m_Engine;
+    private XSAA.EngineLoader m_Loader;
 
     // methods
     public TestWindow ()
@@ -11,10 +11,10 @@ public class TestWindow : Gtk.Window
         set_colormap (screen.get_rgba_colormap ());
         set_default_size (200, 200);
 
-        m_Engine = XSAA.Engine.load ("aixplorer/.libs/aixplorer-engine.so", "aixplorer");
-        m_Engine.set_size_request (200, 200);
-        m_Engine.show ();
-        add (m_Engine);
+        m_Loader = new XSAA.EngineLoader ("aixplorer");
+        m_Loader.engine.set_size_request (200, 200);
+        m_Loader.engine.show ();
+        add (m_Loader.engine);
         destroy.connect (Gtk.main_quit);
     }
 

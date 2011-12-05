@@ -1,4 +1,4 @@
-/* background.vala
+/* logo.vala
  *
  * Copyright (C) 2009-2011  Nicolas Bruguier
  *
@@ -21,7 +21,7 @@
 
 namespace XSAA.Aixplorer
 {
-    public class Background : Image
+    public class Logo : Image
     {
         // properties
         private string m_Filename;
@@ -29,7 +29,7 @@ namespace XSAA.Aixplorer
         // accessors
         public override string node_name {
             get {
-                return "background";
+                return "logo";
             }
         }
 
@@ -38,7 +38,6 @@ namespace XSAA.Aixplorer
                 return m_Filename;
             }
             set {
-                Log.debug ("set filename: %s", value);
                 m_Filename = value;
                 try
                 {

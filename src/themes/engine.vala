@@ -31,13 +31,8 @@ namespace XSAA
     /**
      * Splash render engine
      */
-    public interface Engine : Gtk.Widget
+    public interface Engine : Gtk.Widget, EngineItem
     {
-        static GLib.Module sModule;
-
-        // types
-        public delegate Engine? PluginInitFunc (string inName);
-
         // signals
 //        public signal void login_enter (string inLogin);
 //        public signal void password_enter (string inPasswd);
@@ -58,34 +53,5 @@ namespace XSAA
 
 //        public abstract void show_face ();
 //        public abstract void face_image (Cairo.Surface inSurface);
-
-        // static methods
-        /**
-         * Load a theme engine
-         *
-         * @param inFilename theme engine filename
-         *
-         * @returns theme engine
-         */
-        public static Engine?
-        load (string inFilename, string inName)
-        {
-            sModule = GLib.Module.open (inFilename, GLib.ModuleFlags.BIND_LAZY);
-            if (sModule == null)
-            {
-                Log.error ("Error on loading %s: %s", inFilename, sModule.error ());
-                return null;
-            }
-
-            void* function;
-            if (!sModule.symbol ("plugin_init", out function))
-            {
-                Log.error ("Error on loading %s: %s", inFilename, sModule.error ());
-                return null;
-            }
-            PluginInitFunc plugin_init = (PluginInitFunc)function;
-
-            return plugin_init (inName);
-        }
     }
 }

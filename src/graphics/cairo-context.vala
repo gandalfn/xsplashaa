@@ -98,22 +98,22 @@ namespace XSAA
         public void
         set_source_gdk_color_rgb(Gdk.Color inColor)
         {
-            set_source_rgb((double)inColor.red / 65535.0, 
-                           (double)inColor.green / 65535.0, 
+            set_source_rgb((double)inColor.red / 65535.0,
+                           (double)inColor.green / 65535.0,
                            (double)inColor.blue / 65535.0);
         }
 
         public void
         set_source_gdk_color_rgba(Gdk.Color inColor, double inAlpha)
         {
-            set_source_rgba((double)inColor.red / 65535.0, 
-                            (double)inColor.green / 65535.0, 
+            set_source_rgba((double)inColor.red / 65535.0,
+                            (double)inColor.green / 65535.0,
                             (double)inColor.blue / 65535.0,
                             inAlpha);
         }
 
         public void
-        rounded_rectangle(double inX, double inY, double inW, double inH, 
+        rounded_rectangle(double inX, double inY, double inW, double inH,
                           double inRadius, CairoCorner inCorners)
         {
             if ((inCorners & CairoCorner.TOPLEFT) == CairoCorner.TOPLEFT)
@@ -141,5 +141,7 @@ namespace XSAA
             else
                 move_to(inX, inY);
         }
+
+
     }
 }

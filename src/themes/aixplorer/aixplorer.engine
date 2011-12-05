@@ -1,0 +1,39 @@
+<engine id="aixplorer" background_color="#0000FF">
+    <!-- background -->
+    <background id="background" layer="0" filename="/usr/share/xsplashaa/leaves/background.png" expand="true"/>
+    <!--main table -->
+    <table id="main" layer="1" y_border_spacing="12" row_spacing="12" column_spacing="12" expand="true">
+        <!--content table -->
+        <table id="content" row="0" column="0" y_expand="false" y_fill="true" x_fill="true" homogeneous_rows="true">
+            <!--top logo -->
+            <logo id="top-logo" row="0" column="0" y_expand="true"
+                  filename="/usr/share/xsplashaa/leaves/distrib-logo.png"/>
+            <!--middle content -->
+            <table id="middle" row="1" column="0" y_align="0.3"
+                   row_spacing="24" column_spacing="48" homogeneous_columns="true">
+                <!--left logo -->
+                <logo id="left-logo" row="0" column="0" x_align="1.0"
+                      filename="/usr/share/xsplashaa/leaves/logo.png"/>
+                <!--login area -->
+                <table id="login-table" row="0" column="1" x_align="0"
+                       row_spacing="12" column_spacing="12" homogeneous_rows="true" clip="true">
+                    <text id="login_label" row="1" column="0" x_align="1.0"
+                          font="Deja Sans Bold 18" fill_color="#FFFFFF"
+                          text="Login:"/>
+                    <entry id="login_entry" row="1" column="1" columns="2"
+                           x_align="0.0" x_fill="true"
+                           left_padding="12" right_padding="48"
+                           widget_font="Deja Sans 16"/>
+                    <button id="button-restart" row="3" column="1"
+                            filename_press="/home/gandalfn/Projects/ssibuntu/git/xsplashaa/data/themes/leaves/restart-press.png"
+                            filename_release="/home/gandalfn/Projects/ssibuntu/git/xsplashaa/data/themes/leaves/restart-release.png"/>
+                    <button id="button-shutdown" row="3" column="2"
+                            filename_press="/home/gandalfn/Projects/ssibuntu/git/xsplashaa/data/themes/leaves/shutdown-press.png"
+                            filename_release="/home/gandalfn/Projects/ssibuntu/git/xsplashaa/data/themes/leaves/shutdown-release.png"/>
+                </table>
+            </table>
+            <item id="empty" row="2" column="0"/>
+        </table>
+    </table>
+</engine>
+

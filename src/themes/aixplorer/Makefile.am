@@ -1,5 +1,6 @@
 XSPLASHAA_VAPI_DEPS = \
     $(top_builddir)/src/log/xsaa-log.vapi \
+    $(top_builddir)/src/xml/xsaa-xml.vapi \
     $(top_builddir)/src/graphics/xsaa-graphics.vapi \
     $(top_builddir)/src/timeline/xsaa-timeline.vapi \
     $(top_builddir)/src/themes/xsaa-engine.vapi
@@ -21,7 +22,15 @@ aixplorer_engine_la_VALAFLAGS = \
     --pkg=X-comp
 
 aixplorer_engine_la_SOURCES = \
+    item.vala \
+    item-pack-options.vala \
+    image.vala \
+    text.vala \
+    button.vala \
+    entry.vala \
+    table.vala \
     background.vala \
+    logo.vala \
     engine.vala
 
 aixplorer_engine_la_LDFLAGS = \
