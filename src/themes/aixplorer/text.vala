@@ -78,3 +78,4 @@ namespace XSAA.Aixplorer
         public bool y_shrink         { get; set; default = false; }
     }
 }
+

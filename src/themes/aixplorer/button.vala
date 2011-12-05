@@ -1,4 +1,4 @@
-/* image.vala
+/* button.vala
  *
  * Copyright (C) 2009-2011  Nicolas Bruguier
  *
@@ -29,20 +29,6 @@ namespace XSAA.Aixplorer
             PRESS,
             RELEASE,
             N;
-
-            public string
-            to_button_name (string inId)
-            {
-                switch (this)
-                {
-                    case PRESS:
-                        return inId + "-press";
-                    case RELEASE:
-                        return inId + "-release";
-                }
-
-                return "";
-            }
         }
 
         // properties
@@ -181,3 +167,4 @@ namespace XSAA.Aixplorer
         }
     }
 }
+

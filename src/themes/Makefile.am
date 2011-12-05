@@ -24,6 +24,8 @@ libxsaa_engine_la_VALAFLAGS = \
     --pkg=X-comp
 
 libxsaa_engine_la_SOURCES = \
+    event.vala \
+    event-prompt.vala \
     engine-item.vala \
     engine.vala \
     engine-loader.vala

@@ -47,7 +47,7 @@ namespace XSAA
                     m_Index = 0;
                 else
                     m_Index++;
-                return m_Index < (int)m_Item.childs.size ();
+                return m_Item.childs != null && m_Index < (int)m_Item.childs.size ();
             }
 
             public new unowned EngineItem?
@@ -208,7 +208,31 @@ namespace XSAA
         public unowned EngineItem?
         get (string inNodeId)
         {
-            return childs.lookup (inNodeId);
+            return childs != null ? childs.lookup (inNodeId) : null;
+        }
+
+        /**
+         * Find an child item in this and its childrens
+         *
+         * @param inNodeId child node id
+         *
+         * @return child item
+         */
+        public unowned EngineItem?
+        find (string inNodeId)
+        {
+            unowned EngineItem? ret = get (inNodeId);
+
+            if (ret == null && childs != null)
+            {
+                foreach (unowned EngineItem? item in this)
+                {
+                    ret = item.find (inNodeId);
+                    if (ret != null) return ret;
+                }
+            }
+
+            return ret;
         }
 
         /**
@@ -261,3 +285,4 @@ namespace XSAA
         }
     }
 }
+

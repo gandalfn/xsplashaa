@@ -27,6 +27,7 @@ aixplorer_engine_la_SOURCES = \
     image.vala \
     text.vala \
     button.vala \
+    widget.vala \
     entry.vala \
     table.vala \
     background.vala \

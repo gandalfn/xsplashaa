@@ -109,6 +109,45 @@ namespace XSAA.Aixplorer
             m_Root = get_root_item ();
         }
 
+        private void
+        process_prompt_event (EventPrompt inEvent)
+        {
+            unowned Text prompt_label = (Text)find ("prompt-label");
+            unowned Entry prompt = (Entry)find ("prompt");
+            unowned Table prompt_table = (Table)find ("prompt-table");
+
+            if (prompt == null || prompt_label == null)
+            {
+                Log.critical ("Error does not find prompt items");
+                return;
+            }
+
+            switch (inEvent.args.event_type)
+            {
+                case EventPrompt.Type.SHOW_LOGIN:
+                    prompt_label.text = "Login:";
+                    prompt.text = "";
+                    prompt.entry_visibility = true;
+                    prompt_label.visibility = Goo.CanvasItemVisibility.VISIBLE;
+                    prompt.visibility = Goo.CanvasItemVisibility.VISIBLE;
+                    prompt_table.visibility = Goo.CanvasItemVisibility.VISIBLE;
+                    break;
+                case EventPrompt.Type.SHOW_PASSWORD:
+                    prompt_label.text = "Password:";
+                    prompt.text = "";
+                    prompt.entry_visibility = false;
+                    prompt_label.visibility = Goo.CanvasItemVisibility.VISIBLE;
+                    prompt.visibility = Goo.CanvasItemVisibility.VISIBLE;
+                    prompt_table.visibility = Goo.CanvasItemVisibility.VISIBLE;
+                    break;
+                case EventPrompt.Type.HIDE:
+                    prompt_label.visibility = Goo.CanvasItemVisibility.INVISIBLE;
+                    prompt.visibility = Goo.CanvasItemVisibility.INVISIBLE;
+                    prompt_table.visibility = Goo.CanvasItemVisibility.INVISIBLE;
+                    break;
+            }
+        }
+
         public void
         append_child (EngineItem inChild)
         {
@@ -116,6 +155,21 @@ namespace XSAA.Aixplorer
             {
                 childs.insert (inChild.id, inChild);
                 m_Root.add_child ((Goo.CanvasItemSimple)inChild, inChild.layer);
+            }
+        }
+
+        public override void
+        realize ()
+        {
+            base.realize ();
+
+            unowned Entry? prompt = (Entry?)find ("prompt");
+            if (prompt != null)
+            {
+                prompt.edited.connect ((s) => {
+                    Log.debug ("prompt: %s", s);
+                    event_notify (new EventPrompt.edited (s));
+                });
             }
         }
 
@@ -155,6 +209,15 @@ namespace XSAA.Aixplorer
                 }
             }
         }
+
+        public void
+        process_event (Event inEvent)
+        {
+            if (inEvent is EventPrompt)
+            {
+                process_prompt_event ((EventPrompt)inEvent);
+            }
+        }
     }
 }
 
@@ -162,3 +225,4 @@ public XSAA.Engine? plugin_init ()
 {
     return new XSAA.Aixplorer.Engine ();
 }
+

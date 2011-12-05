@@ -21,74 +21,44 @@
 
 namespace XSAA.Aixplorer
 {
-    public class Entry : Goo.CanvasWidget, XSAA.EngineItem, ItemPackOptions
+    public class Entry : Widget
     {
-        // properties
-        private string                             m_Id;
-        private int                                m_Layer;
-
         // accessors
-        public virtual string node_name {
+        public override string node_name {
             get {
                 return "entry";
             }
         }
 
-        public GLib.HashTable<string, EngineItem>? childs {
-            get {
-                return null;
+        public bool entry_visibility {
+            set {
+                ((Gtk.Entry)composite_widget).visibility = value;
             }
         }
 
-        public string id {
+        public string text {
             get {
-                return m_Id;
+                return ((Gtk.Entry)composite_widget).text;
             }
             set {
-                XSAA.Log.debug ("set id: %s", value);
-                m_Id = value;
+                ((Gtk.Entry)composite_widget).text = value;
             }
         }
 
-        public int layer {
-            get {
-                return m_Layer;
-            }
-            set {
-                m_Layer = value;
-            }
-        }
-
-        public string widget_font {
-            set {
-                Pango.FontDescription font_desc = Pango.FontDescription.from_string (value);
-                widget.modify_font (font_desc);
-            }
-        }
-
-        public bool expand           { get; set; default = false; }
-        public int row               { get; set; default = 0; }
-        public int column            { get; set; default = 0; }
-        public int rows              { get; set; default = 1; }
-        public int columns           { get; set; default = 1; }
-        public double top_padding    { get; set; default = 0.0; }
-        public double bottom_padding { get; set; default = 0.0; }
-        public double left_padding   { get; set; default = 0.0; }
-        public double right_padding  { get; set; default = 0.0; }
-        public double x_align        { get; set; default = 0.5; }
-        public bool x_expand         { get; set; default = true; }
-        public bool x_fill           { get; set; default = false; }
-        public bool x_shrink         { get; set; default = false; }
-        public double y_align        { get; set; default = 0.5; }
-        public bool y_expand         { get; set; default = true; }
-        public bool y_fill           { get; set; default = false; }
-        public bool y_shrink         { get; set; default = false; }
-
+        // signals
+        public signal void edited (string inVal);
 
         // methods
         construct
         {
-            widget = new Gtk.Entry ();
+            Gtk.Entry entry = new Gtk.Entry ();
+            entry.can_focus = true;
+            entry.set_activates_default (true);
+            entry.activate.connect (() => {
+                edited (entry.text);
+            });
+            composite_widget = entry;
         }
     }
 }
+

@@ -1,4 +1,4 @@
-/* table.vala
+/* entry.vala
  *
  * Copyright (C) 2009-2011  Nicolas Bruguier
  *
@@ -21,26 +21,22 @@
 
 namespace XSAA.Aixplorer
 {
-    public class Table : Goo.CanvasTable, Goo.CanvasItem, XSAA.EngineItem, ItemPackOptions
+    public class Widget : Goo.CanvasWidget, XSAA.EngineItem, ItemPackOptions
     {
         // properties
         private string                             m_Id;
         private int                                m_Layer;
-        private GLib.HashTable<string, EngineItem> m_Childs;
-        private bool                               m_Clip;
 
         // accessors
         public virtual string node_name {
             get {
-                return "table";
+                return "widget";
             }
         }
 
         public GLib.HashTable<string, EngineItem>? childs {
             get {
-                if (m_Childs == null)
-                    m_Childs = new GLib.HashTable<string, EngineItem> (GLib.str_hash, GLib.str_equal);
-                return m_Childs;
+                return null;
             }
         }
 
@@ -63,12 +59,34 @@ namespace XSAA.Aixplorer
             }
         }
 
-        public bool clip {
+        public new Gtk.Widget composite_widget {
             get {
-                return m_Clip;
+                return ((Gtk.EventBox)widget).get_child ();
             }
             set {
-                m_Clip = value;
+                Gtk.EventBox box = new Gtk.EventBox ();
+                box.set_above_child (false);
+                box.set_visible_window (true);
+                box.set_app_paintable (true);
+                box.realize.connect ((b) => { b.window.set_composited(true); });
+                box.expose_event.connect ((e) => {
+                    var cr = Gdk.cairo_create (box.window);
+                    cr.set_operator (Cairo.Operator.CLEAR);
+                    cr.paint ();
+                    return false;
+                });
+
+                value.show ();
+                box.add (value);
+
+                widget = box;
+            }
+        }
+
+        public string widget_font {
+            set {
+                Pango.FontDescription font_desc = Pango.FontDescription.from_string (value);
+                composite_widget.modify_font (font_desc);
             }
         }
 
@@ -90,51 +108,20 @@ namespace XSAA.Aixplorer
         public bool y_fill           { get; set; default = false; }
         public bool y_shrink         { get; set; default = false; }
 
-        // methods
-        public void
-        paint (Cairo.Context inContext, Goo.CanvasBounds inBounds, double inScale)
-        {
-            inContext.save ();
-            {
-                if (m_Clip)
-                {
-                    inContext.rectangle (0, 0, inBounds.x1 + inBounds.x2, inBounds.y1 + inBounds.y2);
-                    inContext.clip ();
-                }
-                base.paint (inContext, inBounds, inScale);
-            }
-            inContext.restore ();
-        }
 
-        public void
-        append_child (EngineItem inChild)
+        // methods
+        public override void
+        simple_paint (Cairo.Context inContext, Goo.CanvasBounds inBounds)
         {
-            if (inChild is Goo.CanvasItemSimple)
+            if (widget != null && widget.window != null)
             {
-                childs.insert (inChild.id, inChild);
-                add_child ((Goo.CanvasItemSimple)inChild, inChild.layer);
-                if (inChild is ItemPackOptions)
-                {
-                    unowned ItemPackOptions? pack_options = (ItemPackOptions?)inChild;
-                    set_child_properties (((Goo.CanvasItem)inChild),
-                                          row: pack_options.row,
-                                          column: pack_options.column,
-                                          rows: pack_options.rows,
-                                          columns: pack_options.columns,
-                                          top_padding: pack_options.top_padding,
-                                          bottom_padding: pack_options.bottom_padding,
-                                          right_padding: pack_options.right_padding,
-                                          left_padding: pack_options.left_padding,
-                                          x_expand: pack_options.x_expand,
-                                          x_fill: pack_options.x_fill,
-                                          x_shrink: pack_options.y_shrink,
-                                          y_expand: pack_options.y_expand,
-                                          y_fill: pack_options.y_fill,
-                                          y_shrink: pack_options.y_shrink,
-                                          x_align: pack_options.x_align,
-                                          y_align: pack_options.y_align);
-                }
-                Log.debug ("%s %f,%f,%f,%f", id, bounds.x1, bounds.y1, bounds.x2, bounds.y2);
+                var cr_widget = Gdk.cairo_create (widget.window);
+                var pattern = new Cairo.Pattern.for_surface (cr_widget.get_target());
+
+                get_style ().set_fill_options (inContext);
+                inContext.set_source (pattern);
+                inContext.rectangle (0, 0, inBounds.x1 + inBounds.x2, inBounds.y1 + inBounds.y2);
+                inContext.fill();
             }
         }
     }

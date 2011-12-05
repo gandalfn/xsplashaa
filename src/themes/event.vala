@@ -1,4 +1,4 @@
-/* engine.vala
+/* event.vala
  *
  * Copyright (C) 2009-2011  Nicolas Bruguier
  *
@@ -21,23 +21,33 @@
 
 namespace XSAA
 {
-    public enum CheckSubsystem
-    {
-        FILESYSTEM,
-        TOUCHSCREEN,
-        KEYBOARD
-    }
-
     /**
-     * Splash render engine
+     * Engine event class
      */
-    public interface Engine : Gtk.Widget, EngineItem
+    public abstract class Event<T> : GLib.Object
     {
-        // signals
-        public signal void event_notify (Event inEvent);
+        // types
+        public abstract class Args : GLib.Object
+        {
+        }
 
-        // methods
-        public abstract void process_event (Event inEvent);
+        // properties
+        private T m_Args;
+
+        // accessors
+        /**
+         * Event args
+         */
+        public T args {
+            get {
+                return m_Args;
+            }
+        }
+
+        public Event (T inArgs)
+        {
+            m_Args = inArgs;
+        }
     }
 }
 
