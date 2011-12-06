@@ -33,8 +33,7 @@ namespace XSAA.Aixplorer
 
         // properties
         private State         m_State = State.RELEASE;
-        private Gdk.Pixbuf    m_Pixbuf[2];
-        private Cairo.Pattern m_Pattern[2];
+        private Rsvg.Handle   m_Handle[2];
 
 
         // accessors
@@ -44,42 +43,15 @@ namespace XSAA.Aixplorer
             }
         }
 
-        public override double width {
-            get {
-                return base.width;
-            }
-            set {
-                if (base.width != value)
-                {
-                    m_Pattern[State.PRESS] = null;
-                    m_Pattern[State.RELEASE] = null;
-                    base.width = value;
-                }
-            }
-        }
-
-        public override double height {
-            get {
-                return base.height;
-            }
-            set {
-                if (base.height != value)
-                {
-                    m_Pattern[State.PRESS] = null;
-                    m_Pattern[State.RELEASE] = null;
-                    base.height = value;
-                }
-            }
-        }
-
         public string filename_press {
             set {
                 try
                 {
-                    m_Pixbuf[State.PRESS] = new Gdk.Pixbuf.from_file (value);
-                    m_Pattern[State.PRESS] = null;
-                    base.width = double.max (base.width, m_Pixbuf[State.PRESS].width);
-                    base.height = double.max (base.height, m_Pixbuf[State.PRESS].height);
+                    m_Handle[State.PRESS] = new Rsvg.Handle.from_file (value);
+                    if (width <= 0)
+                        width = m_Handle[State.PRESS].width;
+                    if (height <= 0)
+                        height = m_Handle[State.PRESS].height;
                 }
                 catch (GLib.Error err)
                 {
@@ -92,10 +64,11 @@ namespace XSAA.Aixplorer
             set {
                 try
                 {
-                    m_Pixbuf[State.RELEASE] = new Gdk.Pixbuf.from_file (value);
-                    m_Pattern[State.RELEASE] = null;
-                    base.width = double.max (base.width, m_Pixbuf[State.RELEASE].width);
-                    base.height = double.max (base.height, m_Pixbuf[State.RELEASE].height);
+                    m_Handle[State.RELEASE] = new Rsvg.Handle.from_file (value);
+                    if (width <= 0)
+                        width = m_Handle[State.RELEASE].width;
+                    if (height <= 0)
+                        height = m_Handle[State.RELEASE].height;
                 }
                 catch (GLib.Error err)
                 {
@@ -115,37 +88,15 @@ namespace XSAA.Aixplorer
         }
 
         public override void
-        simple_update (Cairo.Context inContext)
-        {
-            base.simple_update (inContext);
-
-            for (int cpt = 0; cpt < State.N; ++cpt)
-            {
-                if (m_Pattern[cpt] == null && m_Pixbuf[cpt] != null)
-                {
-                    var surface = new Cairo.Surface.similar (inContext.get_target (), Cairo.Content.COLOR_ALPHA,
-                                                             (int)width, (int)height);
-                    var ctx = new Cairo.Context (surface);
-                    ctx.set_operator (Cairo.Operator.SOURCE);
-                    ctx.scale (width / m_Pixbuf[cpt].width, height / m_Pixbuf[cpt].height);
-                    Gdk.cairo_set_source_pixbuf (ctx, m_Pixbuf[cpt], 0, 0);
-                    ctx.paint ();
-                    m_Pattern[cpt] = new Cairo.Pattern.for_surface (surface);
-                }
-            }
-        }
-
-        public override void
         simple_paint (Cairo.Context inContext, Goo.CanvasBounds inBounds)
         {
-            if (m_Pattern[m_State] != null)
+            if (m_Handle[m_State] != null)
             {
-                Cairo.Matrix matrix = Cairo.Matrix.identity ();
-                matrix.translate (-x, -y);
-                m_Pattern[m_State].set_matrix (matrix);
+                inContext.save ();
+                inContext.scale (width / m_Handle[m_State].width, height / m_Handle[m_State].height);
                 get_style ().set_fill_options (inContext);
-                inContext.set_source (m_Pattern[m_State]);
-                inContext.paint ();
+                m_Handle[m_State].render_cairo (inContext);
+                inContext.restore ();
             }
         }
 
@@ -167,4 +118,3 @@ namespace XSAA.Aixplorer
         }
     }
 }
-

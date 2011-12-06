@@ -10,7 +10,7 @@ public class TestWindow : Gtk.Window
         Gdk.Screen screen = Gdk.Screen.get_default();
         set_app_paintable(true);
         set_colormap (screen.get_rgba_colormap ());
-        set_default_size (200, 200);
+        set_default_size (1000, 600);
 
         m_Loader = new XSAA.EngineLoader ("aixplorer");
         m_Loader.engine.set_size_request (200, 200);
@@ -19,7 +19,24 @@ public class TestWindow : Gtk.Window
         add (m_Loader.engine);
         destroy.connect (Gtk.main_quit);
 
-        m_Loader.engine.process_event (new XSAA.EventPrompt.show_login ());
+        m_Loader.engine.process_event (new XSAA.EventBoot.loading (false));
+
+        GLib.Timeout.add_seconds(5, () => {
+            m_Loader.engine.process_event (new XSAA.EventBoot.loading (true));
+            m_Loader.engine.process_event (new XSAA.EventBoot.check_filesystem (false));
+            return false;
+        });
+
+        GLib.Timeout.add_seconds(10, () => {
+            m_Loader.engine.process_event (new XSAA.EventBoot.check_filesystem (true));
+            m_Loader.engine.process_event (new XSAA.EventBoot.starting (false));
+            return false;
+        });
+
+        GLib.Timeout.add_seconds(15, () => {
+            m_Loader.engine.process_event (new XSAA.EventBoot.starting (true));
+            return false;
+        });
     }
 
     private void
@@ -71,4 +88,3 @@ main (string[] inArgs)
 
     return 0;
 }
-

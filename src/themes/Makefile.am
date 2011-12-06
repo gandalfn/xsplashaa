@@ -4,6 +4,7 @@ XSPLASHAA_VAPI_DEPS = \
     $(top_builddir)/src/log/xsaa-log.vapi \
     $(top_builddir)/src/xml/xsaa-xml.vapi \
     $(top_builddir)/src/graphics/xsaa-graphics.vapi \
+    $(top_builddir)/src/widgets/xsaa-widgets.vapi \
     $(top_builddir)/src/timeline/xsaa-timeline.vapi
 
 include $(top_srcdir)/build/vala.am
@@ -26,6 +27,7 @@ libxsaa_engine_la_VALAFLAGS = \
 libxsaa_engine_la_SOURCES = \
     event.vala \
     event-prompt.vala \
+    event-boot.vala \
     engine-item.vala \
     engine.vala \
     engine-loader.vala

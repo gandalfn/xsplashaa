@@ -64,8 +64,10 @@ namespace XSAA.Aixplorer
             set {
                 Log.debug ("Set image pixbuf");
                 m_Pixbuf = value;
-                width = m_Pixbuf.width;
-                height = m_Pixbuf.height;
+                if (width <= 0)
+                    width = m_Pixbuf.width;
+                if (height <= 0)
+                    height = m_Pixbuf.height;
                 m_Pattern = null;
                 changed (true);
             }

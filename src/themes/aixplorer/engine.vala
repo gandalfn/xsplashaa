@@ -73,7 +73,9 @@ namespace XSAA.Aixplorer
             EngineItem.register_item ("text", typeof (Text));
             EngineItem.register_item ("button", typeof (Button));
             EngineItem.register_item ("entry", typeof (Entry));
+            EngineItem.register_item ("throbber", typeof (Throbber));
             EngineItem.register_item ("table", typeof (Table));
+            EngineItem.register_item ("progressbar", typeof (ProgressBar));
 
             GLib.Value.register_transform_func (typeof (string), typeof (Goo.CanvasItemVisibility),
                                                 (ValueTransform)string_to_canvas_item_visibility);
@@ -132,6 +134,7 @@ namespace XSAA.Aixplorer
                     prompt.visibility = Goo.CanvasItemVisibility.VISIBLE;
                     prompt_table.visibility = Goo.CanvasItemVisibility.VISIBLE;
                     break;
+
                 case EventPrompt.Type.SHOW_PASSWORD:
                     prompt_label.text = "Password:";
                     prompt.text = "";
@@ -140,10 +143,49 @@ namespace XSAA.Aixplorer
                     prompt.visibility = Goo.CanvasItemVisibility.VISIBLE;
                     prompt_table.visibility = Goo.CanvasItemVisibility.VISIBLE;
                     break;
+
                 case EventPrompt.Type.HIDE:
                     prompt_label.visibility = Goo.CanvasItemVisibility.INVISIBLE;
                     prompt.visibility = Goo.CanvasItemVisibility.INVISIBLE;
                     prompt_table.visibility = Goo.CanvasItemVisibility.INVISIBLE;
+                    break;
+            }
+        }
+
+        private void
+        process_boot_event (EventBoot inEvent)
+        {
+            unowned Throbber loading = (Throbber)find ("loading-throbber");
+            unowned Throbber check_filesystem = (Throbber)find ("checking-filesystem-throbber");
+            unowned Throbber starting = (Throbber)find ("starting-throbber");
+
+            if (loading == null || check_filesystem == null || starting == null)
+            {
+                Log.critical ("Error does not find boot items");
+                return;
+            }
+
+            switch (inEvent.args.event_type)
+            {
+                case EventBoot.Type.LOADING:
+                    if (!inEvent.args.completed)
+                        loading.start ();
+                    else
+                        loading.finished ();
+                    break;
+
+                case EventBoot.Type.CHECK_FILESYSTEM:
+                    if (!inEvent.args.completed)
+                        check_filesystem.start ();
+                    else
+                        check_filesystem.finished ();
+                    break;
+
+                case EventBoot.Type.STARTING:
+                    if (!inEvent.args.completed)
+                        starting.start ();
+                    else
+                        starting.finished ();
                     break;
             }
         }
@@ -217,6 +259,10 @@ namespace XSAA.Aixplorer
             {
                 process_prompt_event ((EventPrompt)inEvent);
             }
+            else if (inEvent is EventBoot)
+            {
+                process_boot_event ((EventBoot)inEvent);
+            }
         }
     }
 }
@@ -225,4 +271,3 @@ public XSAA.Engine? plugin_init ()
 {
     return new XSAA.Aixplorer.Engine ();
 }
-

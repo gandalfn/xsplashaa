@@ -22,7 +22,8 @@ libxsaa_widgets_la_VALAFLAGS = \
 
 libxsaa_widgets_la_SOURCES = \
     slide-notebook.vala \
-    throbber.vala
+    throbber.vala \
+    segmented-bar.vala
 
 libxsaa_widgets_la_LIBADD = \
     $(XSPLASHAA_LIBS_DEPS)

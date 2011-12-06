@@ -55,6 +55,7 @@ PKG_CHECK_MODULES(XSPLASHAA, [x11
                               gmodule-2.0 >= $GLIB_REQUIRED
                               gtk+-2.0 >= $GTK_REQUIRED
                               goocanvas >= $GOOCANVAS_REQUIRED
+                              librsvg-2.0
                               dbus-glib-1])
 
 PKG_CHECK_MODULES(XSPLASHAA_SESSION_DAEMON, [glib-2.0 >= $GLIB_REQUIRED,

@@ -3,6 +3,7 @@ XSPLASHAA_VAPI_DEPS = \
     $(top_builddir)/src/xml/xsaa-xml.vapi \
     $(top_builddir)/src/graphics/xsaa-graphics.vapi \
     $(top_builddir)/src/timeline/xsaa-timeline.vapi \
+    $(top_builddir)/src/widgets/xsaa-widgets.vapi \
     $(top_builddir)/src/themes/xsaa-engine.vapi
 
 include $(top_srcdir)/build/vala.am
@@ -16,6 +17,7 @@ aixplorer_engine_la_VALAFLAGS = \
     --pkg=gmodule-2.0 \
     --pkg=gtk+-2.0 \
     --pkg=goocanvas \
+    --pkg=librsvg-2.0 \
     --pkg=dbus-glib-1 \
     --pkg=pam \
     --pkg=x11 \
@@ -29,15 +31,18 @@ aixplorer_engine_la_SOURCES = \
     button.vala \
     widget.vala \
     entry.vala \
+    throbber.vala \
+    progress-bar.vala \
     table.vala \
     background.vala \
     logo.vala \
     engine.vala
 
 aixplorer_engine_la_LDFLAGS = \
-    -module -avoid-version -no-undefined
+    -module -avoid-version -no-undefined -Wl,-z,muldefs
 
 aixplorer_engine_la_LIBADD = \
+    $(XSPLASHAA_LIBS_DEPS) \
     $(XSPLASHAA_LIBS)
 
 VALAFILES = \
