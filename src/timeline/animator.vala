@@ -336,7 +336,7 @@ namespace XSAA
         ////////////////////////////////////////////////////////////////////////
         public uint
         add_transition (double inFrom, double inTo, ProgressType inType,
-                        TransitionCallback? inCallback = null, TransitionFinished? inFinished = null)
+                        owned TransitionCallback? inCallback = null, owned TransitionFinished? inFinished = null)
         {
             Transition transition = new Transition (m_TransitionLastId, inFrom, inTo, inType, inCallback, inFinished);
             m_Transitions += transition;
@@ -399,3 +399,4 @@ namespace XSAA
         }
     }
 }
+

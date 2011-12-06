@@ -34,6 +34,7 @@ aixplorer_engine_la_SOURCES = \
     throbber.vala \
     progress-bar.vala \
     table.vala \
+    notebook.vala \
     background.vala \
     logo.vala \
     engine.vala

@@ -1,4 +1,4 @@
-/* event-prompt.vala
+/* event-session.vala
  *
  * Copyright (C) 2009-2011  Nicolas Bruguier
  *
@@ -24,57 +24,35 @@ namespace XSAA
     /**
      * Engine event class
      */
-    public class EventPrompt : Event<EventPrompt.Args>
+    public class EventSession : Event<EventSession.Args>
     {
         // types
         public enum Type
         {
-            SHOW_LOGIN,
-            SHOW_PASSWORD,
-            EDITED
+            LOADING
         }
 
         public class Args : XSAA.Event.Args
         {
             // accessors
             public Type event_type { get; construct; }
-            public string text  { get; construct; }
+            public bool completed  { get; construct; }
 
             // methods
-            public Args.show_login ()
+            public Args.loading (bool inCompleted)
             {
-                GLib.Object (event_type: Type.SHOW_LOGIN);
-            }
-
-            public Args.show_password ()
-            {
-                GLib.Object (event_type: Type.SHOW_PASSWORD);
-            }
-
-            public Args.edited (string inPrompt)
-            {
-                GLib.Object (event_type: Type.EDITED, text: inPrompt);
+                GLib.Object (event_type: Type.LOADING, completed: inCompleted);
             }
         }
 
-        public EventPrompt (Args inArgs)
+        public EventSession (Args inArgs)
         {
             base (inArgs);
         }
 
-        public EventPrompt.show_login ()
+        public EventSession.loading (bool inCompleted)
         {
-            this (new Args.show_login ());
-        }
-
-        public EventPrompt.show_password ()
-        {
-            this (new Args.show_password ());
-        }
-
-        public EventPrompt.edited (string inPrompt)
-        {
-            this (new Args.edited (inPrompt));
+            this (new Args.loading (inCompleted));
         }
     }
 }

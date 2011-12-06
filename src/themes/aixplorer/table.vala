@@ -89,6 +89,9 @@ namespace XSAA.Aixplorer
         public bool y_expand         { get; set; default = true; }
         public bool y_fill           { get; set; default = false; }
         public bool y_shrink         { get; set; default = false; }
+        public int  page_num         { get; set; default = -1; }
+
+        public Notebook.Animation.AnimType animation { get; set; default = Notebook.Animation.AnimType.HORIZONTAL_SLIDE; }
 
         // methods
         public void

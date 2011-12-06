@@ -83,7 +83,7 @@ namespace XSAA
         public delegate string BarValueFormatHandler (Segment segment);
         private int pango_size_normal;
 
-        public class Segment
+        public class Segment : GLib.Object
         {
             // properties
             public string Title { get; set; }
@@ -1018,3 +1018,4 @@ namespace XSAA
         }
     }
 }
+

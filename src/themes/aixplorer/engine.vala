@@ -26,11 +26,66 @@ namespace XSAA.Aixplorer
      */
     public class Engine : Goo.Canvas, XSAA.EngineItem, XSAA.Engine
     {
+        // types
+        public class Animation : GLib.Object
+        {
+            // properties
+            private Animator               m_Animator;
+            private string                 m_Property;
+            private double                 m_Start;
+            private double                 m_End;
+            private unowned Goo.CanvasItem m_Item;
+
+            // signals
+            public signal void finished ();
+
+            // methods
+            public Animation (Goo.CanvasItem inItem, string inProperty, double inStart, double inEnd)
+            {
+                m_Animator = new Animator (60, 400);
+                m_Item = inItem;
+                m_Property = inProperty;
+                m_Start = inStart;
+                m_End = inEnd;
+
+                uint transition = m_Animator.add_transition (0.0, 1.0, XSAA.Animator.ProgressType.EASE_IN_EASE_OUT, null, on_finished);
+                GLib.Value from = (double)m_Start;
+                GLib.Value to = (double)m_End;
+                m_Animator.add_transition_property (transition, m_Item, m_Property, from, to);
+            }
+
+            private void
+            on_finished ()
+            {
+                finished ();
+            }
+
+            public void
+            start ()
+            {
+                GLib.Value start = (double)m_Start;
+                m_Item.set_property (m_Property, start);
+                m_Item.visibility = Goo.CanvasItemVisibility.VISIBLE;
+
+                m_Animator.start ();
+            }
+
+            public void
+            stop ()
+            {
+                m_Animator.stop ();
+
+                GLib.Value end = (double)m_End;
+                m_Item.set_property (m_Property, end);
+            }
+        }
+
         // private
         private string                             m_Id;
         private int                                m_Layer = -1;
         private unowned Goo.CanvasItem?            m_Root;
         private GLib.HashTable<string, EngineItem> m_Childs;
+        private GLib.Queue<Animation>              m_Animations;
 
         // accessors
         protected GLib.HashTable<string, EngineItem>? childs {
@@ -75,6 +130,7 @@ namespace XSAA.Aixplorer
             EngineItem.register_item ("entry", typeof (Entry));
             EngineItem.register_item ("throbber", typeof (Throbber));
             EngineItem.register_item ("table", typeof (Table));
+            EngineItem.register_item ("notebook", typeof (Notebook));
             EngineItem.register_item ("progressbar", typeof (ProgressBar));
 
             GLib.Value.register_transform_func (typeof (string), typeof (Goo.CanvasItemVisibility),
@@ -103,6 +159,11 @@ namespace XSAA.Aixplorer
         }
 
         // methods
+        construct
+        {
+            m_Animations = new GLib.Queue<Animation> ();
+        }
+
         /**
          * Create a new Aixplorer theme engine
          */
@@ -114,11 +175,11 @@ namespace XSAA.Aixplorer
         private void
         process_prompt_event (EventPrompt inEvent)
         {
+            unowned Notebook notebook = (Notebook)find ("main-notebook");
             unowned Text prompt_label = (Text)find ("prompt-label");
             unowned Entry prompt = (Entry)find ("prompt");
-            unowned Table prompt_table = (Table)find ("prompt-table");
 
-            if (prompt == null || prompt_label == null)
+            if (prompt == null || prompt_label == null || notebook == null)
             {
                 Log.critical ("Error does not find prompt items");
                 return;
@@ -130,24 +191,14 @@ namespace XSAA.Aixplorer
                     prompt_label.text = "Login:";
                     prompt.text = "";
                     prompt.entry_visibility = true;
-                    prompt_label.visibility = Goo.CanvasItemVisibility.VISIBLE;
-                    prompt.visibility = Goo.CanvasItemVisibility.VISIBLE;
-                    prompt_table.visibility = Goo.CanvasItemVisibility.VISIBLE;
+                    notebook.current_page = 1;
                     break;
 
                 case EventPrompt.Type.SHOW_PASSWORD:
                     prompt_label.text = "Password:";
                     prompt.text = "";
                     prompt.entry_visibility = false;
-                    prompt_label.visibility = Goo.CanvasItemVisibility.VISIBLE;
-                    prompt.visibility = Goo.CanvasItemVisibility.VISIBLE;
-                    prompt_table.visibility = Goo.CanvasItemVisibility.VISIBLE;
-                    break;
-
-                case EventPrompt.Type.HIDE:
-                    prompt_label.visibility = Goo.CanvasItemVisibility.INVISIBLE;
-                    prompt.visibility = Goo.CanvasItemVisibility.INVISIBLE;
-                    prompt_table.visibility = Goo.CanvasItemVisibility.INVISIBLE;
+                    notebook.current_page = 1;
                     break;
             }
         }
@@ -155,11 +206,12 @@ namespace XSAA.Aixplorer
         private void
         process_boot_event (EventBoot inEvent)
         {
+            unowned Notebook notebook = (Notebook)find ("main-notebook");
             unowned Throbber loading = (Throbber)find ("loading-throbber");
             unowned Throbber check_filesystem = (Throbber)find ("checking-filesystem-throbber");
             unowned Throbber starting = (Throbber)find ("starting-throbber");
 
-            if (loading == null || check_filesystem == null || starting == null)
+            if (loading == null || check_filesystem == null || starting == null || notebook == null)
             {
                 Log.critical ("Error does not find boot items");
                 return;
@@ -168,6 +220,7 @@ namespace XSAA.Aixplorer
             switch (inEvent.args.event_type)
             {
                 case EventBoot.Type.LOADING:
+                    notebook.current_page = 0;
                     if (!inEvent.args.completed)
                         loading.start ();
                     else
@@ -175,17 +228,92 @@ namespace XSAA.Aixplorer
                     break;
 
                 case EventBoot.Type.CHECK_FILESYSTEM:
+                    notebook.current_page = 0;
                     if (!inEvent.args.completed)
+                    {
+                        unowned Table check_filesystem_table = (Table)find ("checking-filesystem");
+                        Animation animation = new Animation (check_filesystem_table, "x", allocation.width, check_filesystem_table.x);
+                        m_Animations.push_tail (animation);
+                        animation.finished.connect (() => {
+                            m_Animations.pop_tail ().ref ();
+                            if (!m_Animations.is_empty ())
+                                m_Animations.peek_head ().start ();
+                        });
+                        if (m_Animations.length == 1)
+                            animation.start ();
+
                         check_filesystem.start ();
+                    }
                     else
                         check_filesystem.finished ();
                     break;
 
                 case EventBoot.Type.STARTING:
+                    notebook.current_page = 0;
                     if (!inEvent.args.completed)
+                    {
+                        unowned Table starting_table = (Table)find ("starting");
+                        Animation animation = new Animation (starting_table, "x", allocation.width, starting_table.x);
+                        m_Animations.push_tail (animation);
+                        animation.finished.connect (() => {
+                            m_Animations.pop_tail ().ref ();
+                            if (!m_Animations.is_empty ())
+                                m_Animations.peek_head ().start ();
+                        });
+                        if (m_Animations.length == 1)
+                            animation.start ();
+
                         starting.start ();
+                    }
                     else
                         starting.finished ();
+                    break;
+            }
+        }
+
+        private void
+        process_progress_event (EventProgress inEvent)
+        {
+            unowned ProgressBar progress = (ProgressBar)find ("progress-bar");
+
+            if (progress == null)
+            {
+                Log.critical ("Error does not find progress items");
+                return;
+            }
+
+            switch (inEvent.args.event_type)
+            {
+                case EventProgress.Type.PULSE:
+                    progress.pulse ();
+                    break;
+
+                case EventProgress.Type.PROGRESS:
+                    progress.percent = inEvent.args.progress_val;
+                    break;
+            }
+        }
+
+        private void
+        process_session_event (EventSession inEvent)
+        {
+            unowned Notebook notebook = (Notebook)find ("main-notebook");
+            unowned Throbber session = (Throbber)find ("launch-sesion-throbber");
+
+            if (session == null || notebook == null)
+            {
+                Log.critical ("Error does not find boot items");
+                return;
+            }
+
+            switch (inEvent.args.event_type)
+            {
+                case EventSession.Type.LOADING:
+                    notebook.current_page = 2;
+                    if (!inEvent.args.completed)
+                        session.start ();
+                    else
+                        session.finished ();
                     break;
             }
         }
@@ -263,6 +391,14 @@ namespace XSAA.Aixplorer
             {
                 process_boot_event ((EventBoot)inEvent);
             }
+            else if (inEvent is EventProgress)
+            {
+                process_progress_event ((EventProgress)inEvent);
+            }
+            else if (inEvent is EventSession)
+            {
+                process_session_event ((EventSession)inEvent);
+            }
         }
     }
 }
@@ -271,3 +407,4 @@ public XSAA.Engine? plugin_init ()
 {
     return new XSAA.Aixplorer.Engine ();
 }
+

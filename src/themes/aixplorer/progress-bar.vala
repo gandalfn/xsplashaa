@@ -23,6 +23,12 @@ namespace XSAA.Aixplorer
 {
     public class ProgressBar : Widget
     {
+        // properties
+        private XSAA.Animator m_Animator;
+        SegmentedBar.Segment  m_Before;
+        SegmentedBar.Segment  m_Value;
+        SegmentedBar.Segment  m_After;
+
         // accessors
         public override string node_name {
             get {
@@ -41,19 +47,58 @@ namespace XSAA.Aixplorer
                 Gdk.Color color;
                 if (Gdk.Color.parse (value, out color))
                 {
-                    ((SegmentedBar)composite_widget).AddSegmentRgba ("", 0.0, 0);
-                    ((SegmentedBar)composite_widget).AddSegmentB ("", 0.0, SegmentedBar.GdkColorToCairoColorA (color));
-                    ((SegmentedBar)composite_widget).AddSegmentRgba ("", 1.0, 0);
+                    if (m_Before == null)
+                    {
+                        m_Before = new SegmentedBar.Segment ("", 0, SegmentedBar.BarColour (0, 0, 0, 0), false);
+                        ((SegmentedBar)composite_widget).AddSegment (m_Before);
+                        uint transition = m_Animator.add_transition (0.0, 0.5, XSAA.Animator.ProgressType.SINUSOIDAL, () => {
+                            composite_widget.queue_draw ();
+                            return false;
+                        }, null);
+                        GLib.Value from = (double)0.0;
+                        GLib.Value to = (double)0.9;
+                        m_Animator.add_transition_property (transition, m_Before, "Percent", from, to);
+
+                        transition = m_Animator.add_transition (0.5, 1.0, XSAA.Animator.ProgressType.SINUSOIDAL, () => {
+                            composite_widget.queue_draw ();
+                            return false;
+                        }, null);
+                        m_Animator.add_transition_property (transition, m_Before, "Percent", to, from);
+                    }
+                    if (m_Value == null)
+                    {
+                        m_Value = new SegmentedBar.Segment ("", 1, SegmentedBar.GdkColorToCairoColorA (color), true);
+                        ((SegmentedBar)composite_widget).AddSegment (m_Value);
+                    }
+                    else
+                    {
+                        m_Value.Color = SegmentedBar.GdkColorToCairoColorA (color);
+                    }
+                    if (m_After == null)
+                    {
+                        m_After = new SegmentedBar.Segment ("", 1, SegmentedBar.BarColour (0, 0, 0, 0), false);
+                        ((SegmentedBar)composite_widget).AddSegment (m_After);
+                        uint transition = m_Animator.add_transition (0.0, 0.5, XSAA.Animator.ProgressType.SINUSOIDAL, null, null);
+                        GLib.Value from = (double)0.1;
+                        GLib.Value to = (double)1.0;
+                        m_Animator.add_transition_property (transition, m_After, "Percent", from, to);
+
+                        transition = m_Animator.add_transition (0.5, 1.0, XSAA.Animator.ProgressType.SINUSOIDAL, null, null);
+                        m_Animator.add_transition_property (transition, m_After, "Percent", to, from);
+                    }
                 }
             }
         }
 
         public double percent {
             set {
-                ((SegmentedBar)composite_widget).UpdateSegment (1, 0);
-                ((SegmentedBar)composite_widget).UpdateSegment (2, value);
-                ((SegmentedBar)composite_widget).UpdateSegment (3, (1.0 - value));
-                composite_widget.queue_draw ();
+                m_Animator.stop ();
+
+                m_Before.Percent = 0.0;
+                m_Value.Percent = value;
+                m_After.Percent = 1.0 - value;
+
+                changed (true);
             }
         }
 
@@ -64,6 +109,17 @@ namespace XSAA.Aixplorer
             progress.ShowReflection = true;
             progress.ShowLabels = false;
             composite_widget = progress;
+
+            m_Animator = new XSAA.Animator(60, 2000);
+            m_Animator.loop = true;
+        }
+
+        public void
+        pulse ()
+        {
+            m_Value.Percent = 0.1;
+            m_Animator.start ();
         }
     }
 }
+

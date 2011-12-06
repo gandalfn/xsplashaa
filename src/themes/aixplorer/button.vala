@@ -34,7 +34,7 @@ namespace XSAA.Aixplorer
         // properties
         private State         m_State = State.RELEASE;
         private Rsvg.Handle   m_Handle[2];
-
+        private bool          m_Reflect = false;
 
         // accessors
         public override string node_name {
@@ -43,15 +43,24 @@ namespace XSAA.Aixplorer
             }
         }
 
+        public override double height {
+            get {
+                return m_Reflect ? base.height * 2.0 : base.height;
+            }
+            set {
+                base.height = value;
+            }
+        }
+
         public string filename_press {
             set {
                 try
                 {
                     m_Handle[State.PRESS] = new Rsvg.Handle.from_file (value);
-                    if (width <= 0)
-                        width = m_Handle[State.PRESS].width;
-                    if (height <= 0)
-                        height = m_Handle[State.PRESS].height;
+                    if (base.width <= 0)
+                        base.width = m_Handle[State.PRESS].width;
+                    if (base.height <= 0)
+                        base.height = m_Handle[State.PRESS].height;
                 }
                 catch (GLib.Error err)
                 {
@@ -65,14 +74,26 @@ namespace XSAA.Aixplorer
                 try
                 {
                     m_Handle[State.RELEASE] = new Rsvg.Handle.from_file (value);
-                    if (width <= 0)
-                        width = m_Handle[State.RELEASE].width;
-                    if (height <= 0)
-                        height = m_Handle[State.RELEASE].height;
+                    if (base.width <= 0)
+                        base.width = m_Handle[State.RELEASE].width;
+                    if (base.height <= 0)
+                        base.height = m_Handle[State.RELEASE].height;
                 }
                 catch (GLib.Error err)
                 {
                     Log.critical ("error on loading %s: %s", value, err.message);
+                }
+            }
+        }
+
+        public bool show_reflection {
+            get {
+                return m_Reflect;
+            }
+            set {
+                if (m_Reflect != value)
+                {
+                    m_Reflect = value;
                 }
             }
         }
@@ -93,7 +114,41 @@ namespace XSAA.Aixplorer
             if (m_Handle[m_State] != null)
             {
                 inContext.save ();
-                inContext.scale (width / m_Handle[m_State].width, height / m_Handle[m_State].height);
+                if (m_Reflect)
+                {
+                    inContext.push_group();
+                }
+
+                if (m_Reflect)
+                {
+                    inContext.save ();
+
+                    inContext.rectangle (0, base.height, base.width, base.height);
+                    inContext.clip ();
+
+                    Cairo.Matrix matrix = Cairo.Matrix(1, 0, 0, 1, 0, 0);
+                    matrix.scale (base.width / m_Handle[m_State].width, -base.height / m_Handle[m_State].height);
+                    matrix.translate (0, -(2 * m_Handle[m_State].height) + 1);
+
+                    inContext.transform (matrix);
+
+                    get_style ().set_fill_options (inContext);
+                    m_Handle[m_State].render_cairo (inContext);
+
+                    inContext.restore ();
+
+                    inContext.pop_group_to_source();
+
+                    Cairo.Pattern mask = new Cairo.Pattern.linear(0, height, 0, base.height);
+                    mask.add_color_stop_rgba(0.25, 0, 0, 0, 0);
+                    mask.add_color_stop_rgba(0.5, 0, 0, 0, 0.125);
+                    mask.add_color_stop_rgba(0.75, 0, 0, 0, 0.4);
+                    mask.add_color_stop_rgba(1.0, 0, 0, 0, 0.4);
+
+                    inContext.mask (mask);
+                }
+
+                inContext.scale (base.width / m_Handle[m_State].width, base.height / m_Handle[m_State].height);
                 get_style ().set_fill_options (inContext);
                 m_Handle[m_State].render_cairo (inContext);
                 inContext.restore ();
@@ -118,3 +173,4 @@ namespace XSAA.Aixplorer
         }
     }
 }
+

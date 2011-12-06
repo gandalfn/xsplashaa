@@ -10,7 +10,8 @@ public class TestWindow : Gtk.Window
         Gdk.Screen screen = Gdk.Screen.get_default();
         set_app_paintable(true);
         set_colormap (screen.get_rgba_colormap ());
-        set_default_size (1000, 600);
+        //set_default_size (1000, 600);
+        fullscreen ();
 
         m_Loader = new XSAA.EngineLoader ("aixplorer");
         m_Loader.engine.set_size_request (200, 200);
@@ -20,21 +21,26 @@ public class TestWindow : Gtk.Window
         destroy.connect (Gtk.main_quit);
 
         m_Loader.engine.process_event (new XSAA.EventBoot.loading (false));
+        m_Loader.engine.process_event (new XSAA.EventProgress.pulse ());
 
         GLib.Timeout.add_seconds(5, () => {
             m_Loader.engine.process_event (new XSAA.EventBoot.loading (true));
             m_Loader.engine.process_event (new XSAA.EventBoot.check_filesystem (false));
+            m_Loader.engine.process_event (new XSAA.EventProgress.progress (0.33));
             return false;
         });
 
         GLib.Timeout.add_seconds(10, () => {
             m_Loader.engine.process_event (new XSAA.EventBoot.check_filesystem (true));
             m_Loader.engine.process_event (new XSAA.EventBoot.starting (false));
+            m_Loader.engine.process_event (new XSAA.EventProgress.progress (0.66));
             return false;
         });
 
         GLib.Timeout.add_seconds(15, () => {
             m_Loader.engine.process_event (new XSAA.EventBoot.starting (true));
+            m_Loader.engine.process_event (new XSAA.EventPrompt.show_login ());
+            m_Loader.engine.process_event (new XSAA.EventProgress.progress (1.0));
             return false;
         });
     }
@@ -57,8 +63,8 @@ public class TestWindow : Gtk.Window
                     else
                     {
                         XSAA.Log.info ("Password %s", event_prompt.args.text);
-                        m_Loader.engine.process_event (new XSAA.EventPrompt.hide ());
                         m_AskPasword = false;
+                        m_Loader.engine.process_event (new XSAA.EventSession.loading (false));
                     }
                     break;
             }
@@ -88,3 +94,4 @@ main (string[] inArgs)
 
     return 0;
 }
+
