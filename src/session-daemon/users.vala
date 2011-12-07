@@ -125,37 +125,34 @@ namespace XSAA
 
             if (face_pixbuf != null)
             {
-                Cairo.ImageSurface surface = new Cairo.ImageSurface (Cairo.Format.ARGB32,
-                                                                     ICON_SIZE, ICON_SIZE);
-
-                CairoContext ctx = new CairoContext (surface);
-                ctx.set_operator (Cairo.Operator.CLEAR);
-                ctx.paint ();
-                ctx.set_operator (Cairo.Operator.OVER);
-
-                double scale = ICON_SIZE / (double)(face_pixbuf.width + 4);
-                ctx.scale (scale, scale);
-                ctx.rounded_rectangle (((ICON_SIZE - ((double)(face_pixbuf.width + 4) * scale)) / 2.0) + 2.0,
-                                       ((ICON_SIZE - ((double)(face_pixbuf.height + 4) * scale)) / 2.0) + 2.0,
-                                       face_pixbuf.width, face_pixbuf.height, 4, CairoCorner.ALL);
-                ctx.clip ();
-                Gdk.cairo_set_source_pixbuf (ctx, face_pixbuf, 
-                                             ((ICON_SIZE - ((double)(face_pixbuf.width + 4) * scale)) / 2.0) + 2.0,
-                                             ((ICON_SIZE - ((double)(face_pixbuf.height + 4) * scale)) / 2.0) + 2.0);
-                ctx.paint ();
-                surface.finish ();
-
                 m_FaceIconShmKey = GLib.Quark.from_string (login);
                 m_FaceIconShmId = Os.shmget(m_FaceIconShmKey,
                                             ICON_SIZE * ICON_SIZE *  4,
                                             Os.IPC_CREAT | 0666);
+                m_FaceIconPixels = (uchar[])Os.shmat(face_icon_shm_id, null, 0);
+
+                Cairo.ImageSurface surface = new Cairo.ImageSurface.for_data (m_FaceIconPixels,
+                                                                              Cairo.Format.ARGB32,
+                                                                              ICON_SIZE, ICON_SIZE,
+                                                                              Cairo.Format.ARGB32.stride_for_width (ICON_SIZE));
+
+                CairoContext ctx = new CairoContext (surface);
+                ctx.set_operator (Cairo.Operator.CLEAR);
+                ctx.paint ();
+                ctx.set_operator (Cairo.Operator.SOURCE);
+
+                double scale = ICON_SIZE / (double)(face_pixbuf.width + 4);
+                ctx.scale (scale, scale);
+                ctx.rounded_rectangle (2.0, (((double)(face_pixbuf.width + 4) - (double)face_pixbuf.height) / 2.0) + 2.0,
+                                       face_pixbuf.width, face_pixbuf.height, 4, CairoCorner.ALL);
+                ctx.clip ();
+                Gdk.cairo_set_source_pixbuf (ctx, face_pixbuf,
+                                             2.0, (((double)(face_pixbuf.width + 4) - (double)face_pixbuf.height) / 2.0) + 2.0);
+                ctx.paint ();
+                surface.finish ();
 
                 GLib.debug ("Face icon %s: key = 0x%x, id = %i",
                             login, (int)m_FaceIconShmKey, m_FaceIconShmId);
-
-                m_FaceIconPixels = (uchar[])Os.shmat(face_icon_shm_id, null, 0);
-
-                GLib.Memory.copy (m_FaceIconPixels, surface.get_data (), ICON_SIZE * ICON_SIZE * 4);
             }
         }
 
@@ -409,3 +406,4 @@ namespace XSAA
         }
     }
 }
+

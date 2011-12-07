@@ -12,6 +12,7 @@ libxsaa_graphics_la_VALAFLAGS = \
     --pkg=gtk+-2.0
 
 libxsaa_graphics_la_SOURCES = \
+    cairo-color.vala \
     cairo-context.vala
 
 libxsaa_graphics_la_LIBADD = \

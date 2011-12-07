@@ -31,14 +31,18 @@ namespace XSAA
         {
             SHOW_LOGIN,
             SHOW_PASSWORD,
+            SHOW_FACE_AUTHENTIFICATION,
+            MESSAGE,
             EDITED
         }
 
         public class Args : XSAA.Event.Args
         {
             // accessors
-            public Type event_type { get; construct; }
-            public string text  { get; construct; }
+            public Type event_type            { get; construct; }
+            public string text                { get; construct; }
+            public string msg                 { get; construct; }
+            public bool face_authentification { get; construct; default = false; }
 
             // methods
             public Args.show_login ()
@@ -51,9 +55,19 @@ namespace XSAA
                 GLib.Object (event_type: Type.SHOW_PASSWORD);
             }
 
-            public Args.edited (string inPrompt)
+            public Args.show_face_authentification ()
             {
-                GLib.Object (event_type: Type.EDITED, text: inPrompt);
+                GLib.Object (event_type: Type.SHOW_FACE_AUTHENTIFICATION);
+            }
+
+            public Args.message (string inMessage)
+            {
+                GLib.Object (event_type: Type.MESSAGE, msg: inMessage);
+            }
+
+            public Args.edited (string inPrompt, bool inFaceAuthentification)
+            {
+                GLib.Object (event_type: Type.EDITED, text: inPrompt, face_authentification: inFaceAuthentification);
             }
         }
 
@@ -72,9 +86,19 @@ namespace XSAA
             this (new Args.show_password ());
         }
 
-        public EventPrompt.edited (string inPrompt)
+        public EventPrompt.show_face_authentification ()
         {
-            this (new Args.edited (inPrompt));
+            this (new Args.show_face_authentification ());
+        }
+
+        public EventPrompt.message (string inMessage)
+        {
+            this (new Args.message (inMessage));
+        }
+
+        public EventPrompt.edited (string inPrompt, bool inFaceAuthentification = false)
+        {
+            this (new Args.edited (inPrompt, inFaceAuthentification));
         }
     }
 }

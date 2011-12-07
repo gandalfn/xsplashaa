@@ -56,30 +56,42 @@
                     </table>
                     <!--prompt table -->
                     <table id="prompt-table" page_num="1" animation="vertical-slide" x_align="0.5" y_align="0.0"
-                           row_spacing="12" column_spacing="12" homogeneous_rows="true" y_fill="true">
-                        <notebook id="users-notebook" row="0" column="0" x_align="0.5" y_align="0.0" columns="3">
-                            <users id="users" page_num="0" animation="vertical-slide"
+                           row_spacing="12" column_spacing="12" homogeneous_rows="false" y_fill="true">
+                        <notebook id="users-notebook" row="0" column="0" x_align="0.5" y_align="0.5" columns="3">
+                            <users id="users" page_num="0" animation="horizontal-slide"
                                    y_fill="true" x_fill="true" x_align="0.5" y_align="0.0"
-                                   height="150" widget_font="Liberation Bold 18"/>
-                            <table id="prompt-table" page_num="1" animation="vertical-slide" x_align="0.5" y_align="0.5"
+                                   height="250" widget_font="Liberation Bold 18"/>
+                            <table id="prompt-table" page_num="1" animation="horizontal-slide" x_align="0.5" y_align="0.5"
                                    row_spacing="12" column_spacing="12" homogeneous_rows="true">
                                 <text id="prompt-label" row="0" column="0" x_align="1.0"
                                       font="Liberation Bold 18" fill_color="#DCE7EC"
                                       text="Login:"/>
-                                <entry id="prompt" row="0" column="1"
+                                <entry id="prompt" row="0" column="1" columns="2"
                                        x_align="0.0" x_fill="true" y_fill="true"
                                        left_padding="12" right_padding="48"
                                        widget_font="Liberation 16"/>
                             </table>
+                            <faceauth id="face-auth" page_num="2" animation="horizontal-slide"
+                                      x_align="0.5" y_align="0.0" width="400" height="300"/>
                         </notebook>
-                        <button id="button-restart" row="1" column="1" show_reflection="true"
+                        <text id="prompt-message" row="1" column="0" x_align="0.0" y_align="0.5"  columns="3"
+                              top_padding="12" bottom_padding="12"
+                              font="Liberation Bold 18" fill_color="#FF0000"/>
+                        <table id="face-authentification-table" row="2" column="0" y_align="0.1" column_spacing="12">
+                            <checkbutton id="face-authentification" row="0" column="0"  y_align="0.5"
+                                         line-width="2.7" stroke_color="#FF0000"/>
+                            <text id="face-authentification-label" row="0" column="1"  y_align="0.5"
+                                  font="Liberation Bold 12" fill_color="#DCE7EC"
+                                  text="Face authentification"/>
+                        </table>
+                        <button id="button-restart" row="2" column="2" show_reflection="true"
                                 width="140" height="42" y_align="0.1"
-                                filename_press="/home/gandalfn/Projects/ssibuntu/git/xsplashaa/data/themes/leaves/restart-press.svg"
-                                filename_release="/home/gandalfn/Projects/ssibuntu/git/xsplashaa/data/themes/leaves/restart-release.svg"/>
-                        <button id="button-shutdown" row="1" column="2" show_reflection="true"
+                                filename_press="/home/nicolas/Projects/packages/git/ssibuntu/xsplashaa/data/themes/leaves/restart-press.svg"
+                                filename_release="/home/nicolas/Projects/packages/git/ssibuntu/xsplashaa/data/themes/leaves/restart-release.svg"/>
+                        <button id="button-shutdown" row="2" column="3" show_reflection="true"
                                 width="140" height="42" y_align="0.1"
-                                filename_press="/home/gandalfn/Projects/ssibuntu/git/xsplashaa/data/themes/leaves/shutdown-press.svg"
-                                filename_release="/home/gandalfn/Projects/ssibuntu/git/xsplashaa/data/themes/leaves/shutdown-release.svg"/>
+                                filename_press="/home/nicolas/Projects/packages/git/ssibuntu/xsplashaa/data/themes/leaves/shutdown-press.svg"
+                                filename_release="/home/nicolas/Projects/packages/git/ssibuntu/xsplashaa/data/themes/leaves/shutdown-release.svg"/>
                     </table>
                 </notebook>
             </table>

@@ -117,10 +117,7 @@ namespace XSAA.Aixplorer
                 if (m_Reflect)
                 {
                     inContext.push_group();
-                }
 
-                if (m_Reflect)
-                {
                     inContext.save ();
 
                     inContext.rectangle (0, base.height, base.width, base.height);

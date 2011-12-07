@@ -3,6 +3,10 @@ public class TestWindow : Gtk.Window
     // properties
     private XSAA.EngineLoader m_Loader;
     private bool              m_AskPasword = false;
+    private Gtk.EventBox      m_Box;
+    private XSAA.Animator     m_Animator;
+
+    public double percent { get; set; default = 1.0; }
 
     // methods
     public TestWindow ()
@@ -13,17 +17,38 @@ public class TestWindow : Gtk.Window
         //set_default_size (1000, 600);
         fullscreen ();
 
+        m_Box = new Gtk.EventBox ();
+        m_Box.set_above_child (false);
+        m_Box.set_visible_window (true);
+        m_Box.set_app_paintable (true);
+        m_Box.realize.connect ((b) => { b.window.set_composited(true); });
+        m_Box.expose_event.connect ((e) => {
+            var cr = Gdk.cairo_create (m_Box.window);
+            cr.set_operator (Cairo.Operator.CLEAR);
+            cr.paint ();
+            return false;
+        });
+        m_Box.show ();
+        add (m_Box);
+
+        m_Animator = new XSAA.Animator(60, 2000);
+        uint transition = m_Animator.add_transition (0, 1, XSAA.Animator.ProgressType.LINEAR, () => {
+            queue_draw ();
+            return false;
+        }, Gtk.main_quit);
+        GLib.Value from = (double)0;
+        GLib.Value to = (double)1;
+        m_Animator.add_transition_property (transition, this, "percent", from, to);
         m_Loader = new XSAA.EngineLoader ("aixplorer");
         m_Loader.engine.set_size_request (200, 200);
         m_Loader.engine.show ();
         m_Loader.engine.event_notify.connect (on_event);
-        add (m_Loader.engine);
+        m_Box.add (m_Loader.engine);
         destroy.connect (Gtk.main_quit);
 
         m_Loader.engine.process_event (new XSAA.EventBoot.loading (false));
         m_Loader.engine.process_event (new XSAA.EventProgress.pulse ());
-        m_Loader.engine.process_event (new XSAA.EventUser.add_user (new Gdk.Pixbuf.from_file ("/home/gandalfn/.face"),
-                                                                    "Nicolas Bruguier", "gandalfn", 1));
+        m_Loader.engine.process_event (new XSAA.EventUser.add_user (32769, "Nicolas Bruguier", "nicolas", 1));
 
         GLib.Timeout.add_seconds(5, () => {
             m_Loader.engine.process_event (new XSAA.EventBoot.loading (true));
@@ -66,7 +91,16 @@ public class TestWindow : Gtk.Window
                     if (!m_AskPasword)
                     {
                         XSAA.Log.info ("Login %s", event_prompt.args.text);
-                        m_Loader.engine.process_event (new XSAA.EventPrompt.show_password ());
+                        if (event_prompt.args.face_authentification)
+                        {
+                            XSAA.Log.debug ("show face authentication");
+                            m_Loader.engine.process_event (new XSAA.EventPrompt.show_face_authentification ());
+                        }
+                        else
+                        {
+                            m_Loader.engine.process_event (new XSAA.EventPrompt.show_password ());
+                            m_Loader.engine.process_event (new XSAA.EventPrompt.message ("Please enter password"));
+                        }
                         m_AskPasword = true;
                     }
                     else
@@ -74,6 +108,11 @@ public class TestWindow : Gtk.Window
                         XSAA.Log.info ("Password %s", event_prompt.args.text);
                         m_AskPasword = false;
                         m_Loader.engine.process_event (new XSAA.EventSession.loading (false));
+                        GLib.Timeout.add_seconds(5, () => {
+                            m_Loader.engine.process_event (new XSAA.EventSession.loading (true));
+                            m_Animator.start ();
+                            return false;
+                        });
                     }
                     break;
             }
@@ -100,7 +139,28 @@ public class TestWindow : Gtk.Window
         var ctx = Gdk.cairo_create (window);
         ctx.set_operator (Cairo.Operator.CLEAR);
         ctx.paint ();
-        return false;
+
+        var mask = new Cairo.Pattern.radial (allocation.width / 2, allocation.height / 2, 0, allocation.width / 2, allocation.height / 2, int.max (allocation.width, allocation.height));
+        if (percent < 1 )
+        {
+            mask.add_color_stop_rgba (1, 0, 0, 0, 1);
+            mask.add_color_stop_rgba (percent + 0.01, 0, 0, 0, 1);
+            mask.add_color_stop_rgba (percent, 0, 0, 0, 0);
+            mask.add_color_stop_rgba (0, 0, 0, 0, 0);
+        }
+        ctx.set_operator (Cairo.Operator.OVER);
+        var box_ctx = Gdk.cairo_create (m_Box.window);
+        ctx.set_source_surface (box_ctx.get_target (), 0, 0);
+        if (percent < 1 )
+        {
+            ctx.mask (mask);
+        }
+        else
+        {
+            ctx.paint ();
+        }
+
+        return true;
     }
 }
 
@@ -117,3 +177,4 @@ main (string[] inArgs)
 
     return 0;
 }
+

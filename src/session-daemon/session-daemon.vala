@@ -165,7 +165,7 @@ namespace XSAA
         {
             try
             {
-                XSAA.Client client = new XSAA.Client (Config.PACKAGE_CHROOT_DIR);
+                XSAA.Client client = new XSAA.Client (Config.PACKAGE_CHROOT_DIR + "/tmp/xsplashaa-socket");
                 client.send (new Message.close_session ());
             }
             catch (GLib.Error err)
@@ -182,7 +182,7 @@ namespace XSAA
         {
             try
             {
-                XSAA.Client client = new XSAA.Client (Config.PACKAGE_CHROOT_DIR);
+                XSAA.Client client = new XSAA.Client (Config.PACKAGE_CHROOT_DIR + "/tmp/xsplashaa-socket");
                 client.send (new Message.dbus ());
             }
             catch (GLib.Error err)
@@ -199,7 +199,7 @@ namespace XSAA
         {
             try
             {
-                XSAA.Client client = new XSAA.Client (Config.PACKAGE_CHROOT_DIR);
+                XSAA.Client client = new XSAA.Client (Config.PACKAGE_CHROOT_DIR + "/tmp/xsplashaa-socket");
                 client.send (new Message.session ());
             }
             catch (GLib.Error err)
@@ -278,3 +278,4 @@ namespace XSAA
         return 0;
     }
 }
+

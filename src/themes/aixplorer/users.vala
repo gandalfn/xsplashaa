@@ -23,6 +23,9 @@ namespace XSAA.Aixplorer
 {
     public class Users : Widget
     {
+        // constants
+        const int ICON_SIZE = 90;
+
         // properties
         private Gtk.TreeView         m_TreeView;
         private Gtk.ListStore        m_Model;
@@ -71,6 +74,27 @@ namespace XSAA.Aixplorer
             composite_widget = scrolled_window;
         }
 
+        private Gdk.Pixbuf?
+        get_face_pixbuf (int inShmId)
+        {
+            Gdk.Pixbuf ret = null;
+            unowned uchar[] src = (uchar[])Os.shmat(inShmId, null, 0);
+
+            if (src != null)
+            {
+                Cairo.ImageSurface surface = new Cairo.ImageSurface.for_data (src,
+                                                                              Cairo.Format.ARGB32,
+                                                                              ICON_SIZE, ICON_SIZE,
+                                                                              Cairo.Format.ARGB32.stride_for_width (ICON_SIZE));
+                CairoContext ctx = new CairoContext (surface);
+                ret = ctx.to_pixbuf ();
+                Os.shmdt (src);
+            }
+
+            return ret;
+        }
+
+
         private void
         on_selection_changed ()
         {
@@ -85,11 +109,11 @@ namespace XSAA.Aixplorer
         }
 
         public void
-        add_user (Gdk.Pixbuf inPixbuf, string inLogin, string inRealName, int inFrequency)
+        add_user (int inShmId, string inLogin, string inRealName, int inFrequency)
         {
             Gtk.TreeIter iter;
             m_Model.prepend (out iter);
-            m_Model.set (iter, 0, inPixbuf, 1, inRealName, 2, inLogin, 3, inFrequency, 4, true);
+            m_Model.set (iter, 0, get_face_pixbuf (inShmId), 1, inRealName, 2, inLogin, 3, inFrequency, 4, true);
         }
 
         public void
@@ -103,3 +127,4 @@ namespace XSAA.Aixplorer
         }
     }
 }
+

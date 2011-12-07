@@ -127,12 +127,14 @@ namespace XSAA.Aixplorer
             EngineItem.register_item ("logo", typeof (Logo));
             EngineItem.register_item ("text", typeof (Text));
             EngineItem.register_item ("button", typeof (Button));
+            EngineItem.register_item ("checkbutton", typeof (CheckButton));
             EngineItem.register_item ("entry", typeof (Entry));
             EngineItem.register_item ("throbber", typeof (Throbber));
             EngineItem.register_item ("table", typeof (Table));
             EngineItem.register_item ("notebook", typeof (Notebook));
             EngineItem.register_item ("progressbar", typeof (ProgressBar));
             EngineItem.register_item ("users", typeof (Users));
+            EngineItem.register_item ("faceauth", typeof (FaceAuthentification));
 
             GLib.Value.register_transform_func (typeof (string), typeof (Goo.CanvasItemVisibility),
                                                 (ValueTransform)string_to_canvas_item_visibility);
@@ -179,11 +181,14 @@ namespace XSAA.Aixplorer
             unowned Notebook notebook = (Notebook)find ("main-notebook");
             unowned Notebook users_notebook = (Notebook)find ("users-notebook");
             unowned Text prompt_label = (Text)find ("prompt-label");
+            unowned Text message = (Text)find ("prompt-message");
             unowned Entry prompt = (Entry)find ("prompt");
             unowned Users users = (Users)find ("users");
+            unowned FaceAuthentification face_authentification = (FaceAuthentification)find ("face-auth");
 
             if (prompt == null || prompt_label == null || notebook == null ||
-                users_notebook == null || users == null)
+                users_notebook == null || users == null || message == null ||
+                face_authentification == null)
             {
                 Log.critical ("Error does not find prompt items");
                 return;
@@ -195,6 +200,8 @@ namespace XSAA.Aixplorer
                     prompt_label.text = "Login:";
                     prompt.text = "";
                     prompt.entry_visibility = true;
+                    message.text = "";
+                    face_authentification.stop ();
                     users_notebook.current_page = 0;
                     notebook.current_page = 1;
                     break;
@@ -204,8 +211,21 @@ namespace XSAA.Aixplorer
                     prompt.text = "";
                     prompt.grab_focus ();
                     prompt.entry_visibility = false;
+                    message.text = "";
+                    face_authentification.stop ();
                     users_notebook.current_page = 1;
                     notebook.current_page = 1;
+                    break;
+
+                case EventPrompt.Type.SHOW_FACE_AUTHENTIFICATION:
+                    message.text = "";
+                    face_authentification.start ();
+                    users_notebook.current_page = 2;
+                    notebook.current_page = 1;
+                    break;
+
+                case EventPrompt.Type.MESSAGE:
+                    message.text = inEvent.args.msg;
                     break;
             }
         }
@@ -374,7 +394,7 @@ namespace XSAA.Aixplorer
             switch (inEvent.args.event_type)
             {
                 case EventUser.Type.ADD_USER:
-                    users.add_user (inEvent.args.pixbuf, inEvent.args.login, inEvent.args.real_name, inEvent.args.frequency);
+                    users.add_user (inEvent.args.shm_id_pixbuf, inEvent.args.login, inEvent.args.real_name, inEvent.args.frequency);
                     break;
 
                 case EventUser.Type.CLEAR:
@@ -399,11 +419,12 @@ namespace XSAA.Aixplorer
             base.realize ();
 
             unowned Entry? prompt = (Entry?)find ("prompt");
+            unowned CheckButton? face_authentification = (CheckButton?)find ("face-authentification");
             if (prompt != null)
             {
                 prompt.edited.connect ((s) => {
                     Log.debug ("prompt: %s", s);
-                    event_notify (new EventPrompt.edited (s));
+                    event_notify (new EventPrompt.edited (s, face_authentification.active));
                 });
             }
 
@@ -414,18 +435,16 @@ namespace XSAA.Aixplorer
                     Log.debug ("prompt: %s", s);
                     if (s != null)
                     {
-                        event_notify (new EventPrompt.edited (s));
+                        event_notify (new EventPrompt.edited (s, face_authentification.active));
                     }
                     else
                     {
                         unowned Notebook users_notebook = (Notebook)find ("users-notebook");
                         if (users_notebook != null && prompt != null)
                         {
-                            users_notebook.current_page = 1;
-                            prompt.grab_focus ();
+                            process_event(new EventPrompt.show_login ());
                         }
                     }
-
                 });
             }
 
@@ -514,3 +533,4 @@ public XSAA.Engine? plugin_init ()
 {
     return new XSAA.Aixplorer.Engine ();
 }
+

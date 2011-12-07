@@ -29,6 +29,7 @@ aixplorer_engine_la_SOURCES = \
     image.vala \
     text.vala \
     button.vala \
+    check-button.vala \
     widget.vala \
     entry.vala \
     throbber.vala \
@@ -36,6 +37,7 @@ aixplorer_engine_la_SOURCES = \
     table.vala \
     notebook.vala \
     users.vala \
+    face-authentification.vala \
     background.vala \
     logo.vala \
     engine.vala

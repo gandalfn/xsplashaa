@@ -45,7 +45,6 @@ namespace XSAA.Aixplorer
                 return m_Id;
             }
             set {
-                XSAA.Log.debug ("set id: %s", value);
                 m_Id = value;
             }
         }

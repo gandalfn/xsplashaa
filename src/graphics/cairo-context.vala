@@ -1,4 +1,4 @@
-/* xsaa-cairo-context.vala
+/* cairo-context.vala
  *
  * Copyright (C) 2009-2010  Nicolas Bruguier
  *
@@ -141,7 +141,6 @@ namespace XSAA
             else
                 move_to(inX, inY);
         }
-
-
     }
 }
+
