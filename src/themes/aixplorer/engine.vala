@@ -132,6 +132,7 @@ namespace XSAA.Aixplorer
             EngineItem.register_item ("table", typeof (Table));
             EngineItem.register_item ("notebook", typeof (Notebook));
             EngineItem.register_item ("progressbar", typeof (ProgressBar));
+            EngineItem.register_item ("users", typeof (Users));
 
             GLib.Value.register_transform_func (typeof (string), typeof (Goo.CanvasItemVisibility),
                                                 (ValueTransform)string_to_canvas_item_visibility);
@@ -176,10 +177,13 @@ namespace XSAA.Aixplorer
         process_prompt_event (EventPrompt inEvent)
         {
             unowned Notebook notebook = (Notebook)find ("main-notebook");
+            unowned Notebook users_notebook = (Notebook)find ("users-notebook");
             unowned Text prompt_label = (Text)find ("prompt-label");
             unowned Entry prompt = (Entry)find ("prompt");
+            unowned Users users = (Users)find ("users");
 
-            if (prompt == null || prompt_label == null || notebook == null)
+            if (prompt == null || prompt_label == null || notebook == null ||
+                users_notebook == null || users == null)
             {
                 Log.critical ("Error does not find prompt items");
                 return;
@@ -191,13 +195,16 @@ namespace XSAA.Aixplorer
                     prompt_label.text = "Login:";
                     prompt.text = "";
                     prompt.entry_visibility = true;
+                    users_notebook.current_page = 0;
                     notebook.current_page = 1;
                     break;
 
                 case EventPrompt.Type.SHOW_PASSWORD:
                     prompt_label.text = "Password:";
                     prompt.text = "";
+                    prompt.grab_focus ();
                     prompt.entry_visibility = false;
+                    users_notebook.current_page = 1;
                     notebook.current_page = 1;
                     break;
             }
@@ -210,8 +217,9 @@ namespace XSAA.Aixplorer
             unowned Throbber loading = (Throbber)find ("loading-throbber");
             unowned Throbber check_filesystem = (Throbber)find ("checking-filesystem-throbber");
             unowned Throbber starting = (Throbber)find ("starting-throbber");
+            unowned Throbber check_device = (Throbber)find ("checking-device-throbber");
 
-            if (loading == null || check_filesystem == null || starting == null || notebook == null)
+            if (loading == null || check_filesystem == null || starting == null || check_device == null || notebook == null)
             {
                 Log.critical ("Error does not find boot items");
                 return;
@@ -268,6 +276,27 @@ namespace XSAA.Aixplorer
                     else
                         starting.finished ();
                     break;
+
+                case EventBoot.Type.CHECK_DEVICE:
+                    notebook.current_page = 0;
+                    if (!inEvent.args.completed)
+                    {
+                        unowned Table check_device_table = (Table)find ("checking-device");
+                        Animation animation = new Animation (check_device_table, "x", allocation.width, check_device_table.x);
+                        m_Animations.push_tail (animation);
+                        animation.finished.connect (() => {
+                            m_Animations.pop_tail ().ref ();
+                            if (!m_Animations.is_empty ())
+                                m_Animations.peek_head ().start ();
+                        });
+                        if (m_Animations.length == 1)
+                            animation.start ();
+
+                        check_device.start ();
+                    }
+                    else
+                        check_device.finished ();
+                    break;
             }
         }
 
@@ -309,11 +338,47 @@ namespace XSAA.Aixplorer
             switch (inEvent.args.event_type)
             {
                 case EventSession.Type.LOADING:
-                    notebook.current_page = 2;
+                    notebook.current_page = 0;
                     if (!inEvent.args.completed)
+                    {
+                        unowned Table session_table = (Table)find ("session");
+                        Animation animation = new Animation (session_table, "x", allocation.width, session_table.x);
+                        m_Animations.push_tail (animation);
+                        animation.finished.connect (() => {
+                            m_Animations.pop_tail ().ref ();
+                            if (!m_Animations.is_empty ())
+                                m_Animations.peek_head ().start ();
+                        });
+                        if (m_Animations.length == 1)
+                            animation.start ();
+
                         session.start ();
+                    }
                     else
                         session.finished ();
+                    break;
+            }
+        }
+
+        private void
+        process_user_event (EventUser inEvent)
+        {
+            unowned Users users = (Users)find ("users");
+
+            if (users == null)
+            {
+                Log.critical ("Error does not find users items");
+                return;
+            }
+
+            switch (inEvent.args.event_type)
+            {
+                case EventUser.Type.ADD_USER:
+                    users.add_user (inEvent.args.pixbuf, inEvent.args.login, inEvent.args.real_name, inEvent.args.frequency);
+                    break;
+
+                case EventUser.Type.CLEAR:
+                    users.clear ();
                     break;
             }
         }
@@ -339,6 +404,44 @@ namespace XSAA.Aixplorer
                 prompt.edited.connect ((s) => {
                     Log.debug ("prompt: %s", s);
                     event_notify (new EventPrompt.edited (s));
+                });
+            }
+
+            unowned Users? users = (Users?)find ("users");
+            if (users != null)
+            {
+                users.selected.connect ((s) => {
+                    Log.debug ("prompt: %s", s);
+                    if (s != null)
+                    {
+                        event_notify (new EventPrompt.edited (s));
+                    }
+                    else
+                    {
+                        unowned Notebook users_notebook = (Notebook)find ("users-notebook");
+                        if (users_notebook != null && prompt != null)
+                        {
+                            users_notebook.current_page = 1;
+                            prompt.grab_focus ();
+                        }
+                    }
+
+                });
+            }
+
+            unowned Button? button_restart = (Button?)find ("button-restart");
+            if (button_restart != null)
+            {
+                button_restart.clicked.connect (() => {
+                    event_notify (new EventSystem.reboot ());
+                });
+            }
+
+            unowned Button? button_shutdown = (Button?)find ("button-shutdown");
+            if (button_shutdown != null)
+            {
+                button_shutdown.clicked.connect (() => {
+                    event_notify (new EventSystem.halt ());
                 });
             }
         }
@@ -399,6 +502,10 @@ namespace XSAA.Aixplorer
             {
                 process_session_event ((EventSession)inEvent);
             }
+            else if (inEvent is EventUser)
+            {
+                process_user_event ((EventUser)inEvent);
+            }
         }
     }
 }
@@ -407,4 +514,3 @@ public XSAA.Engine? plugin_init ()
 {
     return new XSAA.Aixplorer.Engine ();
 }
-

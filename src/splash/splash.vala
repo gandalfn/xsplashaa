@@ -742,8 +742,7 @@ namespace XSAA
 
                     ctx.set_operator (Cairo.Operator.OVER);
                     ctx.rounded_rectangle ((m_FaceAuthentication.parent.allocation.width - 320) / 2,
-                                           0,
-                                           320, 240, 10, CairoCorner.ALL);
+                                           0, 320, 240, 10, CairoCorner.ALL);
                     ctx.clip ();
                     ctx.set_source_surface (surface,
                                             (m_FaceAuthentication.parent.allocation.width - 320) / 2,
@@ -1022,4 +1021,3 @@ namespace XSAA
         }
     }
 }
-

@@ -83,7 +83,7 @@ namespace XSAA.Aixplorer
             }
         }
 
-        public string widget_font {
+        public virtual string widget_font {
             set {
                 Pango.FontDescription font_desc = Pango.FontDescription.from_string (value);
                 composite_widget.modify_font (font_desc);
@@ -128,4 +128,3 @@ namespace XSAA.Aixplorer
         }
     }
 }
-

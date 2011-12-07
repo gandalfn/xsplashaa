@@ -22,6 +22,8 @@ public class TestWindow : Gtk.Window
 
         m_Loader.engine.process_event (new XSAA.EventBoot.loading (false));
         m_Loader.engine.process_event (new XSAA.EventProgress.pulse ());
+        m_Loader.engine.process_event (new XSAA.EventUser.add_user (new Gdk.Pixbuf.from_file ("/home/gandalfn/.face"),
+                                                                    "Nicolas Bruguier", "gandalfn", 1));
 
         GLib.Timeout.add_seconds(5, () => {
             m_Loader.engine.process_event (new XSAA.EventBoot.loading (true));
@@ -39,6 +41,13 @@ public class TestWindow : Gtk.Window
 
         GLib.Timeout.add_seconds(15, () => {
             m_Loader.engine.process_event (new XSAA.EventBoot.starting (true));
+            m_Loader.engine.process_event (new XSAA.EventBoot.check_device (false));
+            m_Loader.engine.process_event (new XSAA.EventProgress.progress (1.0));
+            return false;
+        });
+
+        GLib.Timeout.add_seconds(20, () => {
+            m_Loader.engine.process_event (new XSAA.EventBoot.check_device (true));
             m_Loader.engine.process_event (new XSAA.EventPrompt.show_login ());
             m_Loader.engine.process_event (new XSAA.EventProgress.progress (1.0));
             return false;
@@ -69,6 +78,20 @@ public class TestWindow : Gtk.Window
                     break;
             }
         }
+        else if (inEvent is XSAA.EventSystem)
+        {
+            unowned XSAA.EventSystem event_system = (XSAA.EventSystem)inEvent;
+            switch (event_system.args.event_type)
+            {
+                case XSAA.EventSystem.Type.REBOOT:
+                    XSAA.Log.info ("reboot");
+                    break;
+
+                case XSAA.EventSystem.Type.HALT:
+                    XSAA.Log.info ("halt");
+                    break;
+            }
+        }
     }
 
     public override bool
@@ -94,4 +117,3 @@ main (string[] inArgs)
 
     return 0;
 }
-

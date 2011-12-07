@@ -24,7 +24,9 @@ namespace XSAA.Aixplorer
     public class Users : Widget
     {
         // properties
-        private Gtk.ListStore m_Model;
+        private Gtk.TreeView         m_TreeView;
+        private Gtk.ListStore        m_Model;
+        private Gtk.CellRendererText m_RenderText;
 
         // accessors
         public override string node_name {
@@ -33,8 +35,14 @@ namespace XSAA.Aixplorer
             }
         }
 
+        public override string widget_font {
+            set {
+                m_RenderText.font = value;
+            }
+        }
+
         // signals
-        public signal void selected (string inLogin);
+        public signal void selected (string? inLogin);
 
         // methods
         construct
@@ -45,21 +53,35 @@ namespace XSAA.Aixplorer
             Gtk.TreeModelFilter filter_model = new Gtk.TreeModelFilter (m_Model, null);
             filter_model.set_visible_column (4);
 
-            Gtk.TreeView tree_view = new Gtk.TreeView.with_model (filter_model);
-            tree_view.can_focus = false;
-            tree_view.headers_visible = false;
-            tree_view.insert_column_with_attributes (-1, "", new Gtk.CellRendererPixbuf (), "pixbuf", 0);
-            tree_view.insert_column_with_attributes (-1, "", new Gtk.CellRendererText (), "markup", 1);
-            tree_view.get_selection ().changed.connect (on_selection_changed);
-            tree_view.show ();
+            m_RenderText = new Gtk.CellRendererText ();
+            m_TreeView = new Gtk.TreeView.with_model (filter_model);
+            m_TreeView.can_focus = false;
+            m_TreeView.headers_visible = false;
+            m_TreeView.insert_column_with_attributes (-1, "", new Gtk.CellRendererPixbuf (), "pixbuf", 0);
+            m_TreeView.insert_column_with_attributes (-1, "", m_RenderText, "markup", 1);
+            m_TreeView.get_selection ().changed.connect (on_selection_changed);
+            m_TreeView.show ();
 
             Gtk.ScrolledWindow scrolled_window = new Gtk.ScrolledWindow (null, null);
             scrolled_window.hscrollbar_policy = Gtk.PolicyType.NEVER;
             scrolled_window.vscrollbar_policy = Gtk.PolicyType.AUTOMATIC;
             scrolled_window.set_shadow_type (Gtk.ShadowType.IN);
-            scrolled_window.add (tree_view);
+            scrolled_window.add (m_TreeView);
 
             composite_widget = scrolled_window;
+        }
+
+        private void
+        on_selection_changed ()
+        {
+            Gtk.TreeModel model;
+            Gtk.TreeIter iter;
+            if (m_TreeView.get_selection ().get_selected (out model, out iter))
+            {
+                string login;
+                model.get (iter, 2, out login, -1);
+                selected (login);
+            }
         }
 
         public void
@@ -67,7 +89,7 @@ namespace XSAA.Aixplorer
         {
             Gtk.TreeIter iter;
             m_Model.prepend (out iter);
-            m_Model.set (iter, 0, inPixbuf, 1, "<span size='x-large'>" + inRealName + "</span>", 2, inLogin, 3, inFrequency, 4, true);
+            m_Model.set (iter, 0, inPixbuf, 1, inRealName, 2, inLogin, 3, inFrequency, 4, true);
         }
 
         public void
@@ -77,8 +99,7 @@ namespace XSAA.Aixplorer
 
             Gtk.TreeIter iter;
             m_Model.append (out iter);
-            m_Model.set (iter, 0, null, 1, "<span size='x-large'>Other...</span>", 2, null, 3, 0, 4, true);
+            m_Model.set (iter, 0, null, 1, "Other...", 2, null, 3, 0, 4, true);
         }
     }
 }
-

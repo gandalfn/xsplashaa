@@ -93,9 +93,10 @@ namespace XSAA.Aixplorer
             private void
             create_horizontal_slide ()
             {
-                double previous_x, current_x;
+                double previous_x, current_x, current_width;
                 ((GLib.Object)m_Previous).get ("x", out previous_x);
                 ((GLib.Object)m_Current).get ("x", out current_x);
+                ((GLib.Object)m_Current).get ("width", out current_width);
 
                 uint transition = m_Animator.add_transition (0.0, 1.0, XSAA.Animator.ProgressType.SINUSOIDAL, null, on_finished);
 
@@ -118,7 +119,7 @@ namespace XSAA.Aixplorer
                     GLib.Value to = (double)previous_x + (m_Notebook.bounds.x2 - m_Notebook.bounds.x1);
                     m_Animator.add_transition_property (transition, m_Previous, "x", from, to);
 
-                    from = (double)current_x - (m_Notebook.bounds.x2 - m_Notebook.bounds.x1);
+                    from = (double)m_Notebook.bounds.x1 - current_width;
                     to = (double)current_x;
                     m_Animator.add_transition_property (transition, m_Current, "x", from, to);
 
@@ -403,4 +404,3 @@ namespace XSAA.Aixplorer
         }
     }
 }
-

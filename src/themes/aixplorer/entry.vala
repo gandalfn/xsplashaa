@@ -59,6 +59,11 @@ namespace XSAA.Aixplorer
             });
             composite_widget = entry;
         }
+
+        public void
+        grab_focus ()
+        {
+            composite_widget.grab_focus ();
+        }
     }
 }
-

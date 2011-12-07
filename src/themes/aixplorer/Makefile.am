@@ -35,6 +35,7 @@ aixplorer_engine_la_SOURCES = \
     progress-bar.vala \
     table.vala \
     notebook.vala \
+    users.vala \
     background.vala \
     logo.vala \
     engine.vala

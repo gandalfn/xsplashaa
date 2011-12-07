@@ -30,6 +30,8 @@ libxsaa_engine_la_SOURCES = \
     event-boot.vala \
     event-progress.vala \
     event-session.vala \
+    event-user.vala \
+    event-system.vala \
     engine-item.vala \
     engine.vala \
     engine-loader.vala
