@@ -1,8 +1,11 @@
 <engine id="aixplorer" background_color="#0000FF">
     <!-- background -->
-    <background id="background" layer="0" filename="/usr/share/xsplashaa/debian/background.png" expand="true"/>
+    <background id="background" row="0"layer="0" filename="/usr/share/xsplashaa/debian/background.png" expand="true"/>
+    <!--touchscreen table -->
+    <table id="touchscreen" layer="1" width="1024" height="768" y_fill="true"/>
     <!--main table -->
-    <table id="main" layer="1" y_border_spacing="12" row_spacing="12" column_spacing="12" expand="true">
+    <table id="main" layer="1" width="1680" height="1050"
+           y_border_spacing="12" row_spacing="12" column_spacing="12" y_fill="true">
         <progressbar id="progress-bar" row="2" column="0" left_padding="96" right_padding="96"
                      bar_height="30" bar_color="#FF0000" width="600" height="70"/>
         <!--content table -->
@@ -17,12 +20,12 @@
                 <notebook id="main-notebook" row="1" column="0" y_fill="true">
                     <!--check table -->
                     <table id="checking-table" page_num="0" animation="vertical-slide" x_align="0.5" y_align="0.3"
-                           row_spacing="12" column_spacing="12" homogeneous_rows="true" clip="true">
+                           row_spacing="12" column_spacing="12" homogeneous_row="true" x_fill="true">
                         <table id="loading" row="0" column="0" x_fill="true">
                             <text id="loading-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#DCE7EC"
                                   text="Loading..."/>
-                            <throbber id="loading-throbber" row="0" column="1" x_expand="false" x_align="1.0"
+                            <throbber id="loading-throbber" row="0" column="1" x_fill="true" x_align="1.0"
                                       theme_name="debian"/>
                         </table>
                         <table id="checking-filesystem" visibility="1" row="1" column="0" x_fill="true">
@@ -56,7 +59,7 @@
                     </table>
                     <!--prompt table -->
                     <table id="prompt-table" page_num="1" animation="vertical-slide" x_align="0.5" y_align="0.0"
-                           row_spacing="12" column_spacing="12" homogeneous_rows="false" y_fill="true">
+                           row_spacing="12" column_spacing="12">
                         <notebook id="users-notebook" row="0" column="0" x_align="0.5" y_align="0.5" columns="3">
                             <users id="users" page_num="0" animation="horizontal-slide"
                                    y_fill="true" x_fill="true" x_align="0.5" y_align="0.0"

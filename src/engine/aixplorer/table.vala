@@ -94,6 +94,16 @@ namespace XSAA.Aixplorer
         public Notebook.Animation.AnimType animation { get; set; default = Notebook.Animation.AnimType.HORIZONTAL_SLIDE; }
 
         // methods
+        construct
+        {
+            notify["visibility"].connect (() => {
+                foreach (unowned EngineItem item in find_by_type (typeof (Widget)))
+                {
+                    ((Goo.CanvasItemSimple)item).visibility = visibility;
+                }
+            });
+        }
+
         public void
         paint (Cairo.Context inContext, Goo.CanvasBounds inBounds, double inScale)
         {
@@ -136,6 +146,10 @@ namespace XSAA.Aixplorer
                                           y_shrink: pack_options.y_shrink,
                                           x_align: pack_options.x_align,
                                           y_align: pack_options.y_align);
+                }
+                if (inChild is Widget)
+                {
+                    ((Widget)inChild).visibility = visibility;
                 }
                 Log.debug ("%s %f,%f,%f,%f", id, bounds.x1, bounds.y1, bounds.x2, bounds.y2);
             }

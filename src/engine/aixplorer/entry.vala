@@ -53,7 +53,6 @@ namespace XSAA.Aixplorer
         {
             Gtk.Entry entry = new Gtk.Entry ();
             entry.can_focus = true;
-            entry.set_activates_default (true);
             entry.activate.connect (() => {
                 edited (entry.text);
             });
@@ -67,3 +66,4 @@ namespace XSAA.Aixplorer
         }
     }
 }
+

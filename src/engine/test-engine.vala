@@ -39,7 +39,7 @@ public class TestWindow : Gtk.Window
         GLib.Value from = (double)0;
         GLib.Value to = (double)1;
         m_Animator.add_transition_property (transition, this, "percent", from, to);
-        m_Loader = new XSAA.EngineLoader ("aixplorer");
+        m_Loader = new XSAA.EngineLoader ("debian");
         m_Loader.engine.set_size_request (200, 200);
         m_Loader.engine.show ();
         m_Loader.engine.event_notify.connect (on_event);

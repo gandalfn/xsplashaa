@@ -313,6 +313,13 @@ namespace XSAA.Aixplorer
         construct
         {
             m_Animations = new GLib.Queue<Animation> ();
+
+            notify["visibility"].connect (() => {
+                foreach (unowned EngineItem item in find_by_type (typeof (Widget)))
+                {
+                    ((Goo.CanvasItemSimple)item).visibility = visibility;
+                }
+            });
         }
 
         private void
@@ -335,10 +342,6 @@ namespace XSAA.Aixplorer
                     else if (pack_options.page_num == old_page)
                     {
                         previous = (Goo.CanvasItemSimple)item;
-                    }
-                    else
-                    {
-                        ((Goo.CanvasItemSimple)item).visibility = Goo.CanvasItemVisibility.INVISIBLE;
                     }
                 }
             }
@@ -412,3 +415,4 @@ namespace XSAA.Aixplorer
         }
     }
 }
+

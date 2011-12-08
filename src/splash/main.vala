@@ -574,8 +574,14 @@ namespace XSAA
                 {
                     m_Session.authenticate ();
                     m_Session.authenticated.connect (on_authenticated);
-                    m_Session.ask_passwd.connect (on_ask_passwd);
-                    m_Session.ask_face_authentication.connect (on_ask_face_authentication);
+                    if (inFaceAuthentication)
+                    {
+                        m_Session.ask_face_authentication.connect (on_ask_face_authentication);
+                    }
+                    else
+                    {
+                        m_Session.ask_passwd.connect (on_ask_passwd);
+                    }
                 }
                 catch (DBus.Error err)
                 {
@@ -789,3 +795,4 @@ namespace XSAA
         return 0;
      }
 }
+

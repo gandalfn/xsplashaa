@@ -24,6 +24,7 @@ namespace XSAA.Aixplorer
     public class Widget : Goo.CanvasWidget, XSAA.EngineItem, ItemPackOptions
     {
         // properties
+        private bool                               m_UseCompositing = true;
         private string                             m_Id;
         private int                                m_Layer;
 
@@ -66,15 +67,19 @@ namespace XSAA.Aixplorer
             set {
                 Gtk.EventBox box = new Gtk.EventBox ();
                 box.set_above_child (false);
-                box.set_visible_window (true);
-                box.set_app_paintable (true);
-                box.realize.connect ((b) => { b.window.set_composited(true); });
-                box.expose_event.connect ((e) => {
-                    var cr = Gdk.cairo_create (box.window);
-                    cr.set_operator (Cairo.Operator.CLEAR);
-                    cr.paint ();
-                    return false;
-                });
+                box.set_visible_window (m_UseCompositing);
+
+                if (m_UseCompositing)
+                {
+                    box.set_app_paintable (true);
+                    box.realize.connect ((b) => { b.window.set_composited(true); });
+                    box.expose_event.connect ((e) => {
+                        var cr = Gdk.cairo_create (box.window);
+                        cr.set_operator (Cairo.Operator.CLEAR);
+                        cr.paint ();
+                        return false;
+                    });
+                }
 
                 value.show ();
                 box.add (value);
@@ -112,10 +117,38 @@ namespace XSAA.Aixplorer
         public Notebook.Animation.AnimType animation { get; set; default = Notebook.Animation.AnimType.HORIZONTAL_SLIDE; }
 
         // methods
+        construct
+        {
+            m_UseCompositing = Gdk.Display.get_default ().supports_composite ();
+
+            notify["visibility"].connect (() => {
+                if (visibility > Goo.CanvasItemVisibility.INVISIBLE)
+                {
+                    bool visible = true;
+                    for (unowned Goo.CanvasItem p = parent; p != null; p = p.parent)
+                    {
+                        if (p.visibility <= Goo.CanvasItemVisibility.INVISIBLE)
+                        {
+                            visible = false;
+                            break;
+                        }
+                    }
+                    if (visible)
+                        widget.show ();
+                    else
+                        widget.hide ();
+                }
+                else
+                {
+                    widget.hide ();
+                }
+            });
+        }
+
         public override void
         simple_paint (Cairo.Context inContext, Goo.CanvasBounds inBounds)
         {
-            if (widget != null && widget.window != null)
+            if (m_UseCompositing && widget != null && widget.window != null)
             {
                 var cr_widget = Gdk.cairo_create (widget.window);
                 var pattern = new Cairo.Pattern.for_surface (cr_widget.get_target());
@@ -128,3 +161,4 @@ namespace XSAA.Aixplorer
         }
     }
 }
+

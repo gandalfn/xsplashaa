@@ -281,8 +281,6 @@ namespace XSAA
         {
             Log.debug ("ask for login");
 
-            m_EngineLoader.engine.process_event (new EventBoot.check_device (true));
-
             var cursor = new Gdk.Cursor(Gdk.CursorType.LEFT_PTR);
             get_window().set_cursor(cursor);
 
@@ -321,3 +319,4 @@ namespace XSAA
         }
     }
 }
+

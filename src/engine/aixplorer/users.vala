@@ -105,6 +105,7 @@ namespace XSAA.Aixplorer
                 string login;
                 model.get (iter, 2, out login, -1);
                 selected (login);
+                m_TreeView.get_selection ().unselect_all ();
             }
         }
 

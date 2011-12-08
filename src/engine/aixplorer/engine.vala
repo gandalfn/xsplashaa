@@ -199,8 +199,8 @@ namespace XSAA.Aixplorer
                 case EventPrompt.Type.SHOW_LOGIN:
                     prompt_label.text = "Login:";
                     prompt.text = "";
+                    prompt.grab_focus ();
                     prompt.entry_visibility = true;
-                    message.text = "";
                     face_authentification.stop ();
                     users_notebook.current_page = 0;
                     notebook.current_page = 1;
@@ -211,7 +211,6 @@ namespace XSAA.Aixplorer
                     prompt.text = "";
                     prompt.grab_focus ();
                     prompt.entry_visibility = false;
-                    message.text = "";
                     face_authentification.stop ();
                     users_notebook.current_page = 1;
                     notebook.current_page = 1;
@@ -428,11 +427,13 @@ namespace XSAA.Aixplorer
             base.realize ();
 
             unowned Entry? prompt = (Entry?)find ("prompt");
+            unowned Text message = (Text)find ("prompt-message");
             unowned CheckButton? face_authentification = (CheckButton?)find ("face-authentification");
             if (prompt != null)
             {
                 prompt.edited.connect ((s) => {
                     Log.debug ("prompt: %s", s);
+                    message.text = "";
                     event_notify (new EventPrompt.edited (s, face_authentification.active));
                 });
             }
@@ -444,14 +445,15 @@ namespace XSAA.Aixplorer
                     Log.debug ("prompt: %s", s);
                     if (s != null)
                     {
+                        message.text = "";
                         event_notify (new EventPrompt.edited (s, face_authentification.active));
                     }
                     else
                     {
                         unowned Notebook users_notebook = (Notebook)find ("users-notebook");
-                        if (users_notebook != null && prompt != null)
+                        if (users_notebook != null)
                         {
-                            process_event(new EventPrompt.show_login ());
+                            users_notebook.current_page = 1;
                         }
                     }
                 });
@@ -542,3 +544,4 @@ public XSAA.Engine? plugin_init ()
 {
     return new XSAA.Aixplorer.Engine ();
 }
+

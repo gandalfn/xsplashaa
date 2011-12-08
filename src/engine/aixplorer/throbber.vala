@@ -45,6 +45,17 @@ namespace XSAA.Aixplorer
         }
 
         // methods
+        construct
+        {
+            notify["visibility"].connect (() => {
+                if (visibility <= Goo.CanvasItemVisibility.INVISIBLE)
+                {
+                    Log.debug ("stop thobber");
+                    ((XSAA.Throbber)composite_widget).stop ();
+                }
+            });
+        }
+
         public void
         start ()
         {
@@ -64,3 +75,4 @@ namespace XSAA.Aixplorer
         }
     }
 }
+
