@@ -32,7 +32,8 @@ namespace XSAA
             STARTING,
             CHECK_FILESYSTEM,
             LOADING,
-            CHECK_DEVICE
+            CHECK_DEVICE,
+            SHUTDOWN
         }
 
         public class Args : XSAA.Event.Args
@@ -61,6 +62,11 @@ namespace XSAA
             {
                 GLib.Object (event_type: Type.CHECK_DEVICE, completed: inCompleted);
             }
+
+            public Args.shutdown (bool inCompleted)
+            {
+                GLib.Object (event_type: Type.SHUTDOWN, completed: inCompleted);
+            }
         }
 
         public EventBoot (Args inArgs)
@@ -86,6 +92,11 @@ namespace XSAA
         public EventBoot.check_device (bool inCompleted)
         {
             this (new Args.check_device (inCompleted));
+        }
+
+        public EventBoot.shutdown (bool inCompleted)
+        {
+            this (new Args.shutdown (inCompleted));
         }
     }
 }

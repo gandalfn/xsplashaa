@@ -236,6 +236,33 @@ namespace XSAA
         }
 
         /**
+         * Find child items by type in this and its childrens
+         *
+         * @param inType child node type
+         *
+         * @return child items array
+         */
+        public EngineItem[]
+        find_by_type (GLib.Type inType)
+        {
+            EngineItem[] ret = {};
+
+            foreach (unowned EngineItem item in this)
+            {
+                if (item.get_type ().is_a (inType))
+                {
+                    ret += item;
+                }
+                foreach (unowned EngineItem child in item.find_by_type (inType))
+                {
+                    ret += child;
+                }
+            }
+
+            return ret;
+        }
+
+        /**
          * Get value in string format of element inName attribute.
          *
          * @param inName attribute name

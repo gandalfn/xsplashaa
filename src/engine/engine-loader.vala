@@ -58,8 +58,7 @@ namespace XSAA
          */
         public EngineLoader (string inName) throws EngineLoaderError
         {
-            //string filename = Config.PACKAGE_DATA_DIR + "/" + inName + "/" + inName + ".engine";
-            string filename = inName + "/" + inName + ".engine";
+            string filename = Config.PACKAGE_DATA_DIR + "/" + inName + "/" + inName + ".engine";
             if (!FileUtils.test(filename, FileTest.EXISTS))
                 throw new EngineLoaderError.NOT_FOUND ("Could not found %s", filename);
 
@@ -103,8 +102,7 @@ namespace XSAA
         private void
         load (string inName) throws EngineLoaderError
         {
-            //string filename = Config.PACKAGE_DATA_DIR + "/" + inName + "/" + inName + "-engine.so";
-            string filename = inName + "/.libs/" + inName + "-engine.so";
+            string filename = Config.PACKAGE_ENGINE_DIR + "/" + inName + "-engine.so";
             m_Module = GLib.Module.open (filename, GLib.ModuleFlags.BIND_LAZY);
             if (m_Module == null)
             {

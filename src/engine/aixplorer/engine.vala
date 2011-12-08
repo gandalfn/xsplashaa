@@ -238,6 +238,7 @@ namespace XSAA.Aixplorer
             unowned Throbber check_filesystem = (Throbber)find ("checking-filesystem-throbber");
             unowned Throbber starting = (Throbber)find ("starting-throbber");
             unowned Throbber check_device = (Throbber)find ("checking-device-throbber");
+            unowned Throbber shutdown = (Throbber)find ("shutdown-throbber");
 
             if (loading == null || check_filesystem == null || starting == null || check_device == null || notebook == null)
             {
@@ -316,6 +317,14 @@ namespace XSAA.Aixplorer
                     }
                     else
                         check_device.finished ();
+                    break;
+
+                case EventBoot.Type.SHUTDOWN:
+                    notebook.current_page = 2;
+                    if (!inEvent.args.completed)
+                        shutdown.start ();
+                    else
+                        shutdown.finished ();
                     break;
             }
         }
@@ -533,4 +542,3 @@ public XSAA.Engine? plugin_init ()
 {
     return new XSAA.Aixplorer.Engine ();
 }
-

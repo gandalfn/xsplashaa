@@ -4,13 +4,11 @@ XSPLASHAA_VAPI_DEPS = \
     $(top_builddir)/src/graphics/xsaa-graphics.vapi \
     $(top_builddir)/src/timeline/xsaa-timeline.vapi \
     $(top_builddir)/src/widgets/xsaa-widgets.vapi \
-    $(top_builddir)/src/themes/xsaa-engine.vapi
+    $(top_builddir)/src/engine/xsaa-engine.vapi
 
 include $(top_srcdir)/build/vala.am
 
-aixplorerthemedir = $(libdir)/xsplashaa
-
-aixplorertheme_LTLIBRARIES = aixplorer-engine.la
+engine_LTLIBRARIES = aixplorer-engine.la
 
 aixplorer_engine_la_VALAFLAGS = \
     --thread \

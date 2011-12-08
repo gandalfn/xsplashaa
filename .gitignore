@@ -53,10 +53,10 @@ src/widgets/*.[ch]
 src/widgets/*.vapi
 src/splash/*.[ch]
 src/splash/*.vapi
-src/themes/*.[ch]
-src/themes/*.vapi
-src/themes/aixplorer/*.[ch]
-src/themes/aixplorer/*.vapi
+src/engine/*.[ch]
+src/engine/*.vapi
+src/engine/aixplorer/*.[ch]
+src/engine/aixplorer/*.vapi
 src/xml/*.[ch]
 src/xml/*.vapi
 test/*.c

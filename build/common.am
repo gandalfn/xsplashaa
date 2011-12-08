@@ -6,5 +6,6 @@ AM_CPPFLAGS = \
     -DPACKAGE_CONFIG_FILE=\""$(sysconfdir)/xsplashaa/xsplashaa.conf"\" \
     -DPACKAGE_DATA_DIR=\""$(datadir)/xsplashaa"\" \
     -DPACKAGE_CHROOT_DIR=\""$(chrootdir)"\" \
+    -DPACKAGE_ENGINE_DIR=\""$(enginedir)"\" \
     -D_GNU_SOURCE
 

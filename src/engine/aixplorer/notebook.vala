@@ -66,6 +66,10 @@ namespace XSAA.Aixplorer
             private Animator         m_Animator;
             private Goo.CanvasItem   m_Previous;
             private Goo.CanvasItem   m_Current;
+            private string           m_Property;
+            private GLib.Value       m_From;
+            private double           m_PreviousX;
+            private double           m_PreviousY;
 
             // signals
             public signal void finished ();
@@ -93,9 +97,12 @@ namespace XSAA.Aixplorer
             private void
             create_horizontal_slide ()
             {
-                double previous_x, current_x;
-                ((GLib.Object)m_Previous).get ("x", out previous_x);
+                double previous_x, previous_y, current_x;
                 ((GLib.Object)m_Current).get ("x", out current_x);
+                ((GLib.Object)m_Previous).get ("x", out previous_x);
+                ((GLib.Object)m_Previous).get ("y", out previous_y);
+                m_PreviousX = previous_x;
+                m_PreviousY = previous_y;
 
                 uint transition = m_Animator.add_transition (0.0, 1.0, XSAA.Animator.ProgressType.SINUSOIDAL, null, on_finished);
 
@@ -109,8 +116,8 @@ namespace XSAA.Aixplorer
                     to = (double)current_x;
                     m_Animator.add_transition_property (transition, m_Current, "x", from, to);
 
-                    // TODO: set current pos on start
-                    m_Current.set_property ("x", from);
+                    m_Property = "x";
+                    m_From = from;
                 }
                 else
                 {
@@ -122,17 +129,20 @@ namespace XSAA.Aixplorer
                     to = (double)current_x;
                     m_Animator.add_transition_property (transition, m_Current, "x", from, to);
 
-                    // TODO: set current pos on start
-                    m_Current.set_property ("x", from);
+                    m_Property = "x";
+                    m_From = from;
                 }
             }
 
             private void
             create_vertical_slide ()
             {
-                double previous_y, current_y;
-                ((GLib.Object)m_Previous).get ("y", out previous_y);
+                double previous_x, previous_y, current_y;
                 ((GLib.Object)m_Current).get ("y", out current_y);
+                ((GLib.Object)m_Previous).get ("x", out previous_x);
+                ((GLib.Object)m_Previous).get ("y", out previous_y);
+                m_PreviousX = previous_x;
+                m_PreviousY = previous_y;
 
                 uint transition = m_Animator.add_transition (0.0, 1.0, XSAA.Animator.ProgressType.SINUSOIDAL, null, on_finished);
 
@@ -146,8 +156,8 @@ namespace XSAA.Aixplorer
                     to = (double)current_y;
                     m_Animator.add_transition_property (transition, m_Current, "y", from, to);
 
-                    // TODO: set current pos on start
-                    m_Current.set_property ("y", from);
+                    m_Property = "y";
+                    m_From = from;
                 }
                 else
                 {
@@ -159,22 +169,20 @@ namespace XSAA.Aixplorer
                     to = (double)current_y;
                     m_Animator.add_transition_property (transition, m_Current, "y", from, to);
 
-                    // TODO: set current pos on start
-                    m_Current.set_property ("y", from);
+                    m_Property = "y";
+                    m_From = from;
                 }
             }
 
             private void
             on_finished ()
             {
-                if (m_Previous != null)
-                {
-                    // TODO: set current pos on start
-                    GLib.Value y_val = (double)0.0;
-                    GLib.Value visibility_val = Goo.CanvasItemVisibility.INVISIBLE;
-                    m_Previous.set_property ("y", y_val);
-                    m_Previous.set_property ("visibility", visibility_val);
-                }
+                // TODO: set current pos on start
+                GLib.Value val_x = (double)m_PreviousX;
+                GLib.Value val_y = (double)m_PreviousY;
+                m_Previous.set_property ("x", val_x);
+                m_Previous.set_property ("y", val_y);
+                ((Goo.CanvasItemSimple)m_Previous).visibility = Goo.CanvasItemVisibility.INVISIBLE;
 
                 finished ();
             }
@@ -183,6 +191,7 @@ namespace XSAA.Aixplorer
             start ()
             {
                 Log.debug ("start animation");
+                m_Current.set_property (m_Property, m_From);
                 m_Current.visibility = Goo.CanvasItemVisibility.VISIBLE;
                 m_Previous.visibility = Goo.CanvasItemVisibility.VISIBLE;
                 m_Animator.start ();
@@ -403,4 +412,3 @@ namespace XSAA.Aixplorer
         }
     }
 }
-

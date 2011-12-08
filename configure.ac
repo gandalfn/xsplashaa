@@ -98,6 +98,16 @@ AC_ARG_WITH(init-dir,
             [initdir="/lib/init"])
 AC_SUBST(initdir)
 
+dnl ****************************************************************************
+dnl Check for engine-dir
+dnl ****************************************************************************
+AC_ARG_WITH(engine-dir,
+            AC_HELP_STRING([--with-engine-dir=DIR],
+                           [Default engine dir [[default=${libdir}/xsplashaa]]]),
+            [enginedir="$withval"],
+            [enginedir="${libdir}/xsplashaa"])
+AC_SUBST(enginedir)
+
 AC_CONFIG_FILES([
     Makefile
     src/Makefile
@@ -110,8 +120,8 @@ AC_CONFIG_FILES([
     src/timeline/Makefile
     src/widgets/Makefile
     src/splash/Makefile
-    src/themes/Makefile
-    src/themes/aixplorer/Makefile
+    src/engine/Makefile
+    src/engine/aixplorer/Makefile
     po/Makefile.in
     data/Makefile
     data/xsplashaa.desktop
