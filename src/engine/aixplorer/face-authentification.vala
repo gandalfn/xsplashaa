@@ -31,7 +31,6 @@ namespace XSAA.Aixplorer
         }
 
         // constants
-        private const Os.key_t FACE_AUTHENTICATION_IPC_KEY_SEM_IMAGE = 567816;
         private const Os.key_t FACE_AUTHENTICATION_IPC_KEY_IMAGE     = 567814;
         private const Os.key_t FACE_AUTHENTICATION_IPC_KEY_STATUS    = 567813;
 
@@ -41,7 +40,6 @@ namespace XSAA.Aixplorer
 
         // properties
         private Timeline        m_Refresh;
-        private int             m_SemPixelsId = 0;
         private int             m_PixelsId    = 0;
         private int             m_StatusId    = 0;
         private unowned uchar[] m_Pixels      = null;
@@ -65,7 +63,6 @@ namespace XSAA.Aixplorer
         private void
         ipc_start ()
         {
-            m_SemPixelsId = Os.semget (FACE_AUTHENTICATION_IPC_KEY_SEM_IMAGE, 1, Os.IPC_CREAT | 0666);
             m_PixelsId = Os.shmget (FACE_AUTHENTICATION_IPC_KEY_IMAGE, FACE_AUTHENTICATION_IMAGE_SIZE, Os.IPC_CREAT | 0666);
             if ((int)m_PixelsId != -1)
             {
@@ -74,6 +71,10 @@ namespace XSAA.Aixplorer
                 {
                     Log.critical ("error on get face authentication pixels mem: %s", GLib.strerror (GLib.errno));
                 }
+            }
+            else
+            {
+                Log.critical ("error on get face authentication pixels mem: %s", GLib.strerror (GLib.errno));
             }
 
             m_StatusId = Os.shmget (FACE_AUTHENTICATION_IPC_KEY_STATUS, sizeof (int), Os.IPC_CREAT | 0666);
@@ -84,6 +85,10 @@ namespace XSAA.Aixplorer
                 {
                     Log.critical ("error on get face authentication status mem: %s", GLib.strerror (GLib.errno));
                 }
+            }
+            else
+            {
+                Log.critical ("error on get face authentication status mem: %s", GLib.strerror (GLib.errno));
             }
         }
 
@@ -190,4 +195,3 @@ namespace XSAA.Aixplorer
         }
     }
 }
-

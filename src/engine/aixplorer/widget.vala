@@ -24,9 +24,9 @@ namespace XSAA.Aixplorer
     public class Widget : Goo.CanvasWidget, XSAA.EngineItem, ItemPackOptions
     {
         // properties
-        private bool                               m_UseCompositing = true;
-        private string                             m_Id;
-        private int                                m_Layer;
+        private bool   m_UseCompositing = true;
+        private string m_Id;
+        private int    m_Layer;
 
         // accessors
         public virtual string node_name {
@@ -161,4 +161,3 @@ namespace XSAA.Aixplorer
         }
     }
 }
-

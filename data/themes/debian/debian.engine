@@ -4,28 +4,30 @@
     <!--touchscreen table -->
     <table id="touchscreen" layer="1" width="1024" height="768" y_fill="true"/>
     <!--main table -->
-    <table id="main" layer="1" width="1680" height="1050"
-           y_border_spacing="12" row_spacing="12" column_spacing="12" y_fill="true">
-        <progressbar id="progress-bar" row="2" column="0" left_padding="96" right_padding="96"
+    <table id="main" layer="1" width="1680" height="1050" y_fill="true">
+        <progressbar id="progress-bar" row="2" column="0" y_fill="true "
+                     left_padding="96" right_padding="96"
                      bar_height="30" bar_color="#FF0000" width="600" height="70"/>
+        <text id="message" row="3" column="0" y_align="0.0"
+              font="Liberation Bold 18" fill_color="#000000"/>
         <!--content table -->
         <table id="content" row="1" column="0" y_align="0.5" x_expand="true" row_spacing="24" column_spacing="48">
             <!--left logo -->
             <logo id="left-logo" row="0" column="0" x_align="0.5" width="500" height="500"
                   filename="/usr/share/xsplashaa/debian/distrib-logo.png"/>
-            <table id="prompt-content" row="0" column="1" y_align="0.5">
+            <table id="prompt-content" row="0" column="1" y_align="0.5" x_fill="true">
                 <!--top logo -->
                 <logo id="top-logo" row="0" column="0" y_align="0.0"
                       filename="/usr/share/xsplashaa/debian/logo.png"/>
-                <notebook id="main-notebook" row="1" column="0" y_fill="true">
+                <notebook id="main-notebook" row="1" column="0" y_fill="true" x_fill="true">
                     <!--check table -->
-                    <table id="checking-table" page_num="0" animation="vertical-slide" x_align="0.5" y_align="0.3"
-                           row_spacing="12" column_spacing="12" homogeneous_row="true" x_fill="true">
+                    <table id="checking-table" page_num="0" animation="vertical-slide" x_align="0.5" y_align="0.3" x_fill="true"
+                           row_spacing="12" column_spacing="12" homogeneous_row="true">
                         <table id="loading" row="0" column="0" x_fill="true">
                             <text id="loading-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#DCE7EC"
                                   text="Loading..."/>
-                            <throbber id="loading-throbber" row="0" column="1" x_fill="true" x_align="1.0"
+                            <throbber id="loading-throbber" row="0" column="1" x_expand="false" x_align="1.0"
                                       theme_name="debian"/>
                         </table>
                         <table id="checking-filesystem" visibility="1" row="1" column="0" x_fill="true">

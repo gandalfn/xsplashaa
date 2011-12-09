@@ -31,6 +31,7 @@ namespace XSAA
         { "progress", 'r', 0, OptionArg.INT, ref sProgress, null, "PROGRESS" },
         { "quit", 'q', 0, OptionArg.NONE, ref sQuit, "Quit", null },
         { "close-session", 'c', 0, OptionArg.NONE, ref sCloseSession, "Close session", null },
+        { "message", 0, 0, OptionArg.STRING, ref sMessage, "Message", null },
         { "socket", 0, 0, OptionArg.STRING, ref sSocketName, null, "SOCKET" },
         { null }
     };
@@ -43,6 +44,7 @@ namespace XSAA
     static bool   sSession = false;
     static int    sPhase = 0;
     static int    sProgress = 0;
+    static string sMessage = null;
     static string sSocketName;
 
     static int
@@ -90,10 +92,11 @@ namespace XSAA
             client.progress (sProgress);
         else if (sCloseSession)
             client.close_session ();
+        else if (sMessage != null)
+            client.message (sMessage.substring (0, int.min (sMessage.length, 1000)).replace ("|", "-"));
         else
             return -1;
 
         return 0;
     }
 }
-

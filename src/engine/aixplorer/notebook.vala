@@ -177,7 +177,6 @@ namespace XSAA.Aixplorer
             private void
             on_finished ()
             {
-                // TODO: set current pos on start
                 GLib.Value val_x = (double)m_PreviousX;
                 GLib.Value val_y = (double)m_PreviousY;
                 m_Previous.set_property ("x", val_x);
@@ -415,4 +414,3 @@ namespace XSAA.Aixplorer
         }
     }
 }
-

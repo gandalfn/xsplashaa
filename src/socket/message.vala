@@ -32,7 +32,8 @@ namespace XSAA
         PHASE,
         PULSE,
         PROGRESS,
-        CLOSE_SESSION
+        CLOSE_SESSION,
+        MESSAGE
     }
 
     /**
@@ -181,6 +182,13 @@ namespace XSAA
         {
             GLib.Object (message_type: MessageType.PULSE);
         }
+
+        /**
+         * Create a new message message
+         */
+        public Message.message (string inMessage)
+        {
+            GLib.Object (message_type: MessageType.MESSAGE, data: inMessage);
+        }
     }
 }
-

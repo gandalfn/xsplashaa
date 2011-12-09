@@ -37,6 +37,7 @@ namespace XSAA
         public signal void pulse();
         public signal void close_session();
         public signal void quit();
+        public signal void message(string inMessage);
 
         // methods
         /**
@@ -116,6 +117,7 @@ namespace XSAA
                 if (bytes_read > 0 && bytes_read < BUFFER_LENGTH)
                 {
                     buffer[bytes_read] = (char)0;
+                    Log.debug ("received: %s", (string)buffer);
                     Message message = new Message ((string)buffer);
                     if (message != null)
                     {
@@ -199,6 +201,13 @@ namespace XSAA
                 }
                 break;
 
+                case MessageType.MESSAGE:
+                {
+                    Log.info ("received message message: %s", inMessage.data);
+                    message(inMessage.data);
+                }
+                break;
+
                 default:
                     Log.warning ("Received an invalid message");
                     break;
@@ -206,4 +215,3 @@ namespace XSAA
         }
     }
 }
-

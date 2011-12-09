@@ -110,7 +110,7 @@ namespace XSAA.Aixplorer
             progress.ShowLabels = false;
             composite_widget = progress;
 
-            m_Animator = new XSAA.Animator(60, 2000);
+            m_Animator = new XSAA.Animator(20, 2000);
             m_Animator.loop = true;
         }
 
@@ -122,4 +122,3 @@ namespace XSAA.Aixplorer
         }
     }
 }
-

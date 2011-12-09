@@ -31,7 +31,7 @@ public class TestWindow : Gtk.Window
         m_Box.show ();
         add (m_Box);
 
-        m_Animator = new XSAA.Animator(60, 2000);
+        m_Animator = new XSAA.Animator(30, 2000);
         uint transition = m_Animator.add_transition (0, 1, XSAA.Animator.ProgressType.LINEAR, () => {
             queue_draw ();
             return false;
@@ -177,4 +177,3 @@ main (string[] inArgs)
 
     return 0;
 }
-

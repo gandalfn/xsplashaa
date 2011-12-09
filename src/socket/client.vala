@@ -151,6 +151,16 @@ namespace XSAA
 
             send(new Message.close_session ());
         }
+
+        /**
+         * Send message message
+         */
+        public void
+        message(string inMessage)
+        {
+            Log.debug ("send message %s message", inMessage);
+
+            send(new Message.message (inMessage));
+        }
     }
 }
-

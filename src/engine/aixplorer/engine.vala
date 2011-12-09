@@ -42,7 +42,7 @@ namespace XSAA.Aixplorer
             // methods
             public Animation (Goo.CanvasItem inItem, string inProperty, double inStart, double inEnd)
             {
-                m_Animator = new Animator (60, 400);
+                m_Animator = new Animator (20, 400);
                 m_Item = inItem;
                 m_Property = inProperty;
                 m_Start = inStart;
@@ -411,6 +411,25 @@ namespace XSAA.Aixplorer
             }
         }
 
+        private void
+        process_message_event (EventMessage inEvent)
+        {
+            unowned Text message = (Text)find ("message");
+
+            if (message == null)
+            {
+                Log.critical ("Error does not find message items");
+                return;
+            }
+
+            switch (inEvent.args.event_type)
+            {
+                case EventMessage.Type.MESSAGE:
+                    message.text = inEvent.args.text;
+                    break;
+            }
+        }
+
         public void
         append_child (EngineItem inChild)
         {
@@ -425,6 +444,25 @@ namespace XSAA.Aixplorer
         realize ()
         {
             base.realize ();
+
+            unowned Table? main = (Table?)find ("main");
+            unowned Table? touchscreen = (Table?)find ("touchscreen");
+            if (main != null && touchscreen != null)
+            {
+                int width, height;
+                window.get_size (out width, out height);
+
+                if (height < main.height + touchscreen.height)
+                {
+                    touchscreen.visibility = Goo.CanvasItemVisibility.HIDDEN;
+                    main.expand = true;
+                    main.changed (true);
+                }
+            }
+            else
+            {
+                GLib.warning ("unable to find main or touchscreen table");
+            }
 
             unowned Entry? prompt = (Entry?)find ("prompt");
             unowned Text message = (Text)find ("prompt-message");
@@ -536,6 +574,10 @@ namespace XSAA.Aixplorer
             {
                 process_user_event ((EventUser)inEvent);
             }
+            else if (inEvent is EventMessage)
+            {
+                process_message_event ((EventMessage)inEvent);
+            }
         }
     }
 }
@@ -544,4 +586,3 @@ public XSAA.Engine? plugin_init ()
 {
     return new XSAA.Aixplorer.Engine ();
 }
-
