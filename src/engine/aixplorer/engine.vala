@@ -185,6 +185,10 @@ namespace XSAA.Aixplorer
             unowned Entry prompt = (Entry)find ("prompt");
             unowned Users users = (Users)find ("users");
             unowned FaceAuthentification face_authentification = (FaceAuthentification)find ("face-auth");
+            unowned Table face_authentification_table = (Table)find ("face-authentification-table");
+            unowned Button? button_restart = (Button?)find ("button-restart");
+            unowned Button? button_shutdown = (Button?)find ("button-shutdown");
+
 
             if (prompt == null || prompt_label == null || notebook == null ||
                 users_notebook == null || users == null || message == null ||
@@ -199,9 +203,13 @@ namespace XSAA.Aixplorer
                 case EventPrompt.Type.SHOW_LOGIN:
                     prompt_label.text = "Login:";
                     prompt.text = "";
+                    prompt.widget.sensitive = true;
                     prompt.grab_focus ();
                     prompt.entry_visibility = true;
                     face_authentification.stop ();
+                    face_authentification_table.visibility = Goo.CanvasItemVisibility.VISIBLE;
+                    button_restart.visibility = Goo.CanvasItemVisibility.VISIBLE;
+                    button_shutdown.visibility = Goo.CanvasItemVisibility.VISIBLE;
                     users_notebook.current_page = 0;
                     notebook.current_page = 1;
                     break;
@@ -209,9 +217,13 @@ namespace XSAA.Aixplorer
                 case EventPrompt.Type.SHOW_PASSWORD:
                     prompt_label.text = "Password:";
                     prompt.text = "";
+                    prompt.widget.sensitive = true;
                     prompt.grab_focus ();
                     prompt.entry_visibility = false;
                     face_authentification.stop ();
+                    face_authentification_table.visibility = Goo.CanvasItemVisibility.INVISIBLE;
+                    button_restart.visibility = Goo.CanvasItemVisibility.INVISIBLE;
+                    button_shutdown.visibility = Goo.CanvasItemVisibility.INVISIBLE;
                     users_notebook.current_page = 1;
                     notebook.current_page = 1;
                     break;
@@ -221,6 +233,9 @@ namespace XSAA.Aixplorer
                     face_authentification.start ();
                     users_notebook.current_page = 2;
                     notebook.current_page = 1;
+                    face_authentification_table.visibility = Goo.CanvasItemVisibility.INVISIBLE;
+                    button_restart.visibility = Goo.CanvasItemVisibility.INVISIBLE;
+                    button_shutdown.visibility = Goo.CanvasItemVisibility.INVISIBLE;
                     break;
 
                 case EventPrompt.Type.MESSAGE:
@@ -457,6 +472,12 @@ namespace XSAA.Aixplorer
                     touchscreen.visibility = Goo.CanvasItemVisibility.HIDDEN;
                     main.expand = true;
                     main.changed (true);
+
+                    event_notify (new EventSystem.monitor ((uint)width, (uint)height, 0, 0));
+                }
+                else
+                {
+                    event_notify (new EventSystem.monitor ((uint)main.width, (uint)main.height, (uint)touchscreen.width, (uint)touchscreen.height));
                 }
             }
             else
@@ -470,7 +491,7 @@ namespace XSAA.Aixplorer
             if (prompt != null)
             {
                 prompt.edited.connect ((s) => {
-                    Log.debug ("prompt: %s", s);
+                    prompt.widget.sensitive = s != null && s.length > 0;
                     message.text = "";
                     event_notify (new EventPrompt.edited (s, face_authentification.active));
                 });
@@ -586,3 +607,4 @@ public XSAA.Engine? plugin_init ()
 {
     return new XSAA.Aixplorer.Engine ();
 }
+

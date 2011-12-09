@@ -44,6 +44,10 @@ namespace XSAA
         private EngineLoader    m_EngineLoader;
 
         // accessors
+        public uint main_width { get; private set; default = 0; }
+        public uint main_height { get; private set; default = 0; }
+        public uint touchscreen_width { get; private set; default = 0; }
+        public uint touchscreen_height { get; private set; default = 0; }
         public double percent { get; set; default = 1.0; }
 
         // signals
@@ -224,6 +228,13 @@ namespace XSAA
                     case EventSystem.Type.HALT:
                         shutdown ();
                         break;
+
+                    case EventSystem.Type.MONITOR:
+                        main_width = event_system.args.main_width;
+                        main_height = event_system.args.main_height;
+                        touchscreen_width = event_system.args.touchscreen_width;
+                        touchscreen_height = event_system.args.touchscreen_height;
+                        break;
                 }
             }
         }
@@ -270,6 +281,10 @@ namespace XSAA
         {
             if (m_UseCompositing)
             {
+                double x = allocation.width / 2.0;
+                double y = allocation.height / 2.0;
+                double radial = (double)int.max (allocation.width, allocation.height);
+
                 var ctx = Gdk.cairo_create (window);
 
                 Gdk.cairo_region (ctx, inEvent.region);
@@ -278,9 +293,14 @@ namespace XSAA
                 ctx.set_operator (Cairo.Operator.CLEAR);
                 ctx.paint ();
 
-                var mask = new Cairo.Pattern.radial (allocation.width / 2, allocation.height / 2, 0,
-                                                     allocation.width / 2, allocation.height / 2,
-                                                     int.max (allocation.width, allocation.height));
+                if (main_width > 0 && main_height > 0)
+                {
+                    x = main_width / 2.0;
+                    y = main_height / 2.0;
+                    radial = (double)uint.max (main_width, main_height + touchscreen_height);
+                }
+
+                var mask = new Cairo.Pattern.radial (x, y, 0, x, y, radial);
                 if (percent < 1 )
                 {
                     mask.add_color_stop_rgba (1, 0, 0, 0, 1);
@@ -343,6 +363,7 @@ namespace XSAA
             var cursor = new Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR);
             get_window().set_cursor(cursor);
 
+            m_EngineLoader.engine.process_event (new EventProgress.pulse ());
             m_EngineLoader.engine.process_event (new EventBoot.shutdown (false));
         }
 
@@ -389,3 +410,4 @@ namespace XSAA
         }
     }
 }
+

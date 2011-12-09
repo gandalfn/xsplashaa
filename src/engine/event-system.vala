@@ -30,13 +30,18 @@ namespace XSAA
         public enum Type
         {
             REBOOT,
-            HALT
+            HALT,
+            MONITOR
         }
 
         public class Args : XSAA.Event.Args
         {
             // accessors
             public Type event_type { get; construct; }
+            public uint main_width { get; construct; }
+            public uint main_height { get; construct; }
+            public uint touchscreen_width { get; construct; }
+            public uint touchscreen_height { get; construct; }
 
             // methods
             public Args.reboot ()
@@ -47,6 +52,12 @@ namespace XSAA
             public Args.halt ()
             {
                 GLib.Object (event_type: Type.HALT);
+            }
+
+            public Args.monitor (uint inMainWidth, uint inMainHeight, uint inTSWidth, uint inTSHeight)
+            {
+                GLib.Object (event_type: Type.MONITOR, main_width: inMainWidth, main_height: inMainHeight,
+                             touchscreen_width: inTSWidth, touchscreen_height: inTSHeight);
             }
         }
 
@@ -64,5 +75,11 @@ namespace XSAA
         {
             this (new Args.halt ());
         }
+
+        public EventSystem.monitor (uint inMainWidth, uint inMainHeight, uint inTSWidth, uint inTSHeight)
+        {
+            this (new Args.monitor (inMainWidth, inMainHeight, inTSWidth, inTSHeight));
+        }
     }
 }
+

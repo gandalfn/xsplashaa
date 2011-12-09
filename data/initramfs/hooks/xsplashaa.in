@@ -33,13 +33,11 @@ copy_themes ()
     for theme in /usr/share/xsplashaa/*
     do
         mkdir -p ${DESTDIR}/$theme
-        copy_exec_if_exist $theme/logo.png $theme
-        copy_exec_if_exist $theme/distrib-logo.png $theme
-        copy_exec_if_exist $theme/background.png $theme
-        copy_exec_if_exist $theme/throbber-initial.png $theme
-        copy_exec_if_exist $theme/throbber-spinner.png $theme
-        copy_exec_if_exist $theme/throbber-finish.png $theme
-        copy_exec_if_exist $theme/gtkrc $theme
+    	for f in $(find $theme -type f)
+    	do
+        	d=$(dirname $f)
+        	copy_exec_if_exist $f $d 
+    	done
     done
 }
 
@@ -67,6 +65,7 @@ mkdir -p ${DESTDIR}/usr/lib/xorg/modules/input
 mkdir -p ${DESTDIR}/usr/lib/xorg/modules/fonts
 mkdir -p ${DESTDIR}/usr/lib/xorg/modules/extensions
 mkdir -p ${DESTDIR}/usr/lib/xorg/modules/drivers
+mkdir -p ${DESTDIR}/usr/lib/xsplashaa
 mkdir -p ${DESTDIR}/usr/share/fonts/truetype/ttf-dejavu
 mkdir -p ${DESTDIR}/usr/share/fonts/X11/misc
 mkdir -p ${DESTDIR}/usr/share/fonts/X11/75dpi
@@ -125,6 +124,7 @@ copy_exec_if_exist /usr/lib/xorg/modules/libvgahw.so /usr/lib/xorg/modules
 copy_exec_if_exist /usr/lib/xorg/modules/libwfb.so /usr/lib/xorg/modules
 copy_exec_if_exist /usr/lib/xorg/modules/libxaa.so /usr/lib/xorg/modules
 copy_exec_if_exist /usr/lib/xorg/modules/libxf8_16bpp.so /usr/lib/xorg/modules
+copy_exec_if_exist /usr/lib/xsplashaa/aixplorer-engine.so /usr/lib/xsplashaa
 copy_exec_if_exist /usr/lib/pango/1.6.0/modules/pango-basic-x.so /usr/lib/pango/1.6.0/modules
 copy_exec_if_exist /usr/lib/pango/1.6.0/modules/pango-basic-fc.so /usr/lib/pango/1.6.0/modules
 copy_exec_if_exist /usr/lib/pango/1.6.0/module-files.d/libpango1.0-0.modules /usr/lib/pango/1.6.0/module-files.d

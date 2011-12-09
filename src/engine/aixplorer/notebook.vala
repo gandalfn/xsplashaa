@@ -368,7 +368,7 @@ namespace XSAA.Aixplorer
             {
                 if (m_Clip)
                 {
-                    inContext.rectangle (0, 0, inBounds.x1 + inBounds.x2, inBounds.y1 + inBounds.y2);
+                    inContext.rectangle (0, 0, bounds.x2 - bounds.x1, bounds.y2 - bounds.y1);
                     inContext.clip ();
                 }
                 base.paint (inContext, inBounds, inScale);
@@ -414,3 +414,4 @@ namespace XSAA.Aixplorer
         }
     }
 }
+

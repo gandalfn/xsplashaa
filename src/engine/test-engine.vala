@@ -12,6 +12,8 @@ public class TestWindow : Gtk.Window
     public TestWindow ()
     {
         Gdk.Screen screen = Gdk.Screen.get_default();
+        Gdk.Window root = screen.get_root_window ();
+        Gdk.property_delete (root, Gdk.Atom.intern ("_XROOTPMAP_ID", false));
         set_app_paintable(true);
         set_colormap (screen.get_rgba_colormap ());
         //set_default_size (1000, 600);
@@ -177,3 +179,4 @@ main (string[] inArgs)
 
     return 0;
 }
+

@@ -440,6 +440,15 @@ namespace XSAA
 
             m_Splash.show_shutdown();
             m_Splash.show ();
+
+            Gdk.Display display = Gdk.Display.get_default ();
+            for (int cpt = 0; cpt < display.get_n_screens (); ++cpt)
+            {
+                Gdk.Screen screen = display.get_screen(cpt);
+                Gdk.Window root = screen.get_root_window ();
+                Gdk.property_delete (root, Gdk.Atom.intern ("_XROOTPMAP_ID", true));
+                Gdk.property_delete (root, Gdk.Atom.intern ("ESETROOT_PMAP_ID", true));
+            }
         }
 
         private void
@@ -674,7 +683,7 @@ namespace XSAA
     static int
     main (string[] args)
     {
-        Log.set_default_logger (new XSAA.Log.Stderr (XSAA.Log.Level.DEBUG, "xsplashaa"));
+        Log.set_default_logger (new XSAA.Log.KMsg (XSAA.Log.Level.DEBUG, "xsplashaa"));
 
         Log.debug ("starting");
 
@@ -795,3 +804,4 @@ namespace XSAA
         return 0;
      }
 }
+

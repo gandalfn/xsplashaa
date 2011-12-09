@@ -50,7 +50,7 @@ namespace XSAA
     static int
     main (string[] args)
     {
-        XSAA.Log.set_default_logger (new XSAA.Log.Stderr (XSAA.Log.Level.DEBUG, "xsaa-client"));
+        XSAA.Log.set_default_logger (new XSAA.Log.Syslog (XSAA.Log.Level.DEBUG, "xsaa-client"));
 
         sSocketName = "/tmp/xsplashaa-socket";
         try

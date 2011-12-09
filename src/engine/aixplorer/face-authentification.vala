@@ -31,6 +31,7 @@ namespace XSAA.Aixplorer
         }
 
         // constants
+        private const Os.key_t FACE_AUTHENTICATION_IPC_KEY_SEM_IMAGE = 567816;
         private const Os.key_t FACE_AUTHENTICATION_IPC_KEY_IMAGE     = 567814;
         private const Os.key_t FACE_AUTHENTICATION_IPC_KEY_STATUS    = 567813;
 
@@ -40,6 +41,7 @@ namespace XSAA.Aixplorer
 
         // properties
         private Timeline        m_Refresh;
+        private int             m_SemPixelsId = 0;
         private int             m_PixelsId    = 0;
         private int             m_StatusId    = 0;
         private unowned uchar[] m_Pixels      = null;
@@ -63,6 +65,8 @@ namespace XSAA.Aixplorer
         private void
         ipc_start ()
         {
+            m_SemPixelsId = Os.semget (FACE_AUTHENTICATION_IPC_KEY_SEM_IMAGE,  1, Os.IPC_CREAT | 0666);
+
             m_PixelsId = Os.shmget (FACE_AUTHENTICATION_IPC_KEY_IMAGE, FACE_AUTHENTICATION_IMAGE_SIZE, Os.IPC_CREAT | 0666);
             if ((int)m_PixelsId != -1)
             {
@@ -118,7 +122,7 @@ namespace XSAA.Aixplorer
             }
         }
 
-        private Cairo.Surface?
+        private Cairo.ImageSurface?
         get_face_surface ()
         {
             Cairo.ImageSurface? surface = null;
@@ -151,20 +155,19 @@ namespace XSAA.Aixplorer
         public override void
         simple_paint (Cairo.Context inContext, Goo.CanvasBounds inBounds)
         {
-            Cairo.Surface surface = get_face_surface ();
+            Cairo.ImageSurface surface = get_face_surface ();
             if (surface != null)
             {
                 inContext.save ();
                 Cairo.Pattern pattern = new Cairo.Pattern.for_surface (surface);
                 Cairo.Matrix matrix = Cairo.Matrix.identity ();
+                matrix.scale (surface.get_width () / width, surface.get_height () / height);
                 matrix.translate (-x, -y);
                 pattern.set_matrix (matrix);
                 get_style ().set_fill_options (inContext);
-                inContext.scale (width / FACE_AUTHENTICATION_IMAGE_WIDTH, height / FACE_AUTHENTICATION_IMAGE_HEIGHT);
-                ((CairoContext)inContext).rounded_rectangle (0, 0, FACE_AUTHENTICATION_IMAGE_WIDTH, FACE_AUTHENTICATION_IMAGE_HEIGHT, 12, CairoCorner.ALL);
-                inContext.clip ();
                 inContext.set_source (pattern);
-                inContext.paint ();
+                ((CairoContext)inContext).rounded_rectangle (x, y, width, height, 12, CairoCorner.ALL);
+                inContext.fill ();
                 inContext.restore ();
             }
         }
@@ -195,3 +198,4 @@ namespace XSAA.Aixplorer
         }
     }
 }
+
