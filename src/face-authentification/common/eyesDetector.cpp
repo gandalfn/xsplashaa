@@ -26,8 +26,8 @@
 
 double CenterofMass(IplImage* src,int flagXY);
 
-std::string HAAR_CASCADE_EYE=PACKAGE_DATA_DIR "/xsplashaa/face-authentification/haarcascade_eye_tree_eyeglasses.xml";
-std::string HAAR_CASCADE_EYE_2=PACKAGE_DATA_DIR "/xsplashaa/face-authentification/haarcascade_eye.xml";
+std::string HAAR_CASCADE_EYE=PACKAGE_FACEAUTH_DATA_DIR "/haarcascade_eye_tree_eyeglasses.xml";
+std::string HAAR_CASCADE_EYE_2=PACKAGE_FACEAUTH_DATA_DIR "/haarcascade_eye.xml";
 
 eyesDetector::eyesDetector()
 {

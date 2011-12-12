@@ -72,7 +72,7 @@ PKG_CHECK_MODULES(XSPLASHAA_CLIENT, [glib-2.0 >= $GLIB_REQUIRED,
                                      gthread-2.0 >= $GLIB_REQUIRED
                                      gobject-2.0 >= $GLIB_REQUIRED])
 
-PKG_CHECK_MODULES(XSPLASHAA_FACE_AUTHENTIFICATION, [opencv >= OPENCV_REQUIRED])
+PKG_CHECK_MODULES(XSPLASHAA_FACE_AUTHENTIFICATION, [opencv2 >= $OPENCV_REQUIRED])
 
 AC_SUBST(XSPLASHAA_CFLAGS)
 AC_SUBST(XSPLASHAA_LIBS)
@@ -123,6 +123,15 @@ AC_ARG_WITH(pam-dir,
             [pamdir="$withval"],
             [pamdir="/lib/security"])
 AC_SUBST(pamdir)
+
+dnl ****************************************************************************
+dnl Define directory
+dnl ****************************************************************************
+idbusdir=${datadir}/xsplashaa/dbus
+faceauthdatadir=${datadir}/xsplashaa/face-authentification
+AC_SUBST(idbusdir)
+AC_SUBST(faceauthdatadir)
+
 
 AC_CONFIG_FILES([
     Makefile

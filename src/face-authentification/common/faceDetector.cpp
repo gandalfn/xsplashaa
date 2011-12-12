@@ -23,7 +23,7 @@
 #include "tracker.h"
 #include <stdio.h>
 
-std::string HAAR_CASCADE_FACE=PACKAGE_DATA_DIR "/xsplashaa/face-authentification/haarcascade.xml";
+std::string HAAR_CASCADE_FACE=PACKAGE_FACEAUTH_DATA_DIR "/haarcascade.xml";
 
 int faceDetector::checkFaceDetected()
 {

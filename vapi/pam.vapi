@@ -57,7 +57,7 @@ namespace Pam
     }
 
     [CCode (has_target = false)]
-    public delegate int ConvFunc (int num_msg, ref unowned Message? msg, out unowned Response? resp, void *appdata_ptr);
+    public delegate int ConvFunc (int num_msg, [CCode (array_length = false)]ref Message[] msg, [CCode (array_length = false)]ref Response[] resp, void *appdata_ptr);
 
     [CCode (cname="struct pam_conv")]
     public struct Conv {
@@ -119,3 +119,4 @@ namespace Pam
     public const int TEXT_INFO;
     public const int ERROR_MSG;
 }
+

@@ -1,6 +1,6 @@
-/* xsaa-main.vala
+/* main.vala
  *
- * Copyright (C) 2009-2010  Nicolas Bruguier
+ * Copyright (C) 2009-2011  Nicolas Bruguier
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,44 +19,6 @@
  * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
-[DBus (name = "fr.supersonicimagine.XSAA.Manager")]
-public interface XSAA.Manager : DBus.Object
-{
-    public abstract bool open_session (string inUser, int inDisplay, string inDevice,
-                                       bool inFaceAuthentication, bool inAutologin,
-                                       out DBus.ObjectPath? inPath) throws DBus.Error;
-    public abstract void close_session(DBus.ObjectPath inPath) throws DBus.Error;
-    public abstract void reboot() throws DBus.Error;
-    public abstract void halt() throws DBus.Error;
-    public abstract int get_nb_users () throws DBus.Error;
-}
-
-[DBus (name = "fr.supersonicimagine.XSAA.Manager.Session")]
-public interface XSAA.Session : DBus.Object
-{
-    public signal void died();
-    public signal void exited();
-
-    public signal void ask_passwd ();
-    public signal void ask_face_authentication ();
-    public signal void authenticated ();
-    public signal void info (string inMsg);
-    public signal void error_msg (string inMsg);
-
-    public abstract void set_passwd(string inPass) throws DBus.Error;
-    public abstract void authenticate() throws DBus.Error;
-    public abstract void launch(string cmd) throws DBus.Error;
-}
-
-[DBus (name = "fr.supersonicimagine.XSAA.Manager.User")]
-public interface XSAA.User : DBus.Object
-{
-    public abstract string login          { owned get; }
-    public abstract string real_name      { owned get; }
-    public abstract uint frequency        { get; }
-    public abstract int face_icon_shm_id  { get; }
-}
-
 namespace XSAA
 {
     // constants
@@ -74,6 +36,108 @@ namespace XSAA
 
     public class Daemon : GLib.Object
     {
+        // types
+        public class StateMachine : GLib.Object
+        {
+            // types
+            public delegate ReturnType Func (StateMachine inMachine);
+
+            public enum ReturnType
+            {
+                CONTINUE,
+                ERROR,
+                YIELD
+            }
+
+            // properties
+            private StateMachine m_Next;
+            private Func         m_Run;
+
+            // signals
+            public signal void error ();
+            public signal void finished ();
+
+            // methods
+            public StateMachine (Func inRun)
+            {
+                m_Run = inRun;
+            }
+
+            private void
+            on_child_finished ()
+            {
+                finished ();
+            }
+
+            private void
+            on_child_error ()
+            {
+                error ();
+            }
+
+            public unowned StateMachine?
+            add_child (Func inRun)
+            {
+                m_Next = new StateMachine (inRun);
+                m_Next.error.connect (on_child_error);
+                m_Next.finished.connect (on_child_finished);
+
+                return m_Next;
+            }
+
+            public void
+            next ()
+            {
+                if (m_Next != null)
+                {
+                    m_Next.run ();
+                }
+                else
+                {
+                    GLib.Timeout.add (500, () => {
+                        finished ();
+                        return false;
+                    });
+                }
+            }
+
+            public void
+            resume (ReturnType inType)
+            {
+                switch (inType)
+                {
+                    case ReturnType.ERROR:
+                        error ();
+                        break;
+                    case ReturnType.CONTINUE:
+                        if (m_Next != null)
+                        {
+                            m_Next.run ();
+                        }
+                        else
+                        {
+                            GLib.Timeout.add (500, () => {
+                                finished ();
+                                return false;
+                            });
+                        }
+                        break;
+                    case ReturnType.YIELD:
+                        break;
+                }
+            }
+
+            public void
+            run ()
+            {
+                GLib.Timeout.add (500, () => {
+                    resume (m_Run (this));
+
+                    return false;
+                });
+            }
+        }
+
         // properties
         private bool m_Enable       = true;
         private bool m_FirstStart   = true;
@@ -84,6 +148,8 @@ namespace XSAA
         private Display         m_Display;
         private DBus.Connection m_Connection = null;
         private XSAA.Manager    m_Manager = null;
+        private Devices         m_Peripherals = null;
+        private StateMachine    m_CheckPeripherals;
 
         private string  m_Server = "/usr/bin/Xorg";
         private int     m_Number = 0;
@@ -127,6 +193,8 @@ namespace XSAA
                 m_Socket.session.connect (on_session_ready);
                 m_Socket.close_session.connect (on_init_shutdown);
                 m_Socket.quit.connect (on_quit);
+
+                create_check_peripheral_state_machine ();
             }
             catch (GLib.Error err)
             {
@@ -214,6 +282,120 @@ namespace XSAA
             {
                 Log.warning ("unable to found %s config file", Config.PACKAGE_CONFIG_FILE);
             }
+        }
+
+        private void
+        create_check_peripheral_state_machine ()
+        {
+            m_CheckPeripherals = new StateMachine (on_check_service);
+            m_CheckPeripherals.finished.connect (on_check_peripherals_finished);
+            m_CheckPeripherals.error.connect (on_check_peripherals_error);
+
+            unowned StateMachine s1 = m_CheckPeripherals.add_child (on_check_touchscreen);
+            unowned StateMachine s2 = s1.add_child (on_touchscreen_configure);
+            unowned StateMachine s3 = s2.add_child (on_touchscreen_calibrate);
+        }
+
+        private void
+        on_check_peripherals_finished ()
+        {
+            m_Splash.message ("");
+            m_Splash.set_phase_status (Splash.Phase.CHECK_DEVICE, true);
+            start_session ();
+        }
+
+        private void
+        on_check_peripherals_error ()
+        {
+            m_Splash.message ("Error on check peripherals");
+        }
+
+        private StateMachine.ReturnType
+        on_check_service (StateMachine inMachine)
+        {
+            StateMachine.ReturnType ret = StateMachine.ReturnType.CONTINUE;
+
+            if (m_Peripherals == null)
+            {
+                m_Peripherals = new Devices (m_Connection);
+                if (!m_Peripherals.service_available)
+                {
+                    m_Splash.message ("Unable to check peripherals");
+                    ret = StateMachine.ReturnType.ERROR;
+                }
+            }
+
+            m_Splash.message ("Check for touchscreen...");
+
+            return ret;
+        }
+
+        private StateMachine.ReturnType
+        on_check_touchscreen (StateMachine inMachine)
+        {
+            StateMachine.ReturnType ret = StateMachine.ReturnType.CONTINUE;
+
+            if (m_Peripherals.touchscreen == null)
+            {
+                m_Splash.message ("Unable to found touchscreen device");
+                ret = StateMachine.ReturnType.ERROR;
+            }
+            else
+            {
+                m_Splash.progress (25);
+                m_Splash.message ("Configure touchscreen...");
+            }
+
+            return ret;
+        }
+
+        private StateMachine.ReturnType
+        on_touchscreen_configure (StateMachine inMachine)
+        {
+            StateMachine.ReturnType ret = StateMachine.ReturnType.CONTINUE;
+
+            // Open display for touchscreen
+            if (m_Peripherals.touchscreen.open_display (":" + m_Number.to_string ()) >= 0)
+            {
+                // Create virtual pointer for display
+                if (!m_Peripherals.touchscreen.create_virtual_pointer (":" + m_Number.to_string ()))
+                {
+                    m_Splash.message ("Error on configure touchscreen for display !!");
+                    ret = StateMachine.ReturnType.ERROR;
+                }
+                else
+                {
+                    m_Splash.progress (50);
+                }
+            }
+            else
+            {
+                m_Splash.message ("Error on configure touchscreen for display !!");
+                ret = StateMachine.ReturnType.ERROR;
+            }
+
+            m_Splash.message ("Check touchscreen calibration");
+
+            return ret;
+        }
+
+        private StateMachine.ReturnType
+        on_touchscreen_calibrate (StateMachine inMachine)
+        {
+            StateMachine.ReturnType ret = StateMachine.ReturnType.CONTINUE;
+            m_Splash.progress (75);
+
+            if (m_Peripherals.touchscreen.need_calibration (":" + m_Number.to_string ()))
+            {
+                m_Splash.message ("Please calibrate touchscreen");
+                m_Peripherals.touchscreen.calibrate (":" + m_Number.to_string ());
+                m_Peripherals.touchscreen.calibration_finished.connect (() => {
+                    inMachine.resume (StateMachine.ReturnType.CONTINUE);
+                });
+                ret = StateMachine.ReturnType.YIELD;
+            }
+
+            return ret;
         }
 
         private void
@@ -363,6 +545,13 @@ namespace XSAA
                     m_Connection = DBus.Bus.get (DBus.BusType.SYSTEM);
                 }
 
+                // Switch to check devices phase
+                m_Splash.set_phase_status (m_Splash.current_phase, true);
+                m_Splash.set_phase_status (Splash.Phase.CHECK_DEVICE, false);
+
+                // start check peripherals
+                m_CheckPeripherals.run ();
+
                 if (m_Manager == null)
                 {
                     m_Manager = (XSAA.Manager)m_Connection.get_object ("fr.supersonicimagine.XSAA.Manager",
@@ -378,8 +567,6 @@ namespace XSAA
             {
                 Log.warning ("Error on connect to dbus system: %s", err.message);
             }
-
-            start_session ();
         }
 
         private void
@@ -683,7 +870,7 @@ namespace XSAA
     static int
     main (string[] args)
     {
-        Log.set_default_logger (new XSAA.Log.KMsg (XSAA.Log.Level.DEBUG, "xsplashaa"));
+        Log.set_default_logger (new XSAA.Log.Stderr (XSAA.Log.Level.DEBUG, "xsplashaa"));
 
         Log.debug ("starting");
 
@@ -804,3 +991,4 @@ namespace XSAA
         return 0;
      }
 }
+

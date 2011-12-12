@@ -44,6 +44,11 @@ namespace XSAA
         private EngineLoader    m_EngineLoader;
 
         // accessors
+        public Phase current_phase {
+            get {
+                return (Phase)m_CurrentPhase;
+            }
+        }
         public uint main_width { get; private set; default = 0; }
         public uint main_height { get; private set; default = 0; }
         public uint touchscreen_width { get; private set; default = 0; }
@@ -70,9 +75,10 @@ namespace XSAA
             set_app_paintable(true);
             set_default_size(geometry.width, geometry.height);
             set_colormap (screen.get_rgba_colormap ());
+            set_decorated (false);
 
             Log.debug ("splash window geometry (%i,%i)", geometry.width, geometry.height);
-            fullscreen();
+//            fullscreen();
             destroy.connect(Gtk.main_quit);
 
             m_Box = new Gtk.EventBox ();
@@ -124,8 +130,8 @@ namespace XSAA
             m_Socket = inServer;
             m_Socket.phase.connect(on_phase_changed);
             m_Socket.pulse.connect(on_start_pulse);
-            m_Socket.progress.connect(on_progress);
-            m_Socket.message.connect (on_message);
+            m_Socket.progress.connect(progress);
+            m_Socket.message.connect (message);
         }
 
         private void
@@ -248,14 +254,6 @@ namespace XSAA
         }
 
         private void
-        on_progress(int inVal)
-        {
-            Log.debug ("progress = %i", inVal);
-
-            m_EngineLoader.engine.process_event (new EventProgress.progress ((double)inVal / 100.0));
-        }
-
-        private void
         on_phase_changed(int inNewPhase)
         {
             Log.info ("phase changed current = %i, new = %i", m_CurrentPhase, inNewPhase);
@@ -266,14 +264,6 @@ namespace XSAA
                 set_phase_status ((Phase)inNewPhase, false);
                 m_CurrentPhase = inNewPhase;
             }
-        }
-
-        private void
-        on_message(string inMessage)
-        {
-            Log.debug ("message = %s", inMessage);
-
-            m_EngineLoader.engine.process_event (new EventMessage.message (inMessage));
         }
 
         internal override bool
@@ -356,6 +346,14 @@ namespace XSAA
         }
 
         public void
+        progress(int inVal)
+        {
+            Log.debug ("progress = %i", inVal);
+
+            m_EngineLoader.engine.process_event (new EventProgress.progress ((double)inVal / 100.0));
+        }
+
+        public void
         show_shutdown()
         {
             Log.debug ("show shutdown");
@@ -407,6 +405,14 @@ namespace XSAA
             Log.debug ("login message: %s", inMsg);
 
             m_EngineLoader.engine.process_event (new EventPrompt.message (inMsg));
+        }
+
+        public void
+        message (string inMessage)
+        {
+            Log.debug ("message = %s", inMessage);
+
+            m_EngineLoader.engine.process_event (new EventMessage.message (inMessage));
         }
     }
 }

@@ -1,12 +1,12 @@
-/* xsaa-display.vala
+/* display.vala
  *
- * Copyright (C) 2009-2010  Nicolas Bruguier
-     *
+ * Copyright (C) 2009-2011  Nicolas Bruguier
+ *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-     *
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -73,7 +73,7 @@ namespace XSAA
                     }
                     catch (ShellError err)
                     {
-                        throw new DisplayError.COMMAND("Invalid %s command !!", 
+                        throw new DisplayError.COMMAND("Invalid %s command !!",
                                                        inCmd);
                     }
 
@@ -83,9 +83,9 @@ namespace XSAA
                     try
                     {
                         GLib.message ("launch display command: %s", inCmd);
-                        Process.spawn_async(null, argvp, null, 
+                        Process.spawn_async(null, argvp, null,
                                             SpawnFlags.SEARCH_PATH |
-                                            SpawnFlags.DO_NOT_REAP_CHILD, 
+                                            SpawnFlags.DO_NOT_REAP_CHILD,
                                             on_child_setup, out m_Pid);
                         m_ChildWatch = ChildWatch.add((GLib.Pid)m_Pid, on_m_ChildWatch);
                     }
@@ -218,9 +218,9 @@ namespace XSAA
                 if (fd > 0)
                 {
                     if (Os.ioctl(fd, Os.KDSETMODE, Os.KD_GRAPHICS) < 0)
-                        GLib.critical ("KDSETMODE KD_GRAPHICS failed !");  
+                        GLib.critical ("KDSETMODE KD_GRAPHICS failed !");
                     if (Os.ioctl(fd, Os.KDSKBMODE, Os.K_RAW) < 0)
-                        GLib.critical ("KDSETMODE KD_RAW failed !"); 
+                        GLib.critical ("KDSETMODE KD_RAW failed !");
 
                     Os.termios? tty_attr = Os.termios ();
                     Os.ioctl(fd, Os.KDGKBMODE, tty_attr);

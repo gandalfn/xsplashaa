@@ -11,7 +11,13 @@ include $(top_srcdir)/build/vala.am
 bin_PROGRAMS = xsplashaa
 
 xsplashaa_SOURCES = \
+    imanager.vala \
+    isession.vala \
+    iuser.vala \
+    iservice.vala \
+    itouchscreen.vala \
     display.vala \
+    devices.vala \
     splash.vala \
     main.vala
 

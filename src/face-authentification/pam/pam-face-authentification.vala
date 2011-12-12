@@ -170,7 +170,7 @@ namespace XSAA
 
                         if (GLib.Math.pow (ang, 2) < 200)
                         {
-                            // send_info_msg ("Verifying Face ...");
+                            send_info_msg (inHandle, "Verifying Face ...");
                             OpenCV.IPL.Image? im = detector.clip_face (query_image);
                             if (im != null)
                             {
@@ -231,17 +231,17 @@ namespace XSAA
 
         s_LastMessage = inMessage;
 
-        Pam.Message msg = { Pam.TEXT_INFO, inMessage };
+        Pam.Message[] msg = new Pam.Message[1];
+
+        msg[0] = { Pam.TEXT_INFO, inMessage };
         unowned Pam.Conv? conv = null;
         if (inHandle.get_item (Pam.CONV, &conv) != Pam.SUCCESS)
             return;
         if (conv == null || conv.conv == null)
             return;
 
-        unowned Pam.Message? pmsg = msg;
-        unowned Pam.Response? resp = null;
-
-        conv.conv (1, ref pmsg, out resp, conv.appdata_ptr);
+        Pam.Response[] resp = null;
+        conv.conv (1, ref msg, ref resp, conv.appdata_ptr);
     }
 
     public static void
@@ -252,17 +252,17 @@ namespace XSAA
 
         s_LastMessage = inMessage;
 
-        Pam.Message msg = { Pam.ERROR_MSG, inMessage };
+        Pam.Message[] msg = new Pam.Message[1];
+
+        msg[0] = { Pam.ERROR_MSG, inMessage };
         unowned Pam.Conv? conv = null;
         if (inHandle.get_item (Pam.CONV, &conv) != Pam.SUCCESS)
             return;
         if (conv == null || conv.conv == null)
             return;
 
-        unowned Pam.Message? pmsg = msg;
-        unowned Pam.Response? resp = null;
-
-        conv.conv (1, ref pmsg, out resp, conv.appdata_ptr);
+        Pam.Response[] resp = null;
+        conv.conv (1, ref msg, ref resp, conv.appdata_ptr);
     }
 
     // methods
@@ -332,3 +332,4 @@ namespace XSAA
         return Pam.SUCCESS;
     }
 }
+

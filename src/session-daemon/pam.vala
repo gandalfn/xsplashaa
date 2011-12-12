@@ -31,7 +31,7 @@ namespace XSAA
     }
 
     private static int
-    on_pam_conversation(int inNumMsg, [CCode (array_length = false)]Pam.Message[] inMessages, out Pam.Response* outResp, void* inAppdataPtr)
+    on_pam_conversation(int inNumMsg, [CCode (array_length = false)]ref Pam.Message[] inMessages, [CCode (array_length = false)]ref Pam.Response[] outResp, void* inAppdataPtr)
     {
         unowned PamSession pam = (PamSession)inAppdataPtr;
         outResp = new Pam.Response[inNumMsg];
@@ -100,7 +100,7 @@ namespace XSAA
             m_User = inUsername;
 
             m_Conv = Pam.Conv();
-            m_Conv.conv = (void*)on_pam_conversation;
+            m_Conv.conv = on_pam_conversation;
             m_Conv.appdata_ptr = this;
 
             if (Pam.start(inService, inUsername, m_Conv, out m_PamHandle) != Pam.SUCCESS)
@@ -215,7 +215,7 @@ namespace XSAA
             }
             m_Accredited = true;
 
-            if (Os.initgroups (m_User, passwd.pw_gid) < 0) 
+            if (Os.initgroups (m_User, passwd.pw_gid) < 0)
             {
                 throw new PamError.CREDENTIALS("User is not authorized to log in");
             }
@@ -275,3 +275,4 @@ namespace XSAA
         }
     }
 }
+

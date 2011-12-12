@@ -5,9 +5,17 @@ XSPLASHAA_VAPI_DEPS = \
 
 include $(top_srcdir)/build/vala.am
 
+idbus_DATA = \
+    fr.supersonicimagine.XSAA.Manager.xml \
+    fr.supersonicimagine.XSAA.Manager.Session.xml \
+    fr.supersonicimagine.XSAA.Manager.User.xml
+
+$(idbus_DATA): xsplashaa_session_daemon_vala.stamp
+
 bin_PROGRAMS = xsplashaa-session-daemon
 
 xsplashaa_session_daemon_VALAFLAGS = \
+    --generate-dbus-introspect \
     --thread \
     --pkg=source \
     --pkg=gtk+-2.0 \
@@ -36,5 +44,6 @@ VALAFILES = \
 
 CLEANFILES = \
     $(VALAFILES:.vala=.c) \
-    xsplashaa_session_daemon_vala.stamp
+    xsplashaa_session_daemon_vala.stamp \
+    *.xml
 
