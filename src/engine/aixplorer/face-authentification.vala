@@ -107,7 +107,7 @@ namespace XSAA.Aixplorer
                 switch (*m_Status)
                 {
                     case Status.STARTED:
-                        changed (true);
+                        changed (false);
                         break;
                     case Status.STOPPED:
                         GLib.Idle.add (() => {
@@ -198,4 +198,3 @@ namespace XSAA.Aixplorer
         }
     }
 }
-

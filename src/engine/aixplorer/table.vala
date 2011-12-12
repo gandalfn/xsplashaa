@@ -101,6 +101,14 @@ namespace XSAA.Aixplorer
                 {
                     ((Goo.CanvasItemSimple)item).visibility = visibility;
                 }
+                foreach (unowned EngineItem item in find_by_type (typeof (Throbber)))
+                {
+                    ((Goo.CanvasItemSimple)item).visibility = visibility;
+                }
+                foreach (unowned EngineItem item in find_by_type (typeof (ProgressBar)))
+                {
+                    ((Goo.CanvasItemSimple)item).visibility = visibility;
+                }
             });
         }
 
@@ -156,4 +164,3 @@ namespace XSAA.Aixplorer
         }
     }
 }
-

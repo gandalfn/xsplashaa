@@ -4,7 +4,6 @@ XSPLASHAA_VAPI_DEPS = \
     $(top_builddir)/src/log/xsaa-log.vapi \
     $(top_builddir)/src/xml/xsaa-xml.vapi \
     $(top_builddir)/src/graphics/xsaa-graphics.vapi \
-    $(top_builddir)/src/widgets/xsaa-widgets.vapi \
     $(top_builddir)/src/timeline/xsaa-timeline.vapi
 
 include $(top_srcdir)/build/vala.am
@@ -70,4 +69,6 @@ CLEANFILES = \
     libxsaa_engine_la_vala.stamp \
     xsaa-engine.vapi \
     engine.h
+
+.NOTPARALLEL: libxsaa-engine.la test-engine
 

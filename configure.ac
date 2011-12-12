@@ -12,14 +12,16 @@ AM_MAINTAINER_MODE
 dnl ****************************************************************************
 dnl Check for build
 dnl ****************************************************************************
-AC_PROG_CC
+AC_LANG([C])
+AC_LANG([C++])
 AM_PROG_CC_C_O
-dnl AC_DISABLE_STATIC
+AC_SEARCH_LIBS([strerror],[cposix])
 
 dnl ****************************************************************************
 dnl Check for libtool
 dnl ****************************************************************************
-AM_PROG_LIBTOOL
+LT_PREREQ([2.2])
+LT_INIT([disable-static])
 
 dnl ****************************************************************************
 dnl Packages version required
@@ -29,6 +31,7 @@ GTK_REQUIRED=2.10.0
 VALA_REQUIRED=0.12.0
 SSIGTKEXTRAS_REQUIRED=0.5.0
 GOOCANVAS_REQUIRED=0.15
+OPENCV_REQUIRED=2.1.0
 
 dnl ****************************************************************************
 dnl Check for vala
@@ -69,6 +72,8 @@ PKG_CHECK_MODULES(XSPLASHAA_CLIENT, [glib-2.0 >= $GLIB_REQUIRED,
                                      gthread-2.0 >= $GLIB_REQUIRED
                                      gobject-2.0 >= $GLIB_REQUIRED])
 
+PKG_CHECK_MODULES(XSPLASHAA_FACE_AUTHENTIFICATION, [opencv >= OPENCV_REQUIRED])
+
 AC_SUBST(XSPLASHAA_CFLAGS)
 AC_SUBST(XSPLASHAA_LIBS)
 
@@ -108,6 +113,17 @@ AC_ARG_WITH(engine-dir,
             [enginedir="${libdir}/xsplashaa"])
 AC_SUBST(enginedir)
 
+dnl ****************************************************************************
+dnl Check for pam-dir
+dnl ****************************************************************************
+AC_CHECK_HEADER([security/pam_modules.h],, [AC_MSG_ERROR([*** Sorry, you have to install the PAM development files ***])])
+AC_ARG_WITH(pam-dir,
+            AC_HELP_STRING([--with-pam-dir=DIR],
+                           [Default engine dir [[default=/lib/security]]]),
+            [pamdir="$withval"],
+            [pamdir="/lib/security"])
+AC_SUBST(pamdir)
+
 AC_CONFIG_FILES([
     Makefile
     src/Makefile
@@ -118,10 +134,12 @@ AC_CONFIG_FILES([
     src/graphics/Makefile
     src/session-daemon/Makefile
     src/timeline/Makefile
-    src/widgets/Makefile
     src/splash/Makefile
     src/engine/Makefile
     src/engine/aixplorer/Makefile
+    src/face-authentification/Makefile
+    src/face-authentification/common/Makefile
+    src/face-authentification/pam/Makefile
     po/Makefile.in
     data/Makefile
     data/xsplashaa.desktop

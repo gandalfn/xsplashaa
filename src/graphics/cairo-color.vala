@@ -26,8 +26,6 @@ namespace XSAA
      */
     namespace CairoColor
     {
-        ////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////////////////////////////////////////
         /**
          * Compute HLS color from RGB color
          *
@@ -232,6 +230,21 @@ namespace XSAA
 
             return color;
         }
+
+        /**
+         * Convert rgba color to gdkcolor
+         *
+         * @param inColor rgba color
+         * @param outColor corresponding GdkColor
+         * @param outAlpha alpha of corresponding color
+         */
+        public static void
+        rgba_to_color (uint inColor, out Gdk.Color outColor, out double outAlpha)
+        {
+            outColor.red = (uint16) ((((inColor >> 24) & 0xFF) / 255.0) * 65535.0);
+            outColor.green = (uint16) ((((inColor >> 16) & 0xFF) / 255.0) * 65535.0);
+            outColor.blue = (uint16) ((((inColor >> 8) & 0xFF) / 255.0) * 65535.0);
+            outAlpha = ((inColor & 0x000000ff) & 0xFF) / 255.0;
+        }
     }
 }
-

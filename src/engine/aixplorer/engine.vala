@@ -188,11 +188,12 @@ namespace XSAA.Aixplorer
             unowned Table face_authentification_table = (Table)find ("face-authentification-table");
             unowned Button? button_restart = (Button?)find ("button-restart");
             unowned Button? button_shutdown = (Button?)find ("button-shutdown");
+            unowned ProgressBar progress = (ProgressBar)find ("progress-bar");
 
 
             if (prompt == null || prompt_label == null || notebook == null ||
                 users_notebook == null || users == null || message == null ||
-                face_authentification == null)
+                face_authentification == null || progress == null)
             {
                 Log.critical ("Error does not find prompt items");
                 return;
@@ -212,6 +213,7 @@ namespace XSAA.Aixplorer
                     button_shutdown.visibility = Goo.CanvasItemVisibility.VISIBLE;
                     users_notebook.current_page = 0;
                     notebook.current_page = 1;
+                    progress.visibility = Goo.CanvasItemVisibility.INVISIBLE;
                     break;
 
                 case EventPrompt.Type.SHOW_PASSWORD:
@@ -226,6 +228,7 @@ namespace XSAA.Aixplorer
                     button_shutdown.visibility = Goo.CanvasItemVisibility.INVISIBLE;
                     users_notebook.current_page = 1;
                     notebook.current_page = 1;
+                    progress.visibility = Goo.CanvasItemVisibility.INVISIBLE;
                     break;
 
                 case EventPrompt.Type.SHOW_FACE_AUTHENTIFICATION:
@@ -236,6 +239,7 @@ namespace XSAA.Aixplorer
                     face_authentification_table.visibility = Goo.CanvasItemVisibility.INVISIBLE;
                     button_restart.visibility = Goo.CanvasItemVisibility.INVISIBLE;
                     button_shutdown.visibility = Goo.CanvasItemVisibility.INVISIBLE;
+                    progress.visibility = Goo.CanvasItemVisibility.INVISIBLE;
                     break;
 
                 case EventPrompt.Type.MESSAGE:
@@ -357,10 +361,12 @@ namespace XSAA.Aixplorer
             switch (inEvent.args.event_type)
             {
                 case EventProgress.Type.PULSE:
+                    progress.visibility = Goo.CanvasItemVisibility.VISIBLE;
                     progress.pulse ();
                     break;
 
                 case EventProgress.Type.PROGRESS:
+                    progress.visibility = Goo.CanvasItemVisibility.VISIBLE;
                     progress.percent = inEvent.args.progress_val;
                     break;
             }
@@ -607,4 +613,3 @@ public XSAA.Engine? plugin_init ()
 {
     return new XSAA.Aixplorer.Engine ();
 }
-

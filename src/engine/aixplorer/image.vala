@@ -69,16 +69,11 @@ namespace XSAA.Aixplorer
                 if (height <= 0)
                     height = m_Pixbuf.height;
                 m_Pattern = null;
-                changed (true);
+                changed (false);
             }
         }
 
         // methods
-        construct
-        {
-            button_press_event.connect (on_button_press_event);
-        }
-
         public override void
         simple_update (Cairo.Context inContext)
         {
@@ -109,13 +104,6 @@ namespace XSAA.Aixplorer
                 inContext.set_source (m_Pattern);
                 inContext.paint ();
             }
-        }
-
-        public bool
-        on_button_press_event (Goo.CanvasItem inItem, Gdk.EventButton inEvent)
-        {
-            Log.debug ("button press %s", id);
-            return false;
         }
     }
 }

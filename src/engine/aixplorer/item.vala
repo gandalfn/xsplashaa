@@ -74,7 +74,7 @@ namespace XSAA.Aixplorer
             }
             set {
                 m_Geometry.x = value;
-                changed (true);
+                changed (false);
             }
         }
 
@@ -84,7 +84,7 @@ namespace XSAA.Aixplorer
             }
             set {
                 m_Geometry.y = value;
-                changed (true);
+                changed (false);
             }
         }
 
@@ -94,7 +94,7 @@ namespace XSAA.Aixplorer
             }
             set {
                 m_Geometry.width = value;
-                changed (true);
+                changed (false);
             }
         }
 
@@ -104,7 +104,7 @@ namespace XSAA.Aixplorer
             }
             set {
                 m_Geometry.height = value;
-                changed (true);
+                changed (false);
             }
         }
 
@@ -146,4 +146,3 @@ namespace XSAA.Aixplorer
         }
     }
 }
-

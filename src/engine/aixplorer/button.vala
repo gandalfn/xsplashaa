@@ -156,7 +156,7 @@ namespace XSAA.Aixplorer
         on_button_press_event (Goo.CanvasItem inItem, Gdk.EventButton inEvent)
         {
             m_State = State.PRESS;
-            changed (true);
+            changed (false);
             return false;
         }
 
@@ -164,10 +164,9 @@ namespace XSAA.Aixplorer
         on_button_release_event (Goo.CanvasItem inItem, Gdk.EventButton inEvent)
         {
             m_State = State.RELEASE;
-            changed (true);
+            changed (false);
             clicked ();
             return false;
         }
     }
 }
-

@@ -41,7 +41,7 @@ namespace XSAA.Aixplorer
             set
             {
                 m_Active = value;
-                changed (true);
+                changed (false);
             }
         }
 
@@ -107,4 +107,3 @@ namespace XSAA.Aixplorer
         }
     }
 }
-

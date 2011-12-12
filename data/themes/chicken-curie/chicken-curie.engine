@@ -4,7 +4,7 @@
     <!--main table -->
     <table id="main" layer="1" width="1680" height="1050" y_fill="true">
         <progressbar id="progress-bar" row="1" column="0" left_padding="96" right_padding="96"
-                     bar_height="30" bar_color="#89B2DF" width="600" height="70"/>
+                     height="30" fill_color="#89B2DF" width="600"/>
         <text id="message" row="2" column="0" y_align="0.0" y_fill="true"
               font="Liberation Bold 18" fill_color="#7BC4F5"/>
         <!--content table -->
