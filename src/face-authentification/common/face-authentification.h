@@ -92,7 +92,8 @@ extern "C"
                                                                          CvPoint inLe);
     int         xsaa_face_authentification_detector_check_eyes_detected (XSAAFaceAuthentificationDetector* self);
 
-    XSAAFaceAuthentificationFace xsaa_face_authentification_detector_get_face_information (XSAAFaceAuthentificationDetector* self);
+    void        xsaa_face_authentification_detector_get_face_information (XSAAFaceAuthentificationDetector* self,
+                                                                          XSAAFaceAuthentificationFace* face);
     void        xsaa_face_authentification_detector_run_face_detector   (XSAAFaceAuthentificationDetector* self,
                                                                          IplImage* inInput);
     IplImage*   xsaa_face_authentification_detector_clip_detected_face  (XSAAFaceAuthentificationDetector* self,

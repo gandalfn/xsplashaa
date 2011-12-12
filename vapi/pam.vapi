@@ -1,9 +1,6 @@
 [CCode (cheader_filename = "security/pam_appl.h", cprefix = "PAM_", lower_case_cprefix = "pam_")]
 namespace Pam
 {
-    [CCode (cname = "pam_sm_authenticate", has_target = "false")]
-    public delegate int sm_authenticate (Pam.Handle handle, int flags, string[] args);
-
     [Compact]
     [CCode (cname = "pam_handle_t", free_function="")]
     public class Handle {
@@ -12,6 +9,8 @@ namespace Pam
         public int get_user(out string user, string? prompt);
         [CCode (cname = "pam_set_item", cheader_filename = "security/pam_modules.h", sentinel = "")]
         public int set_item(int type_item, ...);
+        [CCode (cname = "pam_get_item", cheader_filename = "security/pam_modules.h", sentinel = "")]
+        public int get_item(int type_item, ...);
         [CCode (cname = "pam_authenticate")]
         public int authenticate(int flags);
         [CCode (cname = "pam_acct_mgmt")]
@@ -26,9 +25,14 @@ namespace Pam
         public string[] getenvlist();
         [CCode (cname = "pam_end")]
         public int end(int status);
+        [CCode (cname = "pam_strerror")]
+        public string strerror(int error);
     }
 
     public int start(string service, string username, Conv conv, out Handle handle);
+
+    [PrintfFormat, CCode (cname = "_pam_output_debug")]
+    public void output_debug (string inMessage, ...);
 
     [CCode (cname = "struct pam_xauth_data", destroy_function="")]
     public struct XauthData {
@@ -39,10 +43,10 @@ namespace Pam
     }
 
     [Compact]
-    [CCode (cname = "struct pam_message", free_function="free")]
-    public class Message  {
+    [CCode (cname = "struct pam_message")]
+    public struct Message  {
         public int msg_style;
-        public string msg;
+        public unowned string? msg;
     }
 
     [SimpleType]
@@ -52,16 +56,13 @@ namespace Pam
         public int resp_retcode;
     }
 
+    [CCode (has_target = false)]
+    public delegate int ConvFunc (int num_msg, ref unowned Message? msg, out unowned Response? resp, void *appdata_ptr);
+
     [CCode (cname="struct pam_conv")]
     public struct Conv {
-        public void* conv;
+        public ConvFunc conv;
         public void* appdata_ptr;
-    }
-
-    [SimpleType]
-    [IntegerType (rank = 6)]
-    [CCode (cname = "PAM_EXTERN int", cheader_filename = "security/pam_modules.h")]
-    public struct ReturnExtern : int  {
     }
 
     public const int SUCCESS;

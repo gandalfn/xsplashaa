@@ -108,6 +108,7 @@ namespace XSAA
 
             // create shared memory
             m_Shared = new IPC ();
+            m_Shared.status = 0;
 
             // cleanup shared memory
             m_Empty = new OpenCV.IPL.Image (OpenCV.Size (FaceAuthentification.IMAGE_WIDTH,
@@ -178,7 +179,7 @@ namespace XSAA
                                 {
                                     // Set state to stopped
                                     m_Shared.status = (int)FaceAuthentification.Pam.Status.STOPPED;
-                                    // send_info_msg("Verification successful.");
+                                    send_info_msg (inHandle, "Verification successful.");
 
                                     // clear shared memory
                                     m_Shared.image = m_Empty;
@@ -188,7 +189,7 @@ namespace XSAA
                         }
                         else
                         {
-                            //send_info_msg("Align your face.");
+                            send_info_msg(inHandle, "Align your face.");
                         }
 
                         paint.cyclops (query_image, eyes.le, eyes.re);
@@ -196,7 +197,7 @@ namespace XSAA
                     }
                     else
                     {
-                        //send_info_msg("Keep proper distance with the camera.");
+                        send_info_msg(inHandle, "Keep proper distance with the camera.");
                     }
 
                     // refresh shared memory
@@ -204,7 +205,7 @@ namespace XSAA
                 }
                 else
                 {
-                    // send_error_msg ("Unable query image from your webcam.");
+                    send_error_msg (inHandle, "Unable query image from your webcam.");
                 }
             }
 
@@ -218,6 +219,52 @@ namespace XSAA
         }
     }
 
+    // static properties
+    private static string s_LastMessage = null;
+
+    // static methods
+    public static void
+    send_info_msg (Pam.Handle inHandle, string inMessage)
+    {
+        if (s_LastMessage == inMessage)
+            return;
+
+        s_LastMessage = inMessage;
+
+        Pam.Message msg = { Pam.TEXT_INFO, inMessage };
+        unowned Pam.Conv? conv = null;
+        if (inHandle.get_item (Pam.CONV, &conv) != Pam.SUCCESS)
+            return;
+        if (conv == null || conv.conv == null)
+            return;
+
+        unowned Pam.Message? pmsg = msg;
+        unowned Pam.Response? resp = null;
+
+        conv.conv (1, ref pmsg, out resp, conv.appdata_ptr);
+    }
+
+    public static void
+    send_error_msg (Pam.Handle inHandle, string inMessage)
+    {
+        if (s_LastMessage == inMessage)
+            return;
+
+        s_LastMessage = inMessage;
+
+        Pam.Message msg = { Pam.ERROR_MSG, inMessage };
+        unowned Pam.Conv? conv = null;
+        if (inHandle.get_item (Pam.CONV, &conv) != Pam.SUCCESS)
+            return;
+        if (conv == null || conv.conv == null)
+            return;
+
+        unowned Pam.Message? pmsg = msg;
+        unowned Pam.Response? resp = null;
+
+        conv.conv (1, ref pmsg, out resp, conv.appdata_ptr);
+    }
+
     // methods
     public int
     sm_authenticate (Pam.Handle inHandle, int inFlags, string[] inArgs)
@@ -226,7 +273,17 @@ namespace XSAA
 
         int ret = inHandle.get_user (out username, null);
         if (ret != Pam.SUCCESS)
+        {
+            Pam.output_debug ("get user returned error: %s", inHandle.strerror (ret));
             return ret;
+        }
+        if (username == null || username.length == 0)
+        {
+            Pam.output_debug ("username not known");
+            inHandle.set_item (Pam.USER, "nobody");
+            send_error_msg (inHandle, "Username Not Set.");
+            return Pam.AUTHINFO_UNAVAIL;
+        }
 
         try
         {
@@ -235,10 +292,11 @@ namespace XSAA
             {
                 return Pam.SUCCESS;
             }
+            send_error_msg (inHandle, "Giving Up Face Authentication. Try Again=(.");
         }
         catch (PamFaceAuthentificationError err)
         {
-            // send_error_msg ("%s", err.message);
+            send_error_msg (inHandle, err.message);
         }
 
         return Pam.AUTHINFO_UNAVAIL;

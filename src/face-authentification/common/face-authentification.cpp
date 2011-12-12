@@ -204,15 +204,14 @@ xsaa_face_authentification_detector_check_eyes_detected (XSAAFaceAuthentificatio
     return self->m_pDetector->checkEyeDetected ();
 }
 
-XSAAFaceAuthentificationFace
-xsaa_face_authentification_detector_get_face_information (XSAAFaceAuthentificationDetector* self)
+void
+xsaa_face_authentification_detector_get_face_information (XSAAFaceAuthentificationDetector* self,
+                                                          XSAAFaceAuthentificationFace* face)
 {
-    XSAAFaceAuthentificationFace ret = { self->m_pDetector->faceInformation.LT,
-                                         self->m_pDetector->faceInformation.RB,
-                                         self->m_pDetector->faceInformation.Width,
-                                         self->m_pDetector->faceInformation.Height };
-
-    return ret;
+    face->lt = self->m_pDetector->faceInformation.LT;
+    face->rb = self->m_pDetector->faceInformation.RB;
+    face->width = self->m_pDetector->faceInformation.Width;
+    face->height = self->m_pDetector->faceInformation.Height;
 }
 
 void
