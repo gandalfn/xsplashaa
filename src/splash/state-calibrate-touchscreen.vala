@@ -30,6 +30,13 @@ namespace XSAA
         private unowned Devices m_Peripherals;
         private int             m_Number;
 
+        // accessors
+        public override GLib.Type next_state {
+            get {
+                return typeof (StateCheckPanel);
+            }
+        }
+
         /**
          * Create a new calibrate touchscreen state machine
          *
@@ -55,6 +62,7 @@ namespace XSAA
             {
                 if (m_Peripherals.touchscreen.need_calibration (":" + m_Number.to_string ()))
                 {
+                    message ("Please calibrate touchscreen");
                     m_Peripherals.touchscreen.calibrate (":" + m_Number.to_string ());
                     m_Peripherals.touchscreen.calibration_finished.connect (on_calibration_finished);
                 }
@@ -70,3 +78,4 @@ namespace XSAA
         }
     }
 }
+

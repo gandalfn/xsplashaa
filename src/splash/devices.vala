@@ -27,9 +27,11 @@ namespace XSAA
     public class Devices : GLib.Object
     {
         // properties
-        private unowned DBus.Connection               m_Connection;
-        private SSI.Devices.Service                   m_Service;
-        private SSI.Devices.Module.Touchscreen.Device m_Touchscreen = null;
+        private unowned DBus.Connection                      m_Connection;
+        private SSI.Devices.Service                          m_Service;
+        private SSI.Devices.Module.Touchscreen.Device        m_Touchscreen = null;
+        private SSI.Devices.Module.AlliedPanel.DeviceManager m_AlliedPanel = null;
+        private SSI.Devices.Module.AlliedPanel.Bootloader    m_Bootloader = null;
 
         // accessors
         public bool service_available {
@@ -73,6 +75,48 @@ namespace XSAA
             }
         }
 
+        public SSI.Devices.Module.AlliedPanel.DeviceManager allied_panel {
+            owned get {
+                if (m_AlliedPanel == null && m_Service != null)
+                {
+                    try
+                    {
+                        string path = m_Service.get_module_dbus_object ("AlliedPanel");
+                        if (path != null && path.length > 0)
+                        {
+                            m_AlliedPanel = (SSI.Devices.Module.AlliedPanel.DeviceManager)m_Connection.get_object ("fr.supersonicimagine.Devices",
+                                                                                                                   "/fr/supersonicimagine/Devices/Module/AlliedPanel/DeviceManager",
+                                                                                                                   "fr.supersonicimagine.Devices.Module.AlliedPanel.DeviceManager");
+                        }
+                    }
+                    catch (GLib.Error err)
+                    {
+                        Log.critical ("Error on get allied panel: %s", err.message);
+                    }
+                }
+
+                return m_AlliedPanel;
+            }
+        }
+
+        public SSI.Devices.Module.AlliedPanel.Bootloader allied_panel_bootloader {
+            owned get {
+                if (m_AlliedPanel != null && m_Bootloader == null)
+                {
+                    string path = m_AlliedPanel.bootloader;
+                    if (path != null && path.length > 0)
+                    {
+                        m_AlliedPanel.bootloader_changed.connect (() => { m_Bootloader = null; });
+                        m_Bootloader = (SSI.Devices.Module.AlliedPanel.Bootloader)m_Connection.get_object ("fr.supersonicimagine.Devices",
+                                                                                                           path,
+                                                                                                           "fr.supersonicimagine.Devices.Module.AlliedPanel.Bootloader");
+                    }
+                }
+
+                return m_Bootloader;
+            }
+        }
+
         // methods
         /**
          * Create a new devices check
@@ -88,3 +132,4 @@ namespace XSAA
         }
     }
 }
+

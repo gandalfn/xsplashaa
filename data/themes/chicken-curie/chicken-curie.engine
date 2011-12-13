@@ -1,6 +1,9 @@
 <engine id="aixplorer" background_color="#1B242D">
     <!--touchscreen table -->
-    <table id="touchscreen" layer="1" width="1024" height="768" y_fill="true"/>
+    <table id="touchscreen" layer="1" y="1050" width="1024" height="768">
+        <logo id="ts-logo" row="0" column="0" x_align="0.5"
+              filename="/usr/share/xsplashaa/chicken-curie/ts-logo.png"/>
+    </table>
     <!--main table -->
     <table id="main" layer="1" width="1680" height="1050" y_fill="true">
         <progressbar id="progress-bar" row="1" column="0" left_padding="96" right_padding="96"
@@ -25,35 +28,35 @@
                                   font="Liberation Bold 18" fill_color="#7BC4F5"
                                   text="Loading..."/>
                             <throbber id="loading-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="debian"/>
+                                      theme_name="chicken-curie"/>
                         </table>
                         <table id="checking-filesystem" visibility="1" row="1" column="0" x_fill="true">
                             <text id="checking-filesystem-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#7BC4F5"
                                   text="Checking filesystem..."/>
                             <throbber id="checking-filesystem-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="debian"/>
+                                      theme_name="chicken-curie"/>
                         </table>
                         <table id="starting" visibility="1" row="2" column="0" x_fill="true">
                             <text id="starting-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#7BC4F5"
                                   text="Starting..."/>
                             <throbber id="starting-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="debian"/>
+                                      theme_name="chicken-curie"/>
                         </table>
                         <table id="checking-device" visibility="1" row="3" column="0" x_fill="true">
                             <text id="checking-device-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#7BC4F5"
                                   text="Checking peripherals..."/>
                             <throbber id="checking-device-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="debian"/>
+                                      theme_name="chicken-curie"/>
                         </table>
                         <table id="session" visibility="1" row="4" column="0" x_fill="true">
                             <text id="launch-sesion-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#7BC4F5"
                                   text="Launching session..."/>
                             <throbber id="launch-sesion-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="debian"/>
+                                      theme_name="chicken-curie"/>
                         </table>
                     </table>
                     <!--prompt table -->
@@ -104,7 +107,7 @@
                                   font="Liberation Bold 18" fill_color="#7BC4F5"
                                   text="shutdown in progress..."/>
                             <throbber id="shutdown-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="debian"/>
+                                      theme_name="chicken-curie"/>
                         </table>
                     </table>
                 </notebook>

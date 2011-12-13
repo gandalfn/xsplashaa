@@ -50,6 +50,12 @@ namespace XSAA
 
             // create calibrate touchscreen state
             add_state (new StateCalibrateTouchscreen (m_Peripherals, inNumber));
+
+            // create check panel state
+            add_state (new StateCheckPanel (m_Peripherals));
+
+            // create check panel firmware state
+            add_state (new StateCheckPanelFirmware (m_Peripherals));
         }
 
         protected override void
@@ -59,3 +65,4 @@ namespace XSAA
         }
     }
 }
+

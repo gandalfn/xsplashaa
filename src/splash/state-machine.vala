@@ -27,8 +27,8 @@ namespace XSAA
     public abstract class StateMachine : GLib.Object
     {
         // constants
-        const int DELAY = 200;
-        const int ERROR_DELAY = 10;
+        const int DELAY = 300;
+        const int ERROR_DELAY = 20;
 
         // properties
         private unowned StateMachine? m_Current;
@@ -61,6 +61,7 @@ namespace XSAA
 
         // signals
         public signal void step ();
+        public signal void progress (int inProgress);
         public signal void message (string inMessage);
         public signal void error (string inMessage);
         public signal void finished ();
@@ -140,6 +141,12 @@ namespace XSAA
             message (inMessage);
         }
 
+        private void
+        on_child_progress (int inProgress)
+        {
+            progress (inProgress);
+        }
+
         protected virtual void
         on_run ()
         {
@@ -169,6 +176,8 @@ namespace XSAA
             m_States += inMachine;
             inMachine.finished.connect (on_child_finished);
             inMachine.error.connect (on_child_error);
+            inMachine.message.connect (on_child_message);
+            inMachine.progress.connect (on_child_progress);
         }
 
         public void
@@ -181,3 +190,4 @@ namespace XSAA
         }
     }
 }
+

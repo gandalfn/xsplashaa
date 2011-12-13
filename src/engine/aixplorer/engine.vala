@@ -490,11 +490,16 @@ namespace XSAA.Aixplorer
                     touchscreen.visibility = Goo.CanvasItemVisibility.HIDDEN;
                     main.expand = true;
                     main.changed (true);
+                    Log.info ("Unset touchscreen");
 
                     event_notify (new EventSystem.monitor ((uint)width, (uint)height, 0, 0));
                 }
                 else
                 {
+                    Log.info ("Keep touchscreen");
+                    touchscreen.visibility = Goo.CanvasItemVisibility.VISIBLE;
+                    main.expand = false;
+                    main.changed (true);
                     event_notify (new EventSystem.monitor ((uint)main.width, (uint)main.height, (uint)touchscreen.width, (uint)touchscreen.height));
                 }
             }
@@ -625,3 +630,4 @@ public XSAA.Engine? plugin_init ()
 {
     return new XSAA.Aixplorer.Engine ();
 }
+

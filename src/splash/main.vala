@@ -189,6 +189,12 @@ namespace XSAA
         }
 
         private void
+        on_check_peripherals_progress (int inVal)
+        {
+            m_Splash.progress (inVal);
+        }
+
+        private void
         on_check_peripherals_step ()
         {
             if (m_CheckPeripherals.current == typeof (StateServiceCheck))
@@ -206,6 +212,14 @@ namespace XSAA
             else if (m_CheckPeripherals.current == typeof (StateCalibrateTouchscreen))
             {
                 m_Splash.message ("Touchscreen calibration...");
+            }
+            else if (m_CheckPeripherals.current == typeof (StateCheckPanel))
+            {
+                m_Splash.message ("Checking panel...");
+            }
+            else if (m_CheckPeripherals.current == typeof (StateCheckPanelFirmware))
+            {
+                m_Splash.message ("Checking panel firmware...");
             }
             m_NumStep++;
 
@@ -397,6 +411,7 @@ namespace XSAA
                     m_CheckPeripherals.finished.connect (on_check_peripherals_finished);
                     m_CheckPeripherals.message.connect (on_check_peripherals_message);
                     m_CheckPeripherals.error.connect (on_check_peripherals_error);
+                    m_CheckPeripherals.progress.connect (on_check_peripherals_progress);
                     m_CheckPeripherals.run ();
                 }
                 else
@@ -832,3 +847,4 @@ namespace XSAA
         return 0;
      }
 }
+
