@@ -78,7 +78,7 @@ namespace XSAA
             set_decorated (false);
 
             Log.debug ("splash window geometry (%i,%i)", geometry.width, geometry.height);
-//            fullscreen();
+            fullscreen();
             destroy.connect(Gtk.main_quit);
 
             m_Box = new Gtk.EventBox ();
@@ -119,7 +119,7 @@ namespace XSAA
                 m_Box.add (m_EngineLoader.engine);
 
                 m_EngineLoader.engine.process_event (new EventProgress.pulse ());
-                set_phase_status (Phase.LOADING, false);
+                set_phase_status (Phase.LOADING, EventBoot.Status.PENDING);
             }
         }
 
@@ -260,8 +260,8 @@ namespace XSAA
 
             if (m_CurrentPhase != inNewPhase)
             {
-                set_phase_status ((Phase)m_CurrentPhase, true);
-                set_phase_status ((Phase)inNewPhase, false);
+                set_phase_status ((Phase)m_CurrentPhase, EventBoot.Status.FINISHED);
+                set_phase_status ((Phase)inNewPhase, EventBoot.Status.PENDING);
                 m_CurrentPhase = inNewPhase;
             }
         }
@@ -323,24 +323,24 @@ namespace XSAA
         }
 
         public void
-        set_phase_status (Phase inPhase, bool inCompleted)
+        set_phase_status (Phase inPhase, EventBoot.Status inStatus)
         {
             switch (inPhase)
             {
                 case Phase.LOADING:
-                    m_EngineLoader.engine.process_event (new EventBoot.loading (inCompleted));
+                    m_EngineLoader.engine.process_event (new EventBoot.loading (inStatus));
                     break;
                 case Phase.CHECK_FILESYSTEM:
-                    m_EngineLoader.engine.process_event (new EventBoot.check_filesystem (inCompleted));
+                    m_EngineLoader.engine.process_event (new EventBoot.check_filesystem (inStatus));
                     break;
                 case Phase.STARTING:
-                    m_EngineLoader.engine.process_event (new EventBoot.starting (inCompleted));
+                    m_EngineLoader.engine.process_event (new EventBoot.starting (inStatus));
                     break;
                 case Phase.CHECK_DEVICE:
-                    m_EngineLoader.engine.process_event (new EventBoot.check_device (inCompleted));
+                    m_EngineLoader.engine.process_event (new EventBoot.check_device (inStatus));
                     break;
                 case Phase.SESSION:
-                    m_EngineLoader.engine.process_event (new EventSession.loading (inCompleted));
+                    m_EngineLoader.engine.process_event (new EventSession.loading ((EventSession.Status)inStatus));
                     break;
             }
         }
@@ -362,7 +362,7 @@ namespace XSAA
             get_window().set_cursor(cursor);
 
             m_EngineLoader.engine.process_event (new EventProgress.pulse ());
-            m_EngineLoader.engine.process_event (new EventBoot.shutdown (false));
+            m_EngineLoader.engine.process_event (new EventBoot.shutdown (EventBoot.Status.PENDING));
         }
 
         public void
@@ -416,4 +416,3 @@ namespace XSAA
         }
     }
 }
-

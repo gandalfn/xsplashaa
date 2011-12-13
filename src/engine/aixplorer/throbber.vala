@@ -27,6 +27,7 @@ namespace XSAA.Aixplorer
         private Animator               m_Animator;
         private Cairo.Pattern          m_Initial = null;
         private Cairo.Pattern          m_Finish = null;
+        private Cairo.Pattern          m_NOk = null;
         private Cairo.Pattern[]        m_Frames;
         private unowned Cairo.Pattern? m_Current = null;
 
@@ -88,6 +89,9 @@ namespace XSAA.Aixplorer
                 Gdk.Pixbuf finish = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + inName + "/throbber-finish.png");
                 m_Finish = pixbuf_to_pattern (finish);
 
+                Gdk.Pixbuf nok = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + inName + "/throbber-nok.png");
+                m_NOk = pixbuf_to_pattern (nok);
+
                 uint size = initial.get_width() > initial.get_height() ? initial.get_width() : initial.get_height();
 
                 int nb_steps = (spinner.get_height() * spinner.get_width()) / (int)(size * size);
@@ -147,6 +151,11 @@ namespace XSAA.Aixplorer
         public void
         stop ()
         {
+            if (m_Animator.is_playing)
+            {
+                m_Current = m_Initial;
+                changed (false);
+            }
             m_Animator.stop ();
         }
 
@@ -155,6 +164,14 @@ namespace XSAA.Aixplorer
         {
             m_Animator.stop ();
             m_Current = m_Finish;
+            changed (false);
+        }
+
+        public void
+        nok ()
+        {
+            m_Animator.stop ();
+            m_Current = m_NOk;
             changed (false);
         }
     }

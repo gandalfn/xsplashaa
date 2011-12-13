@@ -32,16 +32,23 @@ namespace XSAA
             LOADING
         }
 
+        public enum Status
+        {
+            PENDING,
+            FINISHED,
+            ERROR
+        }
+
         public class Args : XSAA.Event.Args
         {
             // accessors
             public Type event_type { get; construct; }
-            public bool completed  { get; construct; }
+            public Status status  { get; construct; }
 
             // methods
-            public Args.loading (bool inCompleted)
+            public Args.loading (Status inStatus)
             {
-                GLib.Object (event_type: Type.LOADING, completed: inCompleted);
+                GLib.Object (event_type: Type.LOADING, status: inStatus);
             }
         }
 
@@ -50,10 +57,9 @@ namespace XSAA
             base (inArgs);
         }
 
-        public EventSession.loading (bool inCompleted)
+        public EventSession.loading (Status inStatus)
         {
-            this (new Args.loading (inCompleted));
+            this (new Args.loading (inStatus));
         }
     }
 }
-

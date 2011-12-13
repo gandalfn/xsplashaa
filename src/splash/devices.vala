@@ -81,18 +81,10 @@ namespace XSAA
         {
             m_Connection = inConnection;
 
-            try
-            {
-                // Try to get devices service
-                m_Service = (SSI.Devices.Service)inConnection.get_object ("fr.supersonicimagine.Devices",
-                                                                          "/fr/supersonicimagine/Devices/Service",
-                                                                          "fr.supersonicimagine.Devices.Service");
-            }
-            catch (GLib.Error err)
-            {
-                Log.warning ("Error on get devices service: %s", err.message);
-            }
+            // Try to get devices service
+            m_Service = (SSI.Devices.Service)inConnection.get_object ("fr.supersonicimagine.Devices",
+                                                                      "/fr/supersonicimagine/Devices/Service",
+                                                                      "fr.supersonicimagine.Devices.Service");
         }
     }
 }
-

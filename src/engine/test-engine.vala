@@ -48,33 +48,33 @@ public class TestWindow : Gtk.Window
         m_Box.add (m_Loader.engine);
         destroy.connect (Gtk.main_quit);
 
-        m_Loader.engine.process_event (new XSAA.EventBoot.loading (false));
+        m_Loader.engine.process_event (new XSAA.EventBoot.loading (XSAA.EventBoot.Status.PENDING));
         m_Loader.engine.process_event (new XSAA.EventProgress.pulse ());
         m_Loader.engine.process_event (new XSAA.EventUser.add_user (32769, "Nicolas Bruguier", "nicolas", 1));
 
         GLib.Timeout.add_seconds(5, () => {
-            m_Loader.engine.process_event (new XSAA.EventBoot.loading (true));
-            m_Loader.engine.process_event (new XSAA.EventBoot.check_filesystem (false));
+            m_Loader.engine.process_event (new XSAA.EventBoot.loading (XSAA.EventBoot.Status.FINISHED));
+            m_Loader.engine.process_event (new XSAA.EventBoot.check_filesystem (XSAA.EventBoot.Status.PENDING));
             m_Loader.engine.process_event (new XSAA.EventProgress.progress (0.33));
             return false;
         });
 
         GLib.Timeout.add_seconds(10, () => {
-            m_Loader.engine.process_event (new XSAA.EventBoot.check_filesystem (true));
-            m_Loader.engine.process_event (new XSAA.EventBoot.starting (false));
+            m_Loader.engine.process_event (new XSAA.EventBoot.check_filesystem (XSAA.EventBoot.Status.FINISHED));
+            m_Loader.engine.process_event (new XSAA.EventBoot.starting (XSAA.EventBoot.Status.PENDING));
             m_Loader.engine.process_event (new XSAA.EventProgress.progress (0.66));
             return false;
         });
 
         GLib.Timeout.add_seconds(15, () => {
-            m_Loader.engine.process_event (new XSAA.EventBoot.starting (true));
-            m_Loader.engine.process_event (new XSAA.EventBoot.check_device (false));
+            m_Loader.engine.process_event (new XSAA.EventBoot.starting (XSAA.EventBoot.Status.FINISHED));
+            m_Loader.engine.process_event (new XSAA.EventBoot.check_device (XSAA.EventBoot.Status.PENDING));
             m_Loader.engine.process_event (new XSAA.EventProgress.progress (1.0));
             return false;
         });
 
         GLib.Timeout.add_seconds(20, () => {
-            m_Loader.engine.process_event (new XSAA.EventBoot.check_device (true));
+            m_Loader.engine.process_event (new XSAA.EventBoot.check_device (XSAA.EventBoot.Status.FINISHED));
             m_Loader.engine.process_event (new XSAA.EventPrompt.show_login ());
             m_Loader.engine.process_event (new XSAA.EventProgress.progress (1.0));
             return false;
@@ -109,9 +109,9 @@ public class TestWindow : Gtk.Window
                     {
                         XSAA.Log.info ("Password %s", event_prompt.args.text);
                         m_AskPasword = false;
-                        m_Loader.engine.process_event (new XSAA.EventSession.loading (false));
+                        m_Loader.engine.process_event (new XSAA.EventSession.loading (XSAA.EventSession.Status.PENDING));
                         GLib.Timeout.add_seconds(5, () => {
-                            m_Loader.engine.process_event (new XSAA.EventSession.loading (true));
+                            m_Loader.engine.process_event (new XSAA.EventSession.loading (XSAA.EventSession.Status.FINISHED));
                             m_Animator.start ();
                             return false;
                         });
@@ -179,4 +179,3 @@ main (string[] inArgs)
 
     return 0;
 }
-

@@ -7,7 +7,7 @@ theme_DATA = \
     throbber-initial.png \
     throbber-spinner.png \
     throbber-finish.png \
-    gtkrc \
+    throbber-nok.png \
     restart-press.svg \
     restart-release.svg \
     shutdown-press.svg \

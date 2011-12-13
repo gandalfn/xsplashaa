@@ -36,108 +36,6 @@ namespace XSAA
 
     public class Daemon : GLib.Object
     {
-        // types
-        public class StateMachine : GLib.Object
-        {
-            // types
-            public delegate ReturnType Func (StateMachine inMachine);
-
-            public enum ReturnType
-            {
-                CONTINUE,
-                ERROR,
-                YIELD
-            }
-
-            // properties
-            private StateMachine m_Next;
-            private Func         m_Run;
-
-            // signals
-            public signal void error ();
-            public signal void finished ();
-
-            // methods
-            public StateMachine (Func inRun)
-            {
-                m_Run = inRun;
-            }
-
-            private void
-            on_child_finished ()
-            {
-                finished ();
-            }
-
-            private void
-            on_child_error ()
-            {
-                error ();
-            }
-
-            public unowned StateMachine?
-            add_child (Func inRun)
-            {
-                m_Next = new StateMachine (inRun);
-                m_Next.error.connect (on_child_error);
-                m_Next.finished.connect (on_child_finished);
-
-                return m_Next;
-            }
-
-            public void
-            next ()
-            {
-                if (m_Next != null)
-                {
-                    m_Next.run ();
-                }
-                else
-                {
-                    GLib.Timeout.add (500, () => {
-                        finished ();
-                        return false;
-                    });
-                }
-            }
-
-            public void
-            resume (ReturnType inType)
-            {
-                switch (inType)
-                {
-                    case ReturnType.ERROR:
-                        error ();
-                        break;
-                    case ReturnType.CONTINUE:
-                        if (m_Next != null)
-                        {
-                            m_Next.run ();
-                        }
-                        else
-                        {
-                            GLib.Timeout.add (500, () => {
-                                finished ();
-                                return false;
-                            });
-                        }
-                        break;
-                    case ReturnType.YIELD:
-                        break;
-                }
-            }
-
-            public void
-            run ()
-            {
-                GLib.Timeout.add (500, () => {
-                    resume (m_Run (this));
-
-                    return false;
-                });
-            }
-        }
-
         // properties
         private bool m_Enable       = true;
         private bool m_FirstStart   = true;
@@ -148,8 +46,10 @@ namespace XSAA
         private Display         m_Display;
         private DBus.Connection m_Connection = null;
         private XSAA.Manager    m_Manager = null;
-        private Devices         m_Peripherals = null;
-        private StateMachine    m_CheckPeripherals;
+
+        private StateCheckPeripherals m_CheckPeripherals = null;
+        private int                   m_NumStep = 0;
+        private EventBoot.Status      m_CheckPeripheralsStatus = EventBoot.Status.FINISHED;
 
         private string  m_Server = "/usr/bin/Xorg";
         private int     m_Number = 0;
@@ -193,8 +93,6 @@ namespace XSAA
                 m_Socket.session.connect (on_session_ready);
                 m_Socket.close_session.connect (on_init_shutdown);
                 m_Socket.quit.connect (on_quit);
-
-                create_check_peripheral_state_machine ();
             }
             catch (GLib.Error err)
             {
@@ -285,117 +183,48 @@ namespace XSAA
         }
 
         private void
-        create_check_peripheral_state_machine ()
+        on_check_peripherals_message (string inMessage)
         {
-            m_CheckPeripherals = new StateMachine (on_check_service);
-            m_CheckPeripherals.finished.connect (on_check_peripherals_finished);
-            m_CheckPeripherals.error.connect (on_check_peripherals_error);
+            m_Splash.message (inMessage);
+        }
 
-            unowned StateMachine s1 = m_CheckPeripherals.add_child (on_check_touchscreen);
-            unowned StateMachine s2 = s1.add_child (on_touchscreen_configure);
-            unowned StateMachine s3 = s2.add_child (on_touchscreen_calibrate);
+        private void
+        on_check_peripherals_step ()
+        {
+            if (m_CheckPeripherals.current == typeof (StateServiceCheck))
+            {
+                m_Splash.message ("Checking service devices...");
+            }
+            else if (m_CheckPeripherals.current == typeof (StateCheckTouchscreen))
+            {
+                m_Splash.message ("Checking touchscreen...");
+            }
+            else if (m_CheckPeripherals.current == typeof (StateConfigureTouchscreen))
+            {
+                m_Splash.message ("Configure touchscreen...");
+            }
+            else if (m_CheckPeripherals.current == typeof (StateCalibrateTouchscreen))
+            {
+                m_Splash.message ("Touchscreen calibration...");
+            }
+            m_NumStep++;
+
+            m_Splash.progress ((int)(((double)m_NumStep / (double)m_CheckPeripherals.length) * 100.0));
         }
 
         private void
         on_check_peripherals_finished ()
         {
+            m_Splash.set_phase_status (Splash.Phase.CHECK_DEVICE, m_CheckPeripheralsStatus);
             m_Splash.message ("");
-            m_Splash.set_phase_status (Splash.Phase.CHECK_DEVICE, true);
             start_session ();
         }
 
         private void
-        on_check_peripherals_error ()
+        on_check_peripherals_error (string inMessage)
         {
-            m_Splash.message ("Error on check peripherals");
-        }
-
-        private StateMachine.ReturnType
-        on_check_service (StateMachine inMachine)
-        {
-            StateMachine.ReturnType ret = StateMachine.ReturnType.CONTINUE;
-
-            if (m_Peripherals == null)
-            {
-                m_Peripherals = new Devices (m_Connection);
-                if (!m_Peripherals.service_available)
-                {
-                    m_Splash.message ("Unable to check peripherals");
-                    ret = StateMachine.ReturnType.ERROR;
-                }
-            }
-
-            m_Splash.message ("Check for touchscreen...");
-
-            return ret;
-        }
-
-        private StateMachine.ReturnType
-        on_check_touchscreen (StateMachine inMachine)
-        {
-            StateMachine.ReturnType ret = StateMachine.ReturnType.CONTINUE;
-
-            if (m_Peripherals.touchscreen == null)
-            {
-                m_Splash.message ("Unable to found touchscreen device");
-                ret = StateMachine.ReturnType.ERROR;
-            }
-            else
-            {
-                m_Splash.progress (25);
-                m_Splash.message ("Configure touchscreen...");
-            }
-
-            return ret;
-        }
-
-        private StateMachine.ReturnType
-        on_touchscreen_configure (StateMachine inMachine)
-        {
-            StateMachine.ReturnType ret = StateMachine.ReturnType.CONTINUE;
-
-            // Open display for touchscreen
-            if (m_Peripherals.touchscreen.open_display (":" + m_Number.to_string ()) >= 0)
-            {
-                // Create virtual pointer for display
-                if (!m_Peripherals.touchscreen.create_virtual_pointer (":" + m_Number.to_string ()))
-                {
-                    m_Splash.message ("Error on configure touchscreen for display !!");
-                    ret = StateMachine.ReturnType.ERROR;
-                }
-                else
-                {
-                    m_Splash.progress (50);
-                }
-            }
-            else
-            {
-                m_Splash.message ("Error on configure touchscreen for display !!");
-                ret = StateMachine.ReturnType.ERROR;
-            }
-
-            m_Splash.message ("Check touchscreen calibration");
-
-            return ret;
-        }
-
-        private StateMachine.ReturnType
-        on_touchscreen_calibrate (StateMachine inMachine)
-        {
-            StateMachine.ReturnType ret = StateMachine.ReturnType.CONTINUE;
-            m_Splash.progress (75);
-
-            if (m_Peripherals.touchscreen.need_calibration (":" + m_Number.to_string ()))
-            {
-                m_Splash.message ("Please calibrate touchscreen");
-                m_Peripherals.touchscreen.calibrate (":" + m_Number.to_string ());
-                m_Peripherals.touchscreen.calibration_finished.connect (() => {
-                    inMachine.resume (StateMachine.ReturnType.CONTINUE);
-                });
-                ret = StateMachine.ReturnType.YIELD;
-            }
-
-            return ret;
+            m_Splash.message (inMessage);
+            m_CheckPeripheralsStatus = EventBoot.Status.ERROR;
         }
 
         private void
@@ -546,11 +375,8 @@ namespace XSAA
                 }
 
                 // Switch to check devices phase
-                m_Splash.set_phase_status (m_Splash.current_phase, true);
-                m_Splash.set_phase_status (Splash.Phase.CHECK_DEVICE, false);
-
-                // start check peripherals
-                m_CheckPeripherals.run ();
+                m_Splash.set_phase_status (m_Splash.current_phase, EventBoot.Status.FINISHED);
+                m_Splash.set_phase_status (Splash.Phase.CHECK_DEVICE, EventBoot.Status.PENDING);
 
                 if (m_Manager == null)
                 {
@@ -561,6 +387,21 @@ namespace XSAA
                 if (m_Manager == null)
                 {
                     Log.warning ("Error on get manager object");
+                }
+
+                if (m_CheckPeripherals == null)
+                {
+                    m_NumStep = 0;
+                    m_CheckPeripherals = new StateCheckPeripherals (m_Connection, m_Number);
+                    m_CheckPeripherals.step.connect (on_check_peripherals_step);
+                    m_CheckPeripherals.finished.connect (on_check_peripherals_finished);
+                    m_CheckPeripherals.message.connect (on_check_peripherals_message);
+                    m_CheckPeripherals.error.connect (on_check_peripherals_error);
+                    m_CheckPeripherals.run ();
+                }
+                else
+                {
+                    start_session ();
                 }
             }
             catch (GLib.Error err)
@@ -734,7 +575,7 @@ namespace XSAA
             {
                 Log.info ("launch %s", m_Exec);
                 m_Session.launch (m_Exec);
-                m_Splash.set_phase_status (Splash.Phase.SESSION, false);
+                m_Splash.set_phase_status (Splash.Phase.SESSION, EventBoot.Status.PENDING);
             }
             catch (DBus.Error err)
             {
@@ -991,4 +832,3 @@ namespace XSAA
         return 0;
      }
 }
-

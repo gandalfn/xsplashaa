@@ -268,15 +268,17 @@ namespace XSAA.Aixplorer
             {
                 case EventBoot.Type.LOADING:
                     notebook.current_page = 0;
-                    if (!inEvent.args.completed)
+                    if (inEvent.args.status == EventBoot.Status.PENDING)
                         loading.start ();
+                    else if (inEvent.args.status == EventBoot.Status.ERROR)
+                        loading.nok ();
                     else
                         loading.finished ();
                     break;
 
                 case EventBoot.Type.CHECK_FILESYSTEM:
                     notebook.current_page = 0;
-                    if (!inEvent.args.completed)
+                    if (inEvent.args.status == EventBoot.Status.PENDING)
                     {
                         unowned Table check_filesystem_table = (Table)find ("checking-filesystem");
                         Animation animation = new Animation (check_filesystem_table, "x", allocation.width, check_filesystem_table.x);
@@ -291,13 +293,15 @@ namespace XSAA.Aixplorer
 
                         check_filesystem.start ();
                     }
+                    else if (inEvent.args.status == EventBoot.Status.ERROR)
+                        check_filesystem.nok ();
                     else
                         check_filesystem.finished ();
                     break;
 
                 case EventBoot.Type.STARTING:
                     notebook.current_page = 0;
-                    if (!inEvent.args.completed)
+                    if (inEvent.args.status == EventBoot.Status.PENDING)
                     {
                         unowned Table starting_table = (Table)find ("starting");
                         Animation animation = new Animation (starting_table, "x", allocation.width, starting_table.x);
@@ -312,13 +316,15 @@ namespace XSAA.Aixplorer
 
                         starting.start ();
                     }
+                    else if (inEvent.args.status == EventBoot.Status.ERROR)
+                        starting.nok ();
                     else
                         starting.finished ();
                     break;
 
                 case EventBoot.Type.CHECK_DEVICE:
                     notebook.current_page = 0;
-                    if (!inEvent.args.completed)
+                    if (inEvent.args.status == EventBoot.Status.PENDING)
                     {
                         unowned Table check_device_table = (Table)find ("checking-device");
                         Animation animation = new Animation (check_device_table, "x", allocation.width, check_device_table.x);
@@ -333,14 +339,18 @@ namespace XSAA.Aixplorer
 
                         check_device.start ();
                     }
+                    else if (inEvent.args.status == EventBoot.Status.ERROR)
+                        check_device.nok ();
                     else
                         check_device.finished ();
                     break;
 
                 case EventBoot.Type.SHUTDOWN:
                     notebook.current_page = 2;
-                    if (!inEvent.args.completed)
+                    if (inEvent.args.status == EventBoot.Status.PENDING)
                         shutdown.start ();
+                    else if (inEvent.args.status == EventBoot.Status.ERROR)
+                        shutdown.nok ();
                     else
                         shutdown.finished ();
                     break;
@@ -388,7 +398,7 @@ namespace XSAA.Aixplorer
             {
                 case EventSession.Type.LOADING:
                     notebook.current_page = 0;
-                    if (!inEvent.args.completed)
+                    if (inEvent.args.status == EventSession.Status.PENDING)
                     {
                         unowned Table session_table = (Table)find ("session");
                         Animation animation = new Animation (session_table, "x", allocation.width, session_table.x);
@@ -403,6 +413,8 @@ namespace XSAA.Aixplorer
 
                         session.start ();
                     }
+                    else if (inEvent.args.status == EventSession.Status.ERROR)
+                        session.nok ();
                     else
                         session.finished ();
                     break;

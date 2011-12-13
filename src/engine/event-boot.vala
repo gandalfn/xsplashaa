@@ -36,36 +36,43 @@ namespace XSAA
             SHUTDOWN
         }
 
+        public enum Status
+        {
+            PENDING,
+            FINISHED,
+            ERROR
+        }
+
         public class Args : XSAA.Event.Args
         {
             // accessors
             public Type event_type { get; construct; }
-            public bool completed  { get; construct; }
+            public Status status  { get; construct; }
 
             // methods
-            public Args.starting (bool inCompleted)
+            public Args.starting (Status inStatus)
             {
-                GLib.Object (event_type: Type.STARTING, completed: inCompleted);
+                GLib.Object (event_type: Type.STARTING, status: inStatus);
             }
 
-            public Args.check_filesystem (bool inCompleted)
+            public Args.check_filesystem (Status inStatus)
             {
-                GLib.Object (event_type: Type.CHECK_FILESYSTEM, completed: inCompleted);
+                GLib.Object (event_type: Type.CHECK_FILESYSTEM, status: inStatus);
             }
 
-            public Args.loading (bool inCompleted)
+            public Args.loading (Status inStatus)
             {
-                GLib.Object (event_type: Type.LOADING, completed: inCompleted);
+                GLib.Object (event_type: Type.LOADING, status: inStatus);
             }
 
-            public Args.check_device (bool inCompleted)
+            public Args.check_device (Status inStatus)
             {
-                GLib.Object (event_type: Type.CHECK_DEVICE, completed: inCompleted);
+                GLib.Object (event_type: Type.CHECK_DEVICE, status: inStatus);
             }
 
-            public Args.shutdown (bool inCompleted)
+            public Args.shutdown (Status inStatus)
             {
-                GLib.Object (event_type: Type.SHUTDOWN, completed: inCompleted);
+                GLib.Object (event_type: Type.SHUTDOWN, status: inStatus);
             }
         }
 
@@ -74,29 +81,29 @@ namespace XSAA
             base (inArgs);
         }
 
-        public EventBoot.starting (bool inCompleted)
+        public EventBoot.starting (Status inStatus)
         {
-            this (new Args.starting (inCompleted));
+            this (new Args.starting (inStatus));
         }
 
-        public EventBoot.check_filesystem (bool inCompleted)
+        public EventBoot.check_filesystem (Status inStatus)
         {
-            this (new Args.check_filesystem (inCompleted));
+            this (new Args.check_filesystem (inStatus));
         }
 
-        public EventBoot.loading (bool inCompleted)
+        public EventBoot.loading (Status inStatus)
         {
-            this (new Args.loading (inCompleted));
+            this (new Args.loading (inStatus));
         }
 
-        public EventBoot.check_device (bool inCompleted)
+        public EventBoot.check_device (Status inStatus)
         {
-            this (new Args.check_device (inCompleted));
+            this (new Args.check_device (inStatus));
         }
 
-        public EventBoot.shutdown (bool inCompleted)
+        public EventBoot.shutdown (Status inStatus)
         {
-            this (new Args.shutdown (inCompleted));
+            this (new Args.shutdown (inStatus));
         }
     }
 }
