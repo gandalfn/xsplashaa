@@ -35,6 +35,10 @@ namespace XSAA.Aixplorer
         private State         m_State = State.RELEASE;
         private Rsvg.Handle   m_Handle[2];
         private bool          m_Reflect = false;
+        private Gdk.Color     m_ActiveColor;
+        private Gdk.Color     m_InactiveColor;
+        private double        m_Border = 12.0;
+        private string        m_Text = null;
 
         // accessors
         public override string node_name {
@@ -86,6 +90,24 @@ namespace XSAA.Aixplorer
             }
         }
 
+        public string active_color {
+            set {
+                Gdk.Color.parse (value, out m_ActiveColor);
+            }
+        }
+
+        public string inactive_color {
+            set {
+                Gdk.Color.parse (value, out m_InactiveColor);
+            }
+        }
+
+        public double border {
+            set {
+                m_Border = value;
+            }
+        }
+
         public bool show_reflection {
             get {
                 return m_Reflect;
@@ -95,6 +117,12 @@ namespace XSAA.Aixplorer
                 {
                     m_Reflect = value;
                 }
+            }
+        }
+
+        public string text {
+            set {
+                m_Text = value;
             }
         }
 
@@ -108,48 +136,85 @@ namespace XSAA.Aixplorer
             button_release_event.connect (on_button_release_event);
         }
 
-        public override void
-        simple_paint (Cairo.Context inContext, Goo.CanvasBounds inBounds)
+        private void
+        draw_button (Cairo.Context inContext)
         {
             if (m_Handle[m_State] != null)
             {
-                inContext.save ();
-                if (m_Reflect)
+                m_Handle[m_State].render_cairo (inContext);
+            }
+            else
+            {
+                Gdk.Color fg;
+                double alpha;
+                CairoColor.rgba_to_color (fill_color_rgba, out fg, out alpha);
+                ((CairoContext)inContext).button (fg, m_ActiveColor, m_InactiveColor,
+                                                  0, 0, base.width, base.height, m_Border,
+                                                  m_State == State.RELEASE ? 1 : 0, 0.9);
+                if (m_Text != null)
                 {
-                    inContext.push_group();
-
+                    Gdk.Color text_color;
+                    CairoColor.rgba_to_color (stroke_color_rgba, out text_color, out alpha);
+                    Gdk.Color shade_color = CairoColor.shade (text_color, 0.8);
                     inContext.save ();
+                    inContext.translate (base.width / 2, base.height / 2);
+                    ((CairoContext)inContext).shade_text (m_Text, font_desc, Pango.Alignment.CENTER,
+                    text_color, shade_color, 1.0, m_State == State.PRESS ? true : false);
+                    inContext.restore ();
+                }
+            }
+        }
 
-                    inContext.rectangle (0, base.height, base.width, base.height);
-                    inContext.clip ();
+        public override void
+        simple_paint (Cairo.Context inContext, Goo.CanvasBounds inBounds)
+        {
+            inContext.save ();
+            if (m_Reflect)
+            {
+                inContext.push_group();
 
-                    Cairo.Matrix matrix = Cairo.Matrix(1, 0, 0, 1, 0, 0);
+                inContext.save ();
+
+                inContext.rectangle (0, base.height, base.width, base.height);
+                inContext.clip ();
+
+                Cairo.Matrix matrix = Cairo.Matrix(1, 0, 0, 1, 0, 0);
+                if (m_Handle[m_State] != null)
+                {
                     matrix.scale (base.width / m_Handle[m_State].width, -base.height / m_Handle[m_State].height);
                     matrix.translate (0, -(2 * m_Handle[m_State].height) + 1);
-
-                    inContext.transform (matrix);
-
-                    get_style ().set_fill_options (inContext);
-                    m_Handle[m_State].render_cairo (inContext);
-
-                    inContext.restore ();
-
-                    inContext.pop_group_to_source();
-
-                    Cairo.Pattern mask = new Cairo.Pattern.linear(0, height, 0, base.height);
-                    mask.add_color_stop_rgba(0.25, 0, 0, 0, 0);
-                    mask.add_color_stop_rgba(0.5, 0, 0, 0, 0.125);
-                    mask.add_color_stop_rgba(0.75, 0, 0, 0, 0.4);
-                    mask.add_color_stop_rgba(1.0, 0, 0, 0, 0.4);
-
-                    inContext.mask (mask);
+                }
+                else
+                {
+                    matrix.scale (1, -1);
+                    matrix.translate (0, -(2 * base.height) + 1);
                 }
 
-                inContext.scale (base.width / m_Handle[m_State].width, base.height / m_Handle[m_State].height);
+                inContext.transform (matrix);
+
                 get_style ().set_fill_options (inContext);
-                m_Handle[m_State].render_cairo (inContext);
+                draw_button (inContext);
+
                 inContext.restore ();
+
+                inContext.pop_group_to_source();
+
+                Cairo.Pattern mask = new Cairo.Pattern.linear(0, height, 0, base.height);
+                mask.add_color_stop_rgba(0.25, 0, 0, 0, 0);
+                mask.add_color_stop_rgba(0.5, 0, 0, 0, 0.125);
+                mask.add_color_stop_rgba(0.75, 0, 0, 0, 0.4);
+                mask.add_color_stop_rgba(1.0, 0, 0, 0, 0.4);
+
+                inContext.mask (mask);
             }
+
+            if (m_Handle[m_State] != null)
+            {
+                inContext.scale (base.width / m_Handle[m_State].width, base.height / m_Handle[m_State].height);
+            }
+            get_style ().set_fill_options (inContext);
+            draw_button (inContext);
+            inContext.restore ();
         }
 
         public bool
@@ -170,3 +235,4 @@ namespace XSAA.Aixplorer
         }
     }
 }
+

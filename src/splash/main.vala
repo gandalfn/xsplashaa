@@ -728,7 +728,7 @@ namespace XSAA
     static int
     main (string[] args)
     {
-        Log.set_default_logger (new XSAA.Log.KMsg (XSAA.Log.Level.DEBUG, "xsplashaa"));
+        Log.set_default_logger (new XSAA.Log.Stderr (XSAA.Log.Level.DEBUG, "xsplashaa"));
 
         Log.debug ("starting");
 
@@ -848,3 +848,4 @@ namespace XSAA
         return 0;
      }
 }
+

@@ -141,6 +141,253 @@ namespace XSAA
             else
                 move_to(inX, inY);
         }
+
+        /**
+         * Sets the source pattern within context to a diagonal gradient.
+         *
+         * @param inColor the begin color of gradient
+         * @param inShadeColor the end color of gradient
+         * @param inW the width of rectangle where apply the pattern
+         * @param inH the height of rectangle where apply the pattern
+         * @param inInvert invert the begin and end colors of gradient
+         * @param inVariance the shade variance of begin and end colors
+         */
+        public void
+        diagonal_gradient(Gdk.Color inColor, Gdk.Color inShadeColor,
+                          double inW, double inH, bool inInvert, double inVariance)
+        {
+            double angle = GLib.Math.atan(inW * 1.16 / inH);
+            double offset = (inH * 0.5) / GLib.Math.tan(angle);
+            Gdk.Color start;
+            Gdk.Color end;
+
+            if (inInvert)
+            {
+                start = CairoColor.shade(inShadeColor, 1 - inVariance);
+                end = CairoColor.shade(inColor, 1 + inVariance);
+            }
+            else
+            {
+                end = CairoColor.shade(inShadeColor, 1 - inVariance);
+                start = CairoColor.shade(inColor, 1 + inVariance);
+            }
+            CairoPattern linearGradient =
+                new CairoPattern.linear(inW * 0.5 - offset, 0,
+                                        inW * 0.5 + offset, inH);
+            linearGradient.add_gdk_color_stop_rgb(0.0, start);
+            linearGradient.add_gdk_color_stop_rgb(0.4, start);
+            linearGradient.add_gdk_color_stop_rgb(0.5, inColor);
+            linearGradient.add_gdk_color_stop_rgb(0.6, end);
+            linearGradient.add_gdk_color_stop_rgb(1.0, end);
+            set_source(linearGradient);
+        }
+
+        public void
+        shade_text(string inText, Pango.FontDescription inFtDesc,
+                   Pango.Alignment inAlignment, Gdk.Color inColor,
+                   Gdk.Color inShadeColor, double inAlpha, bool inInvert)
+        {
+            Pango.Layout layout = Pango.cairo_create_layout(this);
+            int height, width;
+            double x, y, delta;
+            Gdk.Color start, end;
+
+            set_source_gdk_color_rgba(inColor, inAlpha);
+            layout.set_font_description(inFtDesc);
+            layout.set_alignment(inAlignment);
+            layout.set_markup(inText, -1);
+            layout.get_pixel_size(out width, out height);
+
+            if (inInvert)
+            {
+                start = CairoColor.shade(inShadeColor, 1.2);
+                end = CairoColor.shade(inShadeColor, 0.8);
+            }
+            else
+            {
+                end = CairoColor.shade(inShadeColor, 1.2);
+                start = CairoColor.shade(inShadeColor, 0.8);
+            }
+            x = -(double)width / 2.0;
+            y = (double)height / 4.0;
+            delta = (double)height / (double)layout.get_line_count();
+            for (int cpt = 0; cpt < layout.get_line_count(); cpt++)
+            {
+                move_to(x - 1,y + (delta * cpt) - 1);
+                set_source_gdk_color_rgba(start, inAlpha);
+                Pango.cairo_show_layout_line(this, layout.get_line(cpt));
+                move_to(x + 1, y + (delta * cpt) + 1);
+                set_source_gdk_color_rgba(end, inAlpha);
+                Pango.cairo_show_layout_line(this, layout.get_line(cpt));
+                move_to(x, y + (delta * cpt));
+                set_source_gdk_color_rgba(inColor, inAlpha);
+                Pango.cairo_show_layout_line(this, layout.get_line(cpt));
+            }
+        }
+
+        public void
+        button (Gdk.Color inBg, Gdk.Color inColorActive, Gdk.Color inColorInactive,
+                double inX, double inY, double inWidth, double inHeight,
+                double inBorder, double inProgress, double inVariance)
+        {
+            save();
+            translate(inX, inY);
+
+            //Background
+            diagonal_gradient(inBg, inBg, inWidth, inHeight, true, inVariance);
+            rounded_rectangle(0.0, 0.0, inWidth, inHeight, inBorder, CairoCorner.ALL);
+            fill();
+
+            // Old state
+            if (inProgress < 1.0)
+            {
+                //Background
+                diagonal_gradient(inColorInactive, inColorInactive, inWidth, inHeight, true, inVariance);
+                rounded_rectangle(0, 0, inWidth, inHeight, inBorder, CairoCorner.ALL);
+                fill();
+
+                //corners
+                CairoPattern radialGradient = new CairoPattern.radial(inBorder, inBorder, 0.0, inBorder, inBorder, inBorder);
+                radialGradient.add_gdk_color_stop_rgba(0.1, inColorInactive, 1.0);
+                radialGradient.add_gdk_color_stop_rgba(1.0, inColorInactive, 0.1);
+                set_source(radialGradient);
+                rounded_rectangle(0, 0, inBorder, inBorder, inBorder, CairoCorner.TOPLEFT);
+                fill ();
+
+                radialGradient = new CairoPattern.radial(inWidth - inBorder, inBorder, 0.0, inWidth - inBorder, inBorder, inBorder);
+                radialGradient.add_gdk_color_stop_rgba(0.1, inColorInactive, 1.0);
+                radialGradient.add_gdk_color_stop_rgba(1.0, inColorInactive, 0.1);
+                set_source(radialGradient);
+                rounded_rectangle(inWidth - inBorder, 0, inBorder, inBorder, inBorder, CairoCorner.TOPRIGHT);
+                fill ();
+
+                radialGradient = new CairoPattern.radial(inBorder, inHeight - inBorder, 0.0, inBorder, inHeight - inBorder, inBorder);
+                radialGradient.add_gdk_color_stop_rgba(0.1, inColorInactive, 1.0);
+                radialGradient.add_gdk_color_stop_rgba(1.0, inColorInactive, 0.1);
+                set_source(radialGradient);
+                rounded_rectangle(0, inHeight- inBorder, inBorder, inBorder, inBorder, CairoCorner.BOTTOMLEFT);
+                fill ();
+
+                radialGradient = new CairoPattern.radial(inWidth - inBorder, inHeight - inBorder, 0.0, inWidth - inBorder, inHeight - inBorder, inBorder);
+                radialGradient.add_gdk_color_stop_rgba(0.1, inColorInactive, 1.0);
+                radialGradient.add_gdk_color_stop_rgba(1.0, inColorInactive, 0.1);
+                set_source(radialGradient);
+                rounded_rectangle(inWidth - inBorder, inHeight - inBorder, inBorder, inBorder, inBorder, CairoCorner.BOTTOMRIGHT);
+                fill ();
+
+                // Borders
+                CairoPattern linearGradient = new CairoPattern.linear(inBorder, inHeight / 2.0, 0, inHeight / 2.0);
+                linearGradient.add_gdk_color_stop_rgba(0.1, inColorInactive, 1.0);
+                linearGradient.add_gdk_color_stop_rgba(1.0, inColorInactive, 0.1);
+                set_source(linearGradient);
+                rectangle(0, inBorder, inBorder, inHeight - (inBorder*2));
+                fill ();
+
+                linearGradient = new CairoPattern.linear(inWidth / 2.0, inBorder, inWidth / 2.0, 0);
+                linearGradient.add_gdk_color_stop_rgba(0.1, inColorInactive, 1.0);
+                linearGradient.add_gdk_color_stop_rgba(1.0, inColorInactive, 0.1);
+                set_source(linearGradient);
+                rectangle(inBorder, 0, inWidth - (inBorder*2), inBorder);
+                fill ();
+
+                linearGradient = new CairoPattern.linear(inWidth - inBorder, inHeight / 2.0, inWidth, inHeight / 2.0);
+                linearGradient.add_gdk_color_stop_rgba(0.1, inColorInactive, 1.0);
+                linearGradient.add_gdk_color_stop_rgba(1.0, inColorInactive, 0.1);
+                set_source(linearGradient);
+                rectangle(inWidth - inBorder, inBorder, inBorder, inHeight - (inBorder*2));
+                fill ();
+
+                linearGradient = new CairoPattern.linear(inWidth / 2.0, inHeight - inBorder, inWidth / 2.0, inHeight);
+                linearGradient.add_gdk_color_stop_rgba(0.1, inColorInactive, 1.0);
+                linearGradient.add_gdk_color_stop_rgba(1.0, inColorInactive, 0.1);
+                set_source(linearGradient);
+                rectangle(inBorder, inHeight - inBorder, inWidth - (inBorder*2), inBorder);
+                fill ();
+
+                // And finally the real background
+                set_source_gdk_color_rgb (inColorInactive);
+                rectangle(inBorder, inBorder, inWidth - (inBorder*2), inHeight - (inBorder*2));
+                fill ();
+            }
+
+            if (inProgress > 0.0)
+            {
+                new_path();
+                rectangle ((inWidth / 2.0) - (inWidth * inProgress) / 2.0, (inHeight / 2.0) - (inHeight * inProgress) / 2.0, inWidth * inProgress, inHeight * inProgress);
+                close_path();
+                clip();
+
+                //Background
+                diagonal_gradient(inColorActive, inColorActive, inWidth, inHeight, false, inVariance);
+                rounded_rectangle(0, 0, inWidth, inHeight, inBorder, CairoCorner.ALL);
+                fill();
+
+                //corners
+                CairoPattern radialGradient = new CairoPattern.radial(inBorder, inBorder, 0.0, inBorder, inBorder, inBorder);
+                radialGradient.add_gdk_color_stop_rgba(0.1, inColorActive, 1.0);
+                radialGradient.add_gdk_color_stop_rgba(1.0, inColorActive, 0.1);
+                set_source(radialGradient);
+                rounded_rectangle(0, 0, inBorder, inBorder, inBorder, CairoCorner.TOPLEFT);
+                fill ();
+
+                radialGradient = new CairoPattern.radial(inWidth - inBorder, inBorder, 0.0, inWidth - inBorder, inBorder, inBorder);
+                radialGradient.add_gdk_color_stop_rgba(0.1, inColorActive, 1.0);
+                radialGradient.add_gdk_color_stop_rgba(1.0, inColorActive, 0.1);
+                set_source(radialGradient);
+                rounded_rectangle(inWidth - inBorder, 0, inBorder, inBorder, inBorder, CairoCorner.TOPRIGHT);
+                fill ();
+
+                radialGradient = new CairoPattern.radial(inBorder, inHeight - inBorder, 0.0, inBorder, inHeight - inBorder, inBorder);
+                radialGradient.add_gdk_color_stop_rgba(0.1, inColorActive, 1.0);
+                radialGradient.add_gdk_color_stop_rgba(1.0, inColorActive, 0.1);
+                set_source(radialGradient);
+                rounded_rectangle(0, inHeight - inBorder, inBorder, inBorder, inBorder, CairoCorner.BOTTOMLEFT);
+                fill ();
+
+                radialGradient = new CairoPattern.radial(inWidth - inBorder, inHeight - inBorder, 0.0, inWidth - inBorder, inHeight - inBorder, inBorder);
+                radialGradient.add_gdk_color_stop_rgba(0.1, inColorActive, 1.0);
+                radialGradient.add_gdk_color_stop_rgba(1.0, inColorActive, 0.1);
+                set_source(radialGradient);
+                rounded_rectangle(inWidth - inBorder, inHeight - inBorder, inBorder, inBorder, inBorder, CairoCorner.BOTTOMRIGHT);
+                fill ();
+
+                // Borders
+                CairoPattern linearGradient = new CairoPattern.linear(inBorder, inHeight / 2.0, 0, inHeight / 2.0);
+                linearGradient.add_gdk_color_stop_rgba(0.1, inColorActive, 1.0);
+                linearGradient.add_gdk_color_stop_rgba(1.0, inColorActive, 0.1);
+                set_source(linearGradient);
+                rectangle(0, inBorder, inBorder, inHeight - (inBorder*2));
+                fill ();
+
+                linearGradient = new CairoPattern.linear(inWidth / 2.0, inBorder, inWidth / 2.0, 0);
+                linearGradient.add_gdk_color_stop_rgba(0.1, inColorActive, 1.0);
+                linearGradient.add_gdk_color_stop_rgba(1.0, inColorActive, 0.1);
+                set_source(linearGradient);
+                rectangle(inBorder, 0, inWidth - (inBorder*2), inBorder);
+                fill ();
+
+                linearGradient = new CairoPattern.linear(inWidth - inBorder, inHeight / 2.0, inWidth, inHeight / 2.0);
+                linearGradient.add_gdk_color_stop_rgba(0.1, inColorActive, 1.0);
+                linearGradient.add_gdk_color_stop_rgba(1.0, inColorActive, 0.1);
+                set_source(linearGradient);
+                rectangle(inWidth - inBorder, inBorder, inBorder, inHeight - (inBorder * 2));
+                fill ();
+
+                linearGradient = new CairoPattern.linear(inWidth / 2.0, inHeight - inBorder, inWidth / 2.0, inHeight);
+                linearGradient.add_gdk_color_stop_rgba(0.1, inColorActive, 1.0);
+                linearGradient.add_gdk_color_stop_rgba(1.0, inColorActive, 0.1);
+                set_source(linearGradient);
+                rectangle(inBorder, inHeight - inBorder, inWidth - (inBorder * 2), inBorder);
+                fill ();
+
+                // And finally the real background
+                set_source_gdk_color_rgb (inColorActive);
+                rectangle(inBorder, inBorder, inWidth - (inBorder * 2), inHeight - (inBorder * 2));
+                fill ();
+            }
+
+            restore();
+        }
     }
 }
 

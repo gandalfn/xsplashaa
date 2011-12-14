@@ -13,6 +13,7 @@ libxsaa_graphics_la_VALAFLAGS = \
 
 libxsaa_graphics_la_SOURCES = \
     cairo-color.vala \
+    cairo-pattern.vala \
     cairo-context.vala
 
 libxsaa_graphics_la_LIBADD = \

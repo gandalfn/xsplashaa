@@ -100,7 +100,7 @@ namespace XSAA.Aixplorer
             });
         }
 
-        private Cairo.Pattern
+        private CairoPattern
         render_bar (double inWidth, double inHeight)
         {
             Cairo.Surface surface = new Cairo.ImageSurface (Cairo.Format.ARGB32,
@@ -110,13 +110,13 @@ namespace XSAA.Aixplorer
             render_bar_segments (ctx, inWidth, inHeight, inHeight / 2.0);
             render_bar_strokes (ctx, inWidth, inHeight, inHeight / 2.0);
 
-            return new Cairo.Pattern.for_surface (surface);
+            return new CairoPattern.for_surface (surface);
         }
 
         private void
         render_bar_segments (Cairo.Context inContext, double inWidth, double inHeight, double inRadius)
         {
-            Cairo.Pattern grad = new Cairo.Pattern.linear (0, 0, inWidth, 0);
+            CairoPattern grad = new CairoPattern.linear (0, 0, inWidth, 0);
             Gdk.Color color;
             double alpha;
             CairoColor.rgba_to_color (fill_color_rgba, out color, out alpha);
@@ -125,25 +125,15 @@ namespace XSAA.Aixplorer
             {
                 grad.add_color_stop_rgba (0.0, 0, 0, 0, 0.0);
                 grad.add_color_stop_rgba (double.max (0.0, m_Pulse), 0, 0, 0, 0.0);
-                grad.add_color_stop_rgba (double.max (0.0, m_Pulse),
-                                          (double)color.red / 65535.0,
-                                          (double)color.green / 65535.0,
-                                          (double)color.blue / 65535.0, 1.0);
-                grad.add_color_stop_rgba (double.min (1.0, m_Pulse + 0.1),
-                                          (double)color.red / 65535.0,
-                                          (double)color.green / 65535.0,
-                                          (double)color.blue / 65535.0, 1.0);
+                grad.add_gdk_color_stop_rgba (double.max (0.0, m_Pulse), color, 1.0);
+                grad.add_gdk_color_stop_rgba (double.min (1.0, m_Pulse + 0.1), color, 1.0);
                 grad.add_color_stop_rgba (double.min (1.0, m_Pulse + 0.1), 0, 0, 0, 0);
                 grad.add_color_stop_rgba (1.0, 0, 0, 0, 0);
             }
             else
             {
-                grad.add_color_stop_rgba (0, (double)color.red / 65535.0,
-                                             (double)color.green / 65535.0,
-                                             (double)color.blue / 65535.0, 1.0);
-                grad.add_color_stop_rgba (m_Percent, (double)color.red / 65535.0,
-                                                     (double)color.green / 65535.0,
-                                                     (double)color.blue / 65535.0, 1.0);
+                grad.add_gdk_color_stop_rgba (0, color, 1.0);
+                grad.add_gdk_color_stop_rgba (m_Percent, color, 1.0);
                 grad.add_color_stop_rgba (m_Percent, 0, 0, 0, 0);
                 grad.add_color_stop_rgba (1.0, 0, 0, 0, 0);
             }
@@ -152,7 +142,7 @@ namespace XSAA.Aixplorer
             inContext.set_source(grad);
             inContext.fill_preserve ();
 
-            grad = new Cairo.Pattern.linear (0, 0, 0, inHeight);
+            grad = new CairoPattern.linear (0, 0, 0, inHeight);
             grad.add_color_stop_rgba(0.0, 1, 1, 1, 0.125);
             grad.add_color_stop_rgba(0.35, 1, 1, 1, 0.255);
             grad.add_color_stop_rgba(1, 0, 0, 0, 0.4);
@@ -167,9 +157,9 @@ namespace XSAA.Aixplorer
             Gdk.Color.parse ("#000000", out black);
             Gdk.Color.parse ("#FFFFFF", out white);
 
-            Cairo.Pattern stroke = make_segment_gradient (inHeight, black, 0.25);
-            Cairo.Pattern seg_sep_light = make_segment_gradient (inHeight, white, 0.125);
-            Cairo.Pattern seg_sep_dark = make_segment_gradient (inHeight, black, 0.125);
+            CairoPattern stroke = make_segment_gradient (inHeight, black, 0.25);
+            CairoPattern seg_sep_light = make_segment_gradient (inHeight, white, 0.125);
+            CairoPattern seg_sep_dark = make_segment_gradient (inHeight, black, 0.125);
 
             inContext.set_line_width (1);
 
@@ -196,25 +186,19 @@ namespace XSAA.Aixplorer
             inContext.stroke ();
         }
 
-        private Cairo.Pattern
+        private CairoPattern
         make_segment_gradient (double inHeight, Gdk.Color inColor, double inAlpha)
         {
-            Cairo.Pattern grad = new Cairo.Pattern.linear(0, 0, 0, inHeight);
+            CairoPattern grad = new CairoPattern.linear(0, 0, 0, inHeight);
 
             Gdk.Color color = CairoColor.shade (inColor, 1.1);
-            grad.add_color_stop_rgba(0, (double)color.red / 65535.0,
-                                        (double)color.green / 65535.0,
-                                        (double)color.blue / 65535.0, inAlpha);
+            grad.add_gdk_color_stop_rgba(0, color, inAlpha);
 
             color = CairoColor.shade (inColor, 1.2);
-            grad.add_color_stop_rgba(0, (double)color.red / 65535.0,
-                                        (double)color.green / 65535.0,
-                                        (double)color.blue / 65535.0, inAlpha);
+            grad.add_gdk_color_stop_rgba(0, color, inAlpha);
 
             color = CairoColor.shade (inColor, 0.8);
-            grad.add_color_stop_rgba(1, (double)color.red / 65535.0,
-                                        (double)color.green / 65535.0,
-                                        (double)color.blue / 65535.0, inAlpha);
+            grad.add_gdk_color_stop_rgba(1, color, inAlpha);
 
             return grad;
         }
@@ -224,7 +208,7 @@ namespace XSAA.Aixplorer
         {
             Cairo.Matrix matrix = Cairo.Matrix.identity ();
             matrix.translate (-x, -y);
-            Cairo.Pattern bar = render_bar (base.width, base.height);
+            CairoPattern bar = render_bar (base.width, base.height);
             bar.set_matrix (matrix);
 
             inContext.rectangle (0, 0, base.width, base.height);
@@ -247,7 +231,7 @@ namespace XSAA.Aixplorer
                 get_style ().set_fill_options (inContext);
                 inContext.set_source (bar);
 
-                Cairo.Pattern mask = new Cairo.Pattern.linear(0, 0, 0, base.height);
+                CairoPattern mask = new CairoPattern.linear(0, 0, 0, base.height);
                 mask.add_color_stop_rgba(0.25, 0, 0, 0, 0);
                 mask.add_color_stop_rgba(0.5, 0, 0, 0, 0.125);
                 mask.add_color_stop_rgba(0.75, 0, 0, 0, 0.4);
@@ -266,3 +250,4 @@ namespace XSAA.Aixplorer
         }
     }
 }
+
