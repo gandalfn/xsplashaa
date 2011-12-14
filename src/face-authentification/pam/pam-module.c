@@ -26,50 +26,50 @@
 
 #include <security/pam_modules.h>
 
-int xsaa_face_authentification_sm_authenticate (pam_handle_t* inHandle, int inFlags, char** inArgs, int inArgs_length1);
-int xsaa_face_authentification_sm_setcred (pam_handle_t* inHandle, int inFlags, char** inArgs, int inArgs_length1);
-int xsaa_face_authentification_sm_acct_mgmt (pam_handle_t* inHandle, int inFlags, char** inArgs, int inArgs_length1);
-int xsaa_face_authentification_sm_chauthtok (pam_handle_t* inHandle, int inFlags, char** inArgs, int inArgs_length1);
-int xsaa_face_authentification_sm_open_session (pam_handle_t* inHandle, int inFlags, char** inArgs, int inArgs_length1);
-int xsaa_face_authentification_sm_close_session (pam_handle_t* inHandle, int inFlags, char** inArgs, int inArgs_length1);
+int xsaa_sm_authenticate (pam_handle_t* inHandle, int inFlags, char** inArgs, int inArgs_length1);
+int xsaa_sm_setcred (pam_handle_t* inHandle, int inFlags, char** inArgs, int inArgs_length1);
+int xsaa_sm_acct_mgmt (pam_handle_t* inHandle, int inFlags, char** inArgs, int inArgs_length1);
+int xsaa_sm_chauthtok (pam_handle_t* inHandle, int inFlags, char** inArgs, int inArgs_length1);
+int xsaa_sm_open_session (pam_handle_t* inHandle, int inFlags, char** inArgs, int inArgs_length1);
+int xsaa_sm_close_session (pam_handle_t* inHandle, int inFlags, char** inArgs, int inArgs_length1);
 
 PAM_EXTERN int
 pam_sm_authenticate (pam_handle_t* handle, int flags, int argc, const char** argv)
 {
-    return xsaa_face_authentification_sm_authenticate (handle, flags, (char**)argv, argc);
+    return xsaa_sm_authenticate (handle, flags, (char**)argv, argc);
 }
 
 PAM_EXTERN int
 pam_sm_setcred (pam_handle_t* handle, int flags, int argc, const char** argv)
 {
-    return xsaa_face_authentification_sm_setcred (handle, flags, (char**)argv, argc);
+    return xsaa_sm_setcred (handle, flags, (char**)argv, argc);
 }
 
 
 PAM_EXTERN int
 pam_sm_acct_mgmt (pam_handle_t* handle, int flags, int argc, const char** argv)
 {
-    return xsaa_face_authentification_sm_acct_mgmt (handle, flags, (char**)argv, argc);
+    return xsaa_sm_acct_mgmt (handle, flags, (char**)argv, argc);
 }
 
 
 PAM_EXTERN int
 pam_sm_chauthtok (pam_handle_t* handle, int flags, int argc, const char** argv)
 {
-    return xsaa_face_authentification_sm_chauthtok (handle, flags, (char**)argv, argc);
+    return xsaa_sm_chauthtok (handle, flags, (char**)argv, argc);
 }
 
 
 PAM_EXTERN int
 pam_sm_open_session (pam_handle_t* handle, int flags, int argc, const char** argv)
 {
-    return xsaa_face_authentification_sm_open_session (handle, flags, (char**)argv, argc);
+    return xsaa_sm_open_session (handle, flags, (char**)argv, argc);
 }
 
 
 PAM_EXTERN int
 pam_sm_close_session (pam_handle_t* handle, int flags, int argc, const char** argv)
 {
-    return xsaa_face_authentification_sm_close_session (handle, flags, (char**)argv, argc);
+    return xsaa_sm_close_session (handle, flags, (char**)argv, argc);
 }
 

@@ -52,6 +52,7 @@ xsaa_face_authentification_webcam_new ()
 {
     XSAAFaceAuthentificationWebcam* self = g_slice_new0 (XSAAFaceAuthentificationWebcam);
     self->m_pWebcam = new opencvWebcam ();
+    return self;
 }
 
 void
@@ -70,7 +71,7 @@ xsaa_face_authentification_webcam_query_frame  (XSAAFaceAuthentificationWebcam* 
 int
 xsaa_face_authentification_webcam_start_camera (XSAAFaceAuthentificationWebcam* self)
 {
-    self->m_pWebcam->startCamera ();
+    return self->m_pWebcam->startCamera ();
 }
 
 void
@@ -84,6 +85,7 @@ xsaa_face_authentification_webcam_image_paint_new ()
 {
     XSAAFaceAuthentificationWebcamImagePaint* self = g_slice_new0 (XSAAFaceAuthentificationWebcamImagePaint);
     self->m_pWebcamImagePaint = new webcamImagePaint ();
+    return self;
 }
 
 void
@@ -112,6 +114,7 @@ xsaa_face_authentification_detector_new ()
 {
     XSAAFaceAuthentificationDetector* self = g_slice_new0 (XSAAFaceAuthentificationDetector);
     self->m_pDetector = new detector ();
+    return self;
 }
 
 void
@@ -185,8 +188,10 @@ void
 xsaa_face_authentification_detector_get_eyes_information (XSAAFaceAuthentificationDetector* self,
                                                           XSAAFaceAuthentificationEyes* eyes)
 {
-    eyes->le = self->m_pDetector->eyesInformation.LE;
-    eyes->re = self->m_pDetector->eyesInformation.RE;
+    eyes->le.x = self->m_pDetector->eyesInformation.LE.x;
+    eyes->le.y = self->m_pDetector->eyesInformation.LE.y;
+    eyes->re.x = self->m_pDetector->eyesInformation.RE.x;
+    eyes->re.y = self->m_pDetector->eyesInformation.RE.y;
     eyes->length = self->m_pDetector->eyesInformation.Length;
 }
 
@@ -237,6 +242,7 @@ xsaa_face_authentification_verifier_new ()
 {
     XSAAFaceAuthentificationVerifier* self = g_slice_new0 (XSAAFaceAuthentificationVerifier);
     self->m_pVerifier = new verifier ();
+    return self;
 }
 
 XSAAFaceAuthentificationVerifier*
@@ -244,6 +250,7 @@ xsaa_face_authentification_verifier_new_for_uid (uid_t inUID)
 {
     XSAAFaceAuthentificationVerifier* self = g_slice_new0 (XSAAFaceAuthentificationVerifier);
     self->m_pVerifier = new verifier (inUID);
+    return self;
 }
 
 void

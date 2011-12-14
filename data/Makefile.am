@@ -1,4 +1,4 @@
-SUBDIRS = dbus init initramfs pam themes jail-mount.d
+SUBDIRS = dbus init initramfs pam themes jail-mount.d face-authentification
 
 autostartdir = $(sysconfdir)/xdg/autostart
 
@@ -14,6 +14,7 @@ EXTRA_DIST = \
     Xsession \
     xsplashaa.conf \
     xsplashaa.desktop.in
-    
+
 DISTCLEANFILES = \
     xsplashaa.desktop
+

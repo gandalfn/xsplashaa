@@ -92,10 +92,10 @@ namespace XSAA
         }
 
         // properties
-        private FaceAuthentification.Verifier m_Verifier;
-        private FaceAuthentification.Webcam   m_Webcam;
-        private IPC                           m_Shared;
-        private OpenCV.IPL.Image              m_Empty;
+        private FaceAuthentification.Verifier m_Verifier = null;
+        private FaceAuthentification.Webcam   m_Webcam = null;
+        private IPC                           m_Shared = null;
+        private OpenCV.IPL.Image              m_Empty = null;
 
         // methods
         public PamFaceAuthentification (string inUsername) throws PamFaceAuthentificationError
@@ -155,7 +155,7 @@ namespace XSAA
                 t2 = (double)OpenCV.get_tick_count () - t1;
                 t2 = t2 / (OpenCV.get_tick_frequency () * 1000.0);
 
-                OpenCV.IPL.Image? query_image = m_Webcam.query_frame ();
+                OpenCV.IPL.Image query_image = m_Webcam.query_frame ();
                 if (query_image != null)
                 {
                     detector.run_detector (query_image);
@@ -171,7 +171,7 @@ namespace XSAA
                         if (GLib.Math.pow (ang, 2) < 200)
                         {
                             send_info_msg (inHandle, "Verifying Face ...");
-                            OpenCV.IPL.Image? im = detector.clip_face (query_image);
+                            OpenCV.IPL.Image im = detector.clip_face (query_image);
                             if (im != null)
                             {
                                 // verification sucessfull
@@ -274,12 +274,12 @@ namespace XSAA
         int ret = inHandle.get_user (out username, null);
         if (ret != Pam.SUCCESS)
         {
-            Pam.output_debug ("get user returned error: %s", inHandle.strerror (ret));
+            //Pam.output_debug ("get user returned error: %s", inHandle.strerror (ret));
             return ret;
         }
         if (username == null || username.length == 0)
         {
-            Pam.output_debug ("username not known");
+            //Pam.output_debug ("username not known");
             inHandle.set_item (Pam.USER, "nobody");
             send_error_msg (inHandle, "Username Not Set.");
             return Pam.AUTHINFO_UNAVAIL;
@@ -332,4 +332,3 @@ namespace XSAA
         return Pam.SUCCESS;
     }
 }
-

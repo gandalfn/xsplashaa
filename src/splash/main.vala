@@ -47,6 +47,7 @@ namespace XSAA
         private DBus.Connection m_Connection = null;
         private XSAA.Manager    m_Manager = null;
 
+        private bool                  m_Check = true;
         private StateCheckPeripherals m_CheckPeripherals = null;
         private int                   m_NumStep = 0;
         private EventBoot.Status      m_CheckPeripheralsStatus = EventBoot.Status.FINISHED;
@@ -165,6 +166,7 @@ namespace XSAA
                     KeyFile config = new KeyFile ();
                     config.load_from_file (Config.PACKAGE_CONFIG_FILE, KeyFileFlags.NONE);
                     m_Enable = config.get_boolean ("general", "enable");
+                    m_Check = config.get_boolean ("general", "check");
                     m_Server = config.get_string ("display", "server");
                     m_Number = config.get_integer ("display", "number");
                     m_Options = config.get_string ("display", "options");
@@ -403,7 +405,7 @@ namespace XSAA
                     Log.warning ("Error on get manager object");
                 }
 
-                if (m_CheckPeripherals == null)
+                if (m_Check && m_CheckPeripherals == null)
                 {
                     m_NumStep = 0;
                     m_CheckPeripherals = new StateCheckPeripherals (m_Connection, m_Number);
@@ -726,7 +728,7 @@ namespace XSAA
     static int
     main (string[] args)
     {
-        Log.set_default_logger (new XSAA.Log.Stderr (XSAA.Log.Level.DEBUG, "xsplashaa"));
+        Log.set_default_logger (new XSAA.Log.KMsg (XSAA.Log.Level.DEBUG, "xsplashaa"));
 
         Log.debug ("starting");
 
@@ -806,7 +808,6 @@ namespace XSAA
 
                 if (ret_fork == 0)
                 {
-                    Os.nice (-10);
                     try
                     {
                         Log.info ("starting child deamon");
@@ -847,4 +848,3 @@ namespace XSAA
         return 0;
      }
 }
-

@@ -31,7 +31,6 @@ namespace XSAA.Aixplorer
         }
 
         // constants
-        private const Os.key_t FACE_AUTHENTICATION_IPC_KEY_SEM_IMAGE = 567816;
         private const Os.key_t FACE_AUTHENTICATION_IPC_KEY_IMAGE     = 567814;
         private const Os.key_t FACE_AUTHENTICATION_IPC_KEY_STATUS    = 567813;
 
@@ -41,7 +40,6 @@ namespace XSAA.Aixplorer
 
         // properties
         private Timeline        m_Refresh;
-        private int             m_SemPixelsId = 0;
         private int             m_PixelsId    = 0;
         private int             m_StatusId    = 0;
         private unowned uchar[] m_Pixels      = null;
@@ -60,13 +58,14 @@ namespace XSAA.Aixplorer
             m_Refresh = new Timeline (60, 60);
             m_Refresh.loop = true;
             m_Refresh.new_frame.connect (on_refresh);
+
+            width = FACE_AUTHENTICATION_IMAGE_WIDTH;
+            height = FACE_AUTHENTICATION_IMAGE_HEIGHT;
         }
 
         private void
         ipc_start ()
         {
-            m_SemPixelsId = Os.semget (FACE_AUTHENTICATION_IPC_KEY_SEM_IMAGE,  1, Os.IPC_CREAT | 0666);
-
             m_PixelsId = Os.shmget (FACE_AUTHENTICATION_IPC_KEY_IMAGE, FACE_AUTHENTICATION_IMAGE_SIZE, Os.IPC_CREAT | 0666);
             if ((int)m_PixelsId != -1)
             {
@@ -99,9 +98,6 @@ namespace XSAA.Aixplorer
         private void
         on_refresh (int inFrameNum)
         {
-            if ((int)m_Status <= 0)
-                ipc_start ();
-
             if ((int)m_Status > 0)
             {
                 switch (*m_Status)
@@ -128,25 +124,10 @@ namespace XSAA.Aixplorer
             Cairo.ImageSurface? surface = null;
             if ((int)m_Pixels > 0)
             {
-                surface = new Cairo.ImageSurface (Cairo.Format.ARGB32,
-                                                  FACE_AUTHENTICATION_IMAGE_WIDTH,
-                                                  FACE_AUTHENTICATION_IMAGE_HEIGHT);
-
-                unowned uchar* dst = surface.get_data ();
-                unowned uchar* src = m_Pixels;
-
-                for (int i = 0; i < FACE_AUTHENTICATION_IMAGE_WIDTH * FACE_AUTHENTICATION_IMAGE_HEIGHT; ++i)
-                {
-                    dst[0] = src[0];
-                    dst[1] = src[1];
-                    dst[2] = src[2];
-                    dst[3] = 255;
-                    src += 3;
-                    dst += 4;
-                }
-
-                surface.mark_dirty ();
-                surface.flush ();
+                surface = new Cairo.ImageSurface.for_data (m_Pixels, Cairo.Format.ARGB32,
+                                                           FACE_AUTHENTICATION_IMAGE_WIDTH,
+                                                           FACE_AUTHENTICATION_IMAGE_HEIGHT,
+                                                           Cairo.Format.ARGB32.stride_for_width (FACE_AUTHENTICATION_IMAGE_WIDTH));
             }
 
             return surface;

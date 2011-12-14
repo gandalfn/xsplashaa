@@ -72,7 +72,7 @@ PKG_CHECK_MODULES(XSPLASHAA_CLIENT, [glib-2.0 >= $GLIB_REQUIRED,
                                      gthread-2.0 >= $GLIB_REQUIRED
                                      gobject-2.0 >= $GLIB_REQUIRED])
 
-PKG_CHECK_MODULES(XSPLASHAA_FACE_AUTHENTIFICATION, [opencv2 >= $OPENCV_REQUIRED])
+PKG_CHECK_MODULES(XSPLASHAA_FACE_AUTHENTIFICATION, [opencv >= $OPENCV_REQUIRED])
 
 AC_SUBST(XSPLASHAA_CFLAGS)
 AC_SUBST(XSPLASHAA_LIBS)
@@ -154,6 +154,7 @@ AC_CONFIG_FILES([
     data/xsplashaa.desktop
     data/dbus/Makefile
     data/dbus/fr.supersonicimagine.XSAA.Manager.service
+    data/face-authentification/Makefile
     data/init/Makefile
     data/init/splash-functions
     data/init/xsplashaa-functions
