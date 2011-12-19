@@ -29,7 +29,16 @@ namespace XSAA
         // types
         public enum Type
         {
-            MESSAGE
+            MESSAGE,
+            ERROR,
+            QUESTION,
+            RESULT
+        }
+
+        public enum Response
+        {
+            YES,
+            NO
         }
 
         public class Args : XSAA.Event.Args
@@ -37,11 +46,27 @@ namespace XSAA
             // accessors
             public Type event_type { get; construct; }
             public string text { get; construct; }
+            public Response result { get; construct; }
 
             // methods
             public Args.message (string inMessage)
             {
                 GLib.Object (event_type: Type.MESSAGE, text: inMessage);
+            }
+
+            public Args.error (string inMessage)
+            {
+                GLib.Object (event_type: Type.ERROR, text: inMessage);
+            }
+
+            public Args.question (string inMessage)
+            {
+                GLib.Object (event_type: Type.QUESTION, text: inMessage);
+            }
+
+            public Args.response (Response inResponse)
+            {
+                GLib.Object (event_type: Type.RESULT, result: inResponse);
             }
         }
 
@@ -54,5 +79,21 @@ namespace XSAA
         {
             this (new Args.message (inMessage));
         }
+
+        public EventMessage.error (string inMessage)
+        {
+            this (new Args.error (inMessage));
+        }
+
+        public EventMessage.question (string inMessage)
+        {
+            this (new Args.question (inMessage));
+        }
+
+        public EventMessage.response (Response inResponse)
+        {
+            this (new Args.response (inResponse));
+        }
     }
 }
+

@@ -36,6 +36,12 @@ namespace XSAA
             }
         }
 
+        public override GLib.Type error_state {
+            get {
+                return typeof (StateCheckPanel);
+            }
+        }
+
         /**
          * Create a new check touchscreen state machine
          *
@@ -60,3 +66,4 @@ namespace XSAA
         }
     }
 }
+

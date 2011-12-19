@@ -670,7 +670,7 @@ namespace OpenCV {
 		[Compact, CCode (cname = "CvFileStorage", free_function = "cvReleaseFileStorage", free_function_address_of = true)]
 		public class Storage {
 			[CCode (cname = "cvOpenFileStorage")]
-			public Storage (string filename, Memory.Storage? memstorage, int flags);
+			public Storage (string filename, Memory.Storage? memstorage, int flags, string? encoding = null);
 			
 			[CCode (cname = "cvReadRealByName")]
 			public double read_real_by_name (Node? map, string name, double default = 0.0);

@@ -49,6 +49,7 @@ namespace XSAA
 
         private bool                  m_Check = true;
         private StateCheckPeripherals m_CheckPeripherals = null;
+        private uint                  m_CheckShutdownId = 0;
         private int                   m_NumStep = 0;
         private EventBoot.Status      m_CheckPeripheralsStatus = EventBoot.Status.FINISHED;
 
@@ -236,11 +237,49 @@ namespace XSAA
             start_session ();
         }
 
-        private void
+        private bool
         on_check_peripherals_error (string inMessage)
         {
-            m_Splash.message (inMessage);
-            m_CheckPeripheralsStatus = EventBoot.Status.ERROR;
+            bool ret = false;
+
+            if (m_CheckShutdownId == 0)
+            {
+                m_CheckPeripheralsStatus = EventBoot.Status.ERROR;
+
+                int nb_seconds = 60;
+                string msg = "%s\nThe system will be automatically shutdown in %i seconds\nPress Freeze or F12 button to continue".printf (inMessage, nb_seconds);
+                m_Splash.error (msg);
+                m_CheckShutdownId = GLib.Timeout.add_seconds (1, () => {
+                    if (m_CheckShutdownId != 0)
+                    {
+                        nb_seconds--;
+                        if (nb_seconds > 0)
+                        {
+                            string m = "%s\nThe system will be automatically shutdown in %i seconds\nPress Freeze or F12 button to continue".printf (inMessage, nb_seconds);
+                            m_Splash.error (m);
+                        }
+                        else
+                        {
+                            m_CheckShutdownId = 0;
+                            m_Splash.error ("");
+                            //on_shutdown_request ();
+                        }
+                    }
+
+                    return m_CheckShutdownId != 0;
+                });
+
+                ret = true;
+            }
+
+            return ret;
+        }
+
+        private bool
+        on_check_peripherals_question (string inMessage)
+        {
+            m_Splash.question (inMessage);
+            return true;
         }
 
         private void
@@ -279,7 +318,22 @@ namespace XSAA
             m_Splash.passwd.connect (on_passwd_response);
             m_Splash.restart.connect (on_restart_request);
             m_Splash.shutdown.connect (on_shutdown_request);
+            m_Splash.question_response.connect (on_question_response);
+            m_Splash.add_events (Gdk.EventMask.KEY_PRESS_MASK);
+            m_Splash.key_press_event.connect ((e) => {
+                if (m_CheckShutdownId != 0)
+                {
+                    if (e.keyval == 0xffc9)
+                    {
+                        GLib.Source.remove (m_CheckShutdownId);
+                        m_CheckShutdownId = 0;
+                        m_CheckPeripherals.resume_after_error ();
+                    }
+                }
+                return false;
+            });
             m_Splash.show ();
+            m_Splash.window.focus (Gdk.CURRENT_TIME);
             s_Shutdown |= GLib.FileUtils.test (SHUTDOWN_FILENAME, GLib.FileTest.EXISTS);
             if (s_Shutdown)
                 on_init_shutdown ();
@@ -414,6 +468,7 @@ namespace XSAA
                     m_CheckPeripherals.message.connect (on_check_peripherals_message);
                     m_CheckPeripherals.error.connect (on_check_peripherals_error);
                     m_CheckPeripherals.progress.connect (on_check_peripherals_progress);
+                    m_CheckPeripherals.question.connect (on_check_peripherals_question);
                     m_CheckPeripherals.run ();
                 }
                 else
@@ -446,6 +501,7 @@ namespace XSAA
 
             m_Splash.ask_for_login ();
             m_Splash.show ();
+            m_Splash.window.focus (Gdk.CURRENT_TIME);
         }
 
         private void
@@ -485,6 +541,7 @@ namespace XSAA
 
             m_Splash.show_shutdown();
             m_Splash.show ();
+            m_Splash.window.focus (Gdk.CURRENT_TIME);
 
             Gdk.Display display = Gdk.Display.get_default ();
             for (int cpt = 0; cpt < display.get_n_screens (); ++cpt)
@@ -661,6 +718,15 @@ namespace XSAA
             catch (DBus.Error err)
             {
                 Log.warning ("Error on set passwd: %s", err.message);
+            }
+        }
+
+        private void
+        on_question_response (EventMessage.Response inResult)
+        {
+            if (m_CheckPeripherals.current != GLib.Type.INVALID)
+            {
+                m_CheckPeripherals.question_response (inResult == EventMessage.Response.YES);
             }
         }
 
@@ -848,3 +914,4 @@ namespace XSAA
         return 0;
      }
 }
+

@@ -2,10 +2,11 @@
     <!--touchscreen table -->
     <table id="touchscreen" layer="1" y="1050" width="1024" height="768">
         <notebook id="ts-notebook">
-            <table id="ts-question" page_num="0">
+            <logo id="ts-logo" page_num="0" x_align="0.5"
+                  filename="/usr/share/xsplashaa/chicken-curie/ts-logo.png"/>
+            <table id="ts-question" page_num="1" x_align="0.5">
                 <text id="ts-question-message" row="0" column="0" columns="2" height="500"
-                      font="Liberation Bold 26" fill_color="#89B2DF"
-                      text="toto"/>
+                      font="Liberation Bold 26" fill_color="#89B2DF" alignment="center"/>
                 <button id="ts-question-no-button" row="1" column="0" width="256" height="96" border="12"
                         right_padding="96" left_padding="96"
                         show_reflection="true" fill_color="#1B242D" active_color="#526B86" inactive_color="#89B2DF"
@@ -15,16 +16,16 @@
                         show_reflection="true" fill_color="#1B242D" active_color="#526B86" inactive_color="#89B2DF"
                         text="Yes" font="Liberation Bold 26" stroke_color="#ECF8FD"/>
             </table>
-            <logo id="ts-logo" page_num="1" x_align="0.5"
-                  filename="/usr/share/xsplashaa/chicken-curie/ts-logo.png"/>
         </notebook>
     </table>
     <!--main table -->
     <table id="main" layer="1" width="1680" height="1050" y_fill="true">
         <progressbar id="progress-bar" row="1" column="0" left_padding="96" right_padding="96"
                      height="30" fill_color="#89B2DF" width="600"/>
-        <text id="message" row="2" column="0" y_align="0.0" y_fill="true"
+        <text id="message" row="2" column="0" y_align="0.0" y_fill="true" alignment="center"
               font="Liberation Bold 18" fill_color="#7BC4F5"/>
+        <text id="error" row="2" column="0" y_align="0.0" y_fill="true" alignment="center"
+              font="Liberation Bold 18" fill_color="#FF990E"/>
         <!--content table -->
         <table id="content" row="0" column="0" y_align="0.5" row_spacing="24" column_spacing="48">
             <!--left logo -->

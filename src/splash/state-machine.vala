@@ -27,7 +27,7 @@ namespace XSAA
     public abstract class StateMachine : GLib.Object
     {
         // constants
-        const int DELAY = 300;
+        const int DELAY = 100;
         const int ERROR_DELAY = 20;
 
         // properties
@@ -63,7 +63,8 @@ namespace XSAA
         public signal void step ();
         public signal void progress (int inProgress);
         public signal void message (string inMessage);
-        public signal void error (string inMessage);
+        public signal bool error (string inMessage);
+        public signal bool question (string inMessage);
         public signal void finished ();
 
         // methods
@@ -124,21 +125,32 @@ namespace XSAA
             }
         }
 
-        private void
+        private bool
         on_child_error (string inMessage)
         {
-            error (inMessage);
+            bool ret = error (inMessage);
 
-            GLib.Timeout.add_seconds (ERROR_DELAY, () => {
-                next_step_after_error ();
-                return false;
-            });
+            if (!ret)
+            {
+                GLib.Timeout.add_seconds (ERROR_DELAY, () => {
+                    next_step_after_error ();
+                    return false;
+                });
+            }
+
+            return ret;
         }
 
         private void
         on_child_message (string inMessage)
         {
             message (inMessage);
+        }
+
+        private bool
+        on_child_question (string inMessage)
+        {
+            return question (inMessage);
         }
 
         private void
@@ -171,6 +183,21 @@ namespace XSAA
         }
 
         public void
+        resume_after_error ()
+        {
+            next_step_after_error ();
+        }
+
+        public virtual void
+        question_response (bool inResponse)
+        {
+            if (m_Current != null)
+            {
+                m_Current.question_response (inResponse);
+            }
+        }
+
+        public void
         add_state (StateMachine inMachine)
         {
             m_States += inMachine;
@@ -178,6 +205,7 @@ namespace XSAA
             inMachine.error.connect (on_child_error);
             inMachine.message.connect (on_child_message);
             inMachine.progress.connect (on_child_progress);
+            inMachine.question.connect (on_child_question);
         }
 
         public void

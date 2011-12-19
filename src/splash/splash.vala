@@ -60,6 +60,7 @@ namespace XSAA
         public signal void passwd(string passwd);
         public signal void restart();
         public signal void shutdown();
+        public signal void question_response (EventMessage.Response inResult);
 
         // methods
         construct
@@ -243,6 +244,16 @@ namespace XSAA
                         break;
                 }
             }
+            else if (inEvent is EventMessage)
+            {
+                unowned EventMessage? event_message = (EventMessage?)inEvent;
+                switch (event_message.args.event_type)
+                {
+                    case EventMessage.Type.RESULT:
+                        question_response (event_message.args.result);
+                        break;
+                }
+            }
         }
 
         private void
@@ -414,5 +425,22 @@ namespace XSAA
 
             m_EngineLoader.engine.process_event (new EventMessage.message (inMessage));
         }
+
+        public void
+        error (string inMessage)
+        {
+            Log.debug ("error = %s", inMessage);
+
+            m_EngineLoader.engine.process_event (new EventMessage.error (inMessage));
+        }
+
+        public void
+        question (string inMessage)
+        {
+            Log.debug ("question = %s", inMessage);
+
+            m_EngineLoader.engine.process_event (new EventMessage.question (inMessage));
+        }
     }
 }
+

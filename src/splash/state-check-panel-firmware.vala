@@ -26,14 +26,32 @@ namespace XSAA
      */
     public class StateCheckPanelFirmware : StateMachine
     {
+        // types
+        public enum WaitResponseType
+        {
+            NONE,
+            FLASH_BOOTLOADER,
+            FLASH_FIRMWARE
+        }
+
+        public enum FlashResponse
+        {
+            NONE,
+            YES,
+            NO
+        }
+
         // constants
         const int WAIT_BOOTLOADER = 60;
         const int WAIT_PANEL = 90;
 
         // properties
-        private unowned Devices m_Peripherals;
-        private uint            m_IdBootloaderTimeout;
-        private uint            m_IdPanelTimeout;
+        private unowned Devices  m_Peripherals;
+        private uint             m_IdBootloaderTimeout;
+        private uint             m_IdPanelTimeout;
+        private WaitResponseType m_WaitResponse = WaitResponseType.NONE;
+        private FlashResponse    m_BootFlashResponse = FlashResponse.NONE;
+        private FlashResponse    m_FirmwareFlashResponse = FlashResponse.NONE;
 
         /**
          * Create a new check panel firmware state machine
@@ -97,33 +115,18 @@ namespace XSAA
         private void
         check_bootloader_firmware ()
         {
-            try
+            SSI.Devices.Module.AlliedPanel.Bootloader bootloader = m_Peripherals.allied_panel_bootloader;
+            if (bootloader != null && bootloader.bootloader_need_upgrade && bootloader.bootloader_filename != "N/A" && m_BootFlashResponse == FlashResponse.NONE)
             {
-                SSI.Devices.Module.AlliedPanel.Bootloader bootloader = m_Peripherals.allied_panel_bootloader;
-                if (bootloader != null && bootloader.bootloader_need_upgrade && bootloader.bootloader_filename != "N/A")
+                if (m_WaitResponse == WaitResponseType.NONE)
                 {
-                    bootloader.load_bootloader (bootloader.bootloader_filename);
-                    if (bootloader.bootloader_loaded)
-                    {
-                        message ("Flashing bootloader, please wait...");
-                        bootloader.bootloader_flash_progress.connect (on_bootloader_flash_progress);
-                        bootloader.bootloader_flash_finished.connect (on_bootloader_flash_finished);
-
-                        bootloader.flash_bootloader ();
-                    }
-                    else
-                    {
-                        error ("Error on check bootloader firmware version");
-                    }
-                }
-                else
-                {
-                    check_panel_firmware ();
+                    m_WaitResponse = WaitResponseType.FLASH_BOOTLOADER;
+                    question ("Your panel currently running\nwith bootloader %s version\nA newer %s version is available\nDo you want flash it ?".printf (bootloader.bootloader_version, bootloader.bootloader_file_version));
                 }
             }
-            catch (GLib.Error err)
+            else
             {
-                error ("Error on check bootloader firmware version");
+                check_panel_firmware ();
             }
         }
 
@@ -133,20 +136,12 @@ namespace XSAA
             try
             {
                 SSI.Devices.Module.AlliedPanel.Bootloader bootloader = m_Peripherals.allied_panel_bootloader;
-                if (bootloader != null && bootloader.firmware_need_upgrade && bootloader.firmware_filename != "N/A")
+                if (bootloader != null && bootloader.firmware_need_upgrade && bootloader.firmware_filename != "N/A" && m_FirmwareFlashResponse == FlashResponse.NONE)
                 {
-                    bootloader.load_firmware (bootloader.firmware_filename);
-                    if (bootloader.firmware_loaded)
+                    if (m_WaitResponse == WaitResponseType.NONE)
                     {
-                        message ("Flashing panel, please wait...");
-                        bootloader.firmware_flash_progress.connect (on_panel_flash_progress);
-                        bootloader.firmware_flash_finished.connect (on_panel_flash_finished);
-
-                        bootloader.flash_firmware ();
-                    }
-                    else
-                    {
-                        error ("Error on check bootloader firmware version");
+                        m_WaitResponse = WaitResponseType.FLASH_FIRMWARE;
+                        question ("Your panel currently running\nwith firmware %s version\nA newer %s version is available\nDo you want flash it ?".printf (bootloader.firmware_version, bootloader.firmware_file_version));
                     }
                 }
                 else
@@ -287,6 +282,90 @@ namespace XSAA
             {
                 error ("Error on check panel firmware");
             }
+        }
+
+        internal override void
+        question_response (bool inResponse)
+        {
+            switch (m_WaitResponse)
+            {
+                case WaitResponseType.FLASH_BOOTLOADER:
+                    try
+                    {
+                        SSI.Devices.Module.AlliedPanel.Bootloader bootloader = m_Peripherals.allied_panel_bootloader;
+                        if (inResponse)
+                        {
+                            m_BootFlashResponse = FlashResponse.YES;
+
+                            bootloader.load_bootloader (bootloader.bootloader_filename);
+                            if (bootloader.bootloader_loaded)
+                            {
+                                message ("Flashing bootloader, please wait...");
+                                bootloader.bootloader_flash_progress.connect (on_bootloader_flash_progress);
+                                bootloader.bootloader_flash_finished.connect (on_bootloader_flash_finished);
+
+                                bootloader.flash_bootloader ();
+                            }
+                            else
+                            {
+                                error ("Error on check bootloader firmware version");
+                            }
+                        }
+                        else
+                        {
+                            m_BootFlashResponse = FlashResponse.NO;
+                            check_panel_firmware ();
+                        }
+                    }
+                    catch (GLib.Error err)
+                    {
+                        error ("Error on check bootloader firmware version");
+                    }
+                    break;
+
+                case WaitResponseType.FLASH_FIRMWARE:
+                    try
+                    {
+                        SSI.Devices.Module.AlliedPanel.Bootloader bootloader = m_Peripherals.allied_panel_bootloader;
+                        if (inResponse)
+                        {
+                            m_FirmwareFlashResponse = FlashResponse.YES;
+                            bootloader.load_firmware (bootloader.firmware_filename);
+                            if (bootloader.firmware_loaded)
+                            {
+                                message ("Flashing panel, please wait...");
+                                bootloader.firmware_flash_progress.connect (on_panel_flash_progress);
+                                bootloader.firmware_flash_finished.connect (on_panel_flash_finished);
+
+                                bootloader.flash_firmware ();
+                            }
+                            else
+                            {
+                                error ("Error on check bootloader firmware version");
+                            }
+                        }
+                        else
+                        {
+                            m_FirmwareFlashResponse = FlashResponse.NO;
+
+                            message ("Wait for panel...");
+
+                            // start panel
+                            m_Peripherals.allied_panel.start_panel ();
+
+                            // wait on panel connection
+                            m_Peripherals.allied_panel.panel_changed.connect (on_panel_changed_after_panel_flash);
+                            m_IdPanelTimeout = GLib.Timeout.add_seconds (WAIT_PANEL, on_wait_panel_timeout);
+                        }
+                    }
+                    catch (GLib.Error err)
+                    {
+                        error ("Error on check bootloader firmware version");
+                    }
+                    break;
+            }
+
+            m_WaitResponse = WaitResponseType.NONE;
         }
     }
 }

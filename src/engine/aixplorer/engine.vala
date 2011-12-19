@@ -140,6 +140,11 @@ namespace XSAA.Aixplorer
                                                 (ValueTransform)string_to_canvas_item_visibility);
             GLib.Value.register_transform_func (typeof (Goo.CanvasItemVisibility), typeof (string),
                                                 (ValueTransform)canvas_item_visibility_to_string);
+
+            GLib.Value.register_transform_func (typeof (string), typeof (Pango.Alignment),
+                                                (ValueTransform)string_to_pango_alignment);
+            GLib.Value.register_transform_func (typeof (Pango.Alignment), typeof (string),
+                                                (ValueTransform)pango_alignment_to_string);
         }
 
         private static void
@@ -159,6 +164,53 @@ namespace XSAA.Aixplorer
             string val = (string)inSrc;
 
             outDest = (Goo.CanvasItemVisibility)int.parse (val);
+        }
+
+        private static void
+        pango_alignment_to_string (GLib.Value inSrc, out GLib.Value outDest)
+            requires (inSrc.holds (typeof (Pango.Alignment)))
+        {
+            Pango.Alignment val = (Pango.Alignment)inSrc;
+
+            switch (val)
+            {
+                case Pango.Alignment.LEFT:
+                    outDest = "left";
+                    break;
+                case Pango.Alignment.CENTER:
+                    outDest = "center";
+                    break;
+                case Pango.Alignment.RIGHT:
+                    outDest = "right";
+                    break;
+                default:
+                    outDest = "left";
+                    break;
+            }
+        }
+
+        private static void
+        string_to_pango_alignment (GLib.Value inSrc, out GLib.Value outDest)
+            requires (inSrc.holds (typeof (string)))
+            requires ((string)inSrc != null)
+        {
+            string val = (string)inSrc;
+
+            switch (val)
+            {
+                case "left":
+                    outDest = Pango.Alignment.LEFT;
+                    break;
+                case "center":
+                    outDest = Pango.Alignment.CENTER;
+                    break;
+                case "right":
+                    outDest = Pango.Alignment.RIGHT;
+                    break;
+                default:
+                    outDest = Pango.Alignment.LEFT;
+                    break;
+            }
         }
 
         // methods
@@ -448,8 +500,9 @@ namespace XSAA.Aixplorer
         process_message_event (EventMessage inEvent)
         {
             unowned Text message = (Text)find ("message");
+            unowned Text error = (Text)find ("error");
 
-            if (message == null)
+            if (message == null || error == null)
             {
                 Log.critical ("Error does not find message items");
                 return;
@@ -459,6 +512,23 @@ namespace XSAA.Aixplorer
             {
                 case EventMessage.Type.MESSAGE:
                     message.text = inEvent.args.text;
+                    error.text = "";
+                    break;
+
+                case EventMessage.Type.ERROR:
+                    error.text = inEvent.args.text;
+                    message.text = "";
+                    break;
+
+                case EventMessage.Type.QUESTION:
+                    unowned Notebook ts_notebook = (Notebook)find ("ts-notebook");
+                    unowned Text question_message = (Text)find ("ts-question-message");
+
+                    if (ts_notebook != null || question_message != null)
+                    {
+                        ts_notebook.current_page = 1;
+                        question_message.text = inEvent.args.text;
+                    }
                     break;
             }
         }
@@ -501,6 +571,25 @@ namespace XSAA.Aixplorer
                     main.expand = false;
                     main.changed (true);
                     event_notify (new EventSystem.monitor ((uint)main.width, (uint)main.height, (uint)touchscreen.width, (uint)touchscreen.height));
+
+                    unowned Notebook ts_notebook = (Notebook)find ("ts-notebook");
+                    unowned Text question_message = (Text)find ("ts-question-message");
+                    unowned Button no_button = (Button)find ("ts-question-no-button");
+                    unowned Button yes_button = (Button)find ("ts-question-yes-button");
+                    if (ts_notebook != null && question_message != null && no_button != null && yes_button != null)
+                    {
+                        no_button.clicked.connect (() =>{
+                            ts_notebook.current_page = 0;
+                            question_message.text = "";
+                            event_notify (new EventMessage.response (EventMessage.Response.NO));
+                        });
+
+                        yes_button.clicked.connect (() =>{
+                            ts_notebook.current_page = 0;
+                            question_message.text = "";
+                            event_notify (new EventMessage.response (EventMessage.Response.YES));
+                        });
+                    }
                 }
             }
             else
