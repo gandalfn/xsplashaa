@@ -38,12 +38,14 @@ namespace XSAA.Aixplorer
         private const int      FACE_AUTHENTICATION_IMAGE_HEIGHT      = 240;
         private const int      FACE_AUTHENTICATION_IMAGE_SIZE        = 307200;
 
+        private const int      SHM_ERR                               = -1;
+
         // properties
         private Timeline        m_Refresh;
-        private int             m_PixelsId    = 0;
-        private int             m_StatusId    = 0;
-        private unowned uchar[] m_Pixels      = null;
-        private int*            m_Status      = null;
+        private int             m_PixelsId    = SHM_ERR;
+        private int             m_StatusId    = SHM_ERR;
+        private unowned uchar[] m_Pixels      = (uchar[])SHM_ERR;
+        private int*            m_Status      = (int*)SHM_ERR;
 
         // accessors
         public override string node_name {
@@ -66,39 +68,48 @@ namespace XSAA.Aixplorer
         private void
         ipc_start ()
         {
-            m_PixelsId = Os.shmget (FACE_AUTHENTICATION_IPC_KEY_IMAGE, FACE_AUTHENTICATION_IMAGE_SIZE, Os.IPC_CREAT | 0666);
-            if ((int)m_PixelsId != -1)
+            if (m_PixelsId == SHM_ERR)
             {
-                m_Pixels = (uchar[])Os.shmat (m_PixelsId, null, 0);
-                if ((int)m_Pixels == -1)
+                m_PixelsId = Os.shmget (FACE_AUTHENTICATION_IPC_KEY_IMAGE, FACE_AUTHENTICATION_IMAGE_SIZE, 0666);
+                if (m_PixelsId == SHM_ERR)
                 {
                     Log.critical ("error on get face authentication pixels mem: %s", GLib.strerror (GLib.errno));
                 }
             }
-            else
+            if (m_PixelsId != SHM_ERR && (void*)m_Pixels == (void*)SHM_ERR)
             {
-                Log.critical ("error on get face authentication pixels mem: %s", GLib.strerror (GLib.errno));
+                m_Pixels = (uchar[])Os.shmat (m_PixelsId, null, 0);
+                if ((void*)m_Pixels == (void*)(SHM_ERR))
+                {
+                    Log.critical ("error on get face authentication pixels mem: %s", GLib.strerror (GLib.errno));
+                }
             }
 
-            m_StatusId = Os.shmget (FACE_AUTHENTICATION_IPC_KEY_STATUS, sizeof (int), Os.IPC_CREAT | 0666);
-            if ((int)m_StatusId != -1)
+            if (m_StatusId == SHM_ERR)
             {
-                m_Status = Os.shmat (m_StatusId, null, 0);
-                if ((int)m_Status == -1)
+                m_StatusId = Os.shmget (FACE_AUTHENTICATION_IPC_KEY_STATUS, sizeof (int), 0666);
+                if (m_StatusId == SHM_ERR)
                 {
                     Log.critical ("error on get face authentication status mem: %s", GLib.strerror (GLib.errno));
                 }
             }
-            else
+            if (m_StatusId != SHM_ERR && (void*)m_Status == (void*)(SHM_ERR))
             {
-                Log.critical ("error on get face authentication status mem: %s", GLib.strerror (GLib.errno));
+                m_Status = (int*)Os.shmat (m_StatusId, null, 0);
+                if ((void*)m_Status == (void*)(SHM_ERR))
+                {
+                    Log.critical ("error on get face authentication status mem: %s", GLib.strerror (GLib.errno));
+                }
             }
         }
 
         private void
         on_refresh (int inFrameNum)
         {
-            if ((int)m_Status > 0)
+            if (m_StatusId == SHM_ERR || (void*)m_Status == (void*)(SHM_ERR))
+                ipc_start ();
+
+            if ((void*)m_Status != (void*)(SHM_ERR))
             {
                 switch (*m_Status)
                 {
@@ -115,14 +126,18 @@ namespace XSAA.Aixplorer
                     default:
                         break;
                 }
+                changed (false);
             }
         }
 
         private Cairo.ImageSurface?
         get_face_surface ()
         {
+            if (m_PixelsId == SHM_ERR || (void*)m_Pixels == (void*)(SHM_ERR))
+                ipc_start ();
+
             Cairo.ImageSurface? surface = null;
-            if ((int)m_Pixels > 0)
+            if ((void*)m_Pixels != (void*)(SHM_ERR))
             {
                 surface = new Cairo.ImageSurface.for_data (m_Pixels, Cairo.Format.ARGB32,
                                                            FACE_AUTHENTICATION_IMAGE_WIDTH,

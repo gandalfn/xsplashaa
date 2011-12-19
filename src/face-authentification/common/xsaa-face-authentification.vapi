@@ -61,7 +61,7 @@ namespace XSAA.FaceAuthentification
         public void stop_clip_face ();
         public bool finished_clip_face ();
         public void run_detector (OpenCV.IPL.Image inInput);
-        public string query_message ();
+        public int query_message ();
         public OpenCV.IPL.Image? clip_face (OpenCV.IPL.Image inInputImage);
         public bool successfull ();
 
@@ -162,12 +162,12 @@ namespace XSAA.FaceAuthentification
         }
     }
 
-    [CCode (cname = "IMAGE_SIZE")]
+    [CCode (cname = "FA_IMAGE_SIZE")]
     public const int IMAGE_SIZE;
 
-    [CCode (cname = "IMAGE_WIDTH")]
+    [CCode (cname = "FA_IMAGE_WIDTH")]
     public const int IMAGE_WIDTH;
 
-    [CCode (cname = "IMAGE_HEIGHT")]
+    [CCode (cname = "FA_IMAGE_HEIGHT")]
     public const int IMAGE_HEIGHT;
 }

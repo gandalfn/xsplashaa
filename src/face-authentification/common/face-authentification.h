@@ -80,7 +80,7 @@ extern "C"
     int         xsaa_face_authentification_detector_finished_clip_face  (XSAAFaceAuthentificationDetector* self);
     void        xsaa_face_authentification_detector_run_detector        (XSAAFaceAuthentificationDetector* self,
                                                                          IplImage* inInput);
-    const char* xsaa_face_authentification_detector_query_message       (XSAAFaceAuthentificationDetector* self);
+    int         xsaa_face_authentification_detector_query_message       (XSAAFaceAuthentificationDetector* self);
     IplImage*   xsaa_face_authentification_detector_clip_face           (XSAAFaceAuthentificationDetector* self,
                                                                          IplImage* inInputImage);
     int         xsaa_face_authentification_detector_sucessfull          (XSAAFaceAuthentificationDetector* self);

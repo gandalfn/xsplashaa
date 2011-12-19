@@ -87,7 +87,7 @@ namespace XSAA
         public Session(DBus.Connection inConn, FreeDesktop.ConsoleKit.Manager inManager,
                        string inService, string inUser, int inDisplay, string inDevice) throws SessionError
         {
-            GLib.debug ("create ck session");
+            Log.debug ("create ck session");
 
             m_CkManager = inManager;
 
@@ -119,7 +119,7 @@ namespace XSAA
 
         ~Session()
         {
-            GLib.debug ("destroy ck session");
+            Log.debug ("destroy ck session");
 
             if (FileUtils.test(m_XauthFile, FileTest.EXISTS))
             {
@@ -135,7 +135,7 @@ namespace XSAA
         private void
         generate_xauth(string inUser, int inDisplay) throws SessionError
         {
-            GLib.debug ("generate xauth for user %s and display %i", inUser, inDisplay);
+            Log.debug ("generate xauth for user %s and display %i", inUser, inDisplay);
 
             if (!FileUtils.test(PACKAGE_XAUTH_DIR, FileTest.EXISTS | FileTest.IS_DIR))
             {
@@ -154,22 +154,17 @@ namespace XSAA
             X.Auth auth = X.Auth();
 
             auth.family = X.FamilyLocal;
-            auth.address = "localhost";
-            auth.address_length = (ushort)"localhost".length;
-            auth.number = inDisplay.to_string();
-            auth.number_length = (ushort)inDisplay.to_string().length;
-            auth.name = "MIT-MAGIC-COOKIE-1";
-            auth.name_length = (ushort)"MIT-MAGIC-COOKIE-1".length;
+            auth.address = "localhost".to_utf8 ();
+            auth.number = inDisplay.to_string().to_utf8 ();
+            auth.name = "MIT-MAGIC-COOKIE-1".to_utf8 ();
 
-            auth.data = "";
+            auth.data = "".to_utf8 ();
 
             char[] data = new char[16];
             for (int i = 0; i < 16; i++)
                 data[i] = (char)Random.int_range(0, 256);
 
-            auth.data = string.nfill(16, ' ');
-            Memory.copy(auth.data, data, 16);
-            auth.data_length = 16;
+            auth.data = data;
 
             auth.write(f);
             f.flush();
@@ -183,7 +178,7 @@ namespace XSAA
         private void
         register()
         {
-            GLib.debug ("register");
+            Log.debug ("register");
 
             Value user_val = Value (typeof(int));
             user_val.set_int((int)m_Passwd.pw_uid);
@@ -217,14 +212,14 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                GLib.critical ("error on generate ck session");
+                Log.critical ("error on generate ck session");
             }
         }
 
         private void
         on_child_setup()
         {
-            GLib.debug ("child setup");
+            Log.debug ("child setup");
 
             try
             {
@@ -233,7 +228,7 @@ namespace XSAA
             catch (GLib.Error err)
             {
                 error_msg("Invalid user or wrong password");
-                GLib.critical ("error on open pam session");
+                Log.critical ("error on open pam session");
                 Os.exit(1);
             }
 
@@ -262,27 +257,28 @@ namespace XSAA
         private void
         on_child_watch(GLib.Pid inPid, int inStatus)
         {
-            GLib.debug ("child watch %lu: %i", inPid, inStatus);
+            Log.debug ("child watch %lu: %i", inPid, inStatus);
+
+            try
+            {
+                Log.info ("launch killall dbus-launch cairo-compmgr");
+
+                Process.spawn_command_line_async("killall dbus-launch");
+                Process.spawn_command_line_async("killall cairo-compmgr");
+            }
+            catch (GLib.Error err)
+            {
+               Log.debug ("error on launch killall dbus-launch: %s",
+                           err.message);
+            }
+
+            Process.close_pid(inPid);
+            m_Pid = (Pid)0;
 
             if (Process.if_exited(inStatus))
                 exited();
             else if (Process.if_signaled(inStatus))
                 died();
-
-            Process.close_pid(inPid);
-            m_Pid = (Pid)0;
-
-            try
-            {
-                GLib.message ("launch killall dbus-launch");
-
-                Process.spawn_command_line_async("killall dbus-launch");
-            }
-            catch (GLib.Error err)
-            {
-               GLib.debug ("error on launch killall dbus-launch: %s",
-                           err.message);
-            }
         }
 
         private bool
@@ -293,27 +289,27 @@ namespace XSAA
             switch (msg.type)
             {
                 case MessageType.ASK_PASSWD:
-                    GLib.debug ("Received ask passwd message");
+                    Log.debug ("Received ask passwd message");
                     ask_passwd ();
                     break;
                 case MessageType.ASK_FACE_AUTHENTICATION:
-                    GLib.debug ("Received ask face authentication message");
+                    Log.debug ("Received ask face authentication message");
                     ask_face_authentication ();
                     break;
                 case MessageType.AUTHENTIFICATED:
-                    GLib.debug ("Received authenticated message");
+                    Log.debug ("Received authenticated message");
                     authenticated ();
                     break;
                 case MessageType.INFO:
-                    GLib.debug ("Received info message");
+                    Log.debug ("Received info message");
                     info (msg.message);
                     break;
                 case MessageType.ERROR:
-                    GLib.debug ("Received error message");
+                    Log.debug ("Received error message");
                     error_msg (msg.message);
                     break;
                 case MessageType.FINISHED:
-                    GLib.debug ("Received finished message");
+                    Log.debug ("Received finished message");
                     m_Pam.info.connect (on_info);
                     m_Pam.error_msg.connect (on_error_msg);
                     break;
@@ -327,7 +323,7 @@ namespace XSAA
         private string
         on_ask_passwd()
         {
-            GLib.debug ("send ask passwd message");
+            Log.debug ("send ask passwd message");
             Message msg = Message (MessageType.ASK_PASSWD, "");
             m_MessageQueue.push (msg);
             GLib.Idle.add (on_message);
@@ -338,7 +334,7 @@ namespace XSAA
         private void
         on_ask_face_authentication ()
         {
-            GLib.debug ("send ask face authentication message");
+            Log.debug ("send ask face authentication message");
             Message msg = Message (MessageType.ASK_FACE_AUTHENTICATION, "");
             m_MessageQueue.push (msg);
             GLib.Idle.add (on_message);
@@ -347,7 +343,7 @@ namespace XSAA
         private void
         on_authentificated ()
         {
-            GLib.debug ("send authenticated message");
+            Log.debug ("send authenticated message");
             Message msg = Message (MessageType.AUTHENTIFICATED, "");
             m_MessageQueue.push (msg);
             GLib.Idle.add (on_message);
@@ -356,7 +352,7 @@ namespace XSAA
         private void
         on_authenticate_info(string inText)
         {
-            GLib.debug ("authenticate info message: %s", inText);
+            Log.debug ("authenticate info message: %s", inText);
             Message msg = Message (MessageType.INFO, inText);
             m_MessageQueue.push (msg);
             GLib.Idle.add (on_message);
@@ -365,7 +361,7 @@ namespace XSAA
         private void
         on_authenticate_error_msg(string inText)
         {
-            GLib.debug ("authenticate error message: %s", inText);
+            Log.debug ("authenticate error message: %s", inText);
             Message msg = Message (MessageType.ERROR, inText);
             m_MessageQueue.push (msg);
             GLib.Idle.add (on_message);
@@ -374,21 +370,21 @@ namespace XSAA
         private void
         on_info(string inText)
         {
-            GLib.debug ("info message: %s", inText);
+            Log.debug ("info message: %s", inText);
             info (inText);
         }
 
         private void
         on_error_msg(string inText)
         {
-            GLib.debug ("error message: %s", inText);
+            Log.debug ("error message: %s", inText);
             error_msg (inText);
         }
 
         private void*
         start_authenticate ()
         {
-            GLib.debug ("start authenticate");
+            Log.debug ("start authenticate");
 
             m_Pam.authenticated.connect (on_authentificated);
             m_Pam.passwd.connect (on_ask_passwd);
@@ -411,7 +407,7 @@ namespace XSAA
         public void
         authenticate()
         {
-            GLib.debug ("authenticate");
+            Log.debug ("authenticate");
 
             try
             {
@@ -423,7 +419,7 @@ namespace XSAA
             {
                 m_Pam.info.connect (on_info);
                 m_Pam.error_msg.connect (on_error_msg);
-                GLib.warning ("Error on launch authentification: %s", err.message);
+                Log.warning ("Error on launch authentification: %s", err.message);
                 error_msg ("Error on launch authentification");
             }
         }
@@ -438,7 +434,7 @@ namespace XSAA
         public void
         launch(string inCmd) throws SessionError
         {
-            GLib.debug ("launch: %s", inCmd);
+            Log.debug ("launch: %s", inCmd);
 
             string[] argvp;
 
@@ -469,4 +465,3 @@ namespace XSAA
         }
     }
 }
-

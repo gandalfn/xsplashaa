@@ -39,6 +39,8 @@ namespace OpenCV {
 		public OpenCV.Matrix get_rows (OpenCV.Matrix submat, int start_row, int end_Row, int delta_row = 1);
 		[CCode (cname = "cvGetSubRect")]
 		public OpenCV.Matrix get_subrectangle (OpenCV.Matrix submat, OpenCV.Rectangle rect);
+		[CCode (cname = "cvGetSize")]
+		public OpenCV.Size get_size ();
 
 		[CCode (cname = "cvAdd")]
 		public void add (OpenCV.Array src2, OpenCV.Array dst, OpenCV.Array? mask = null);
@@ -56,6 +58,8 @@ namespace OpenCV {
 		public void divide (OpenCV.Array src2, OpenCV.Array dst, double scale = 1.0);
 		[CCode (cname = "cvScaleAdd")]
 		public void scale_add (OpenCV.Scalar scale, OpenCV.Array src2, OpenCV.Array dst);
+		[CCode (cname = "cvConvertScale")]
+		public void convert_scale (OpenCV.Array dst, double scale = 1, double shift = 0);
 		[CCode (cname = "cvAddWeighted")]
 		public void add_weighted (double alpha, OpenCV.Array src2, double beta, double gamma, OpenCV.Array dst);
 		[CCode (cname = "cvDotProduct")]
@@ -97,6 +101,14 @@ namespace OpenCV {
 		[CCode (cname = "cvAbs")]
 		public void abs (OpenCV.Array dst);
 
+		[CCode (cname = "cvEqualizeHist")]
+		public void equalize_hist (OpenCV.Array dst);
+
+		[CCode (cname = "cvCvtColor")]
+		public void convert_color (OpenCV.Array dst, ColorConvert code);
+
+		[CCode (cname = "cvInvert")]
+		public void invert (OpenCV.Array dst, int method = LU);
 		[CCode (cname = "cvCartToPolar")]
 		public static void cartesian_to_polar (OpenCV.Array x, OpenCV.Array y, OpenCV.Array magnitude, OpenCV.Array? angle = null, int angle_in_degrees = 0);
 		[CCode (cname = "cvPolarToCart")]
@@ -117,6 +129,8 @@ namespace OpenCV {
 		public void matrix_multiply_add (OpenCV.Array src2, OpenCV.Array? src3, OpenCV.Array dst);
 		[CCode (cname = "cvMatMul")]
 		public void matrix_multiply (OpenCV.Array src2, OpenCV.Array dst);
+		[CCode (cname = "cvMulSpectrums")]
+		public void multiply_spectrums (OpenCV.Array src2, OpenCV.Array dst, int flags);
 		[CCode (cname = "cvGEMM")]
 		public void GEMM (OpenCV.Array src2, double alpha, OpenCV.Array src3, double beta, OpenCV.Array dst, OpenCV.GEMMTranspose tABC = 0);
 		[CCode (cname = "cvTransform")]
@@ -129,10 +143,20 @@ namespace OpenCV {
 		public void transpose (OpenCV.Array? dst = null);
 		[CCode (cname = "cvFlip")]
 		public void flip (OpenCV.Array? dst = null, OpenCV.FlipMode flip_mode = OpenCV.FlipMode.HORIZONTAL);
+		[CCode (cname = "cvCopy")]
+		public void copy (OpenCV.Array dst, OpenCV.Array? mask = null);
+		[CCode (cname = "cvMerge")]
+		public void merge (OpenCV.Array? src1, OpenCV.Array? src2, OpenCV.Array? src3, OpenCV.Array dst);
+		[CCode (cname = "cvSplit")]
+		public void split (OpenCV.Array? dst0, OpenCV.Array? dst1, OpenCV.Array? dst2, OpenCV.Array? dst3);
 		[CCode (cname = "cvSVD")]
 		public void SVD (OpenCV.Array w, OpenCV.Array? u = null, OpenCV.Array? v = null, OpenCV.SVDFlag flags = 0);
 		[CCode (cname = "cvSVBkSb")]
 		public static void SVBkSb (OpenCV.Array W, OpenCV.Array U, OpenCV.Array V, OpenCV.Array B, OpenCV.Array X, OpenCV.SVDFlag flags = 0);
+		[CCode (cname = "cvDFT")]
+		public void DFT (OpenCV.Array dst, int flags, int nonzeroRows = 0);
+		[CCode (cname = "cvMinMaxLoc")]
+		public void min_max_loc (out double minVal, out double maxVal, out Point minLoc = null, out Point maxLoc = null, OpenCV.Array? mask = null);
 
 		[CCode (cname = "cvLine")]
 		public void line (OpenCV.Point pt1, OpenCV.Point pt2, OpenCV.Scalar color, int thickness = 1);
@@ -152,7 +176,87 @@ namespace OpenCV {
 		public void poly_line ([CCode (array_length = false)] OpenCV.Point[][] pts, [CCode (array_length = false)] int[] npts, int contours, int is_closed, OpenCV.Scalar color, int thickness = 1, int line_type = 8, int shift = 0);
 		[CCode (cname = "cvSegmentImage", cheader_filename = "cvaux.h")]
 		public OpenCV.Sequence segment_image (OpenCV.Array dstarr, double canny_threshhold, double ffill_threshhold, OpenCV.Memory.Storage storage);
+
+		[CCode (cname = "cvSet2D")]
+		public void set_2d (int inIdx0, int inIdx1, Scalar val);
 	}
+
+	[CCode (cname = "int", has_type_id = false, lower_case_cprefix = "CV_", cprefix="CV_")]
+	public enum ColorConvert {
+		BGR2BGRA,
+		RGB2RGBA,
+		BGRA2BGR,
+		RGBA2RGB,
+		BGR2RGBA,
+		RGB2BGRA,
+		RGBA2BGR,
+		BGRA2RGB,
+		BGR2RGB,
+		RGB2BGR,
+		BGRA2RGBA,
+		RGBA2BGRA,
+		BGR2GRAY,
+		RGB2GRAY,
+		GRAY2BGR,
+		GRAY2RGB,
+		GRAY2BGRA,
+		GRAY2RGBA,
+		BGRA2GRAY,
+		RGBA2GRAY,
+		BGR2BGR565,
+		RGB2BGR565,
+		BGR5652BGR,
+		BGR5652RGB,
+		BGRA2BGR565,
+		RGBA2BGR565,
+		BGR5652BGRA,
+		BGR5652RGBA,
+		GRAY2BGR565,
+		BGR5652GRAY,
+		BGR2BGR555,
+		RGB2BGR555,
+		BGR5552BGR,
+		BGR5552RGB,
+		BGRA2BGR555,
+		RGBA2BGR555,
+		BGR5552BGRA,
+		BGR5552RGBA,
+		GRAY2BGR555,
+		BGR5552GRAY,
+		BGR2XYZ,
+		RGB2XYZ,
+		XYZ2BGR,
+		XYZ2RGB,
+		BGR2YCrCb,
+		RGB2YCrCb,
+		YCrCb2BGR,
+		YCrCb2RGB,
+		BGR2HSV,
+		RGB2HSV,
+		BGR2Lab,
+		RGB2Lab,
+		BayerBG2BGR,
+		BayerGB2BGR,
+		BayerRG2BGR,
+		BayerGR2BGR,
+		BayerBG2RGB,
+		BayerGB2RGB,
+		BayerRG2RGB,
+		BayerGR2RGB,
+		BGR2Luv,
+		RGB2Luv,
+		BGR2HLS,
+		RGB2HLS,
+		HSV2BGR,
+		HSV2RGB,
+		Lab2BGR,
+		Lab2RGB,
+		Luv2BGR,
+		Luv2RGB,
+		HLS2BGR,
+		HLS2RGB
+	}
+
 
 	[SimpleType, CCode (cname = "CvBox2D", has_type_id = false)]
 	public struct Box2D {
@@ -443,6 +547,8 @@ namespace OpenCV {
 		[CCode (cname = "cvCreateMatHeader")]
 		public Matrix.header (int rows, int cols, int type);
 
+		[CCode (cname = "CV_ARE_TYPES_EQ")]
+		public bool are_types_eq (OpenCV.Matrix m);
 		[CCode (cname = "cvCloneMat")]
 		public Matrix clone ();
 		[CCode (cname = "cvCompleteSymm")]
@@ -559,6 +665,30 @@ namespace OpenCV {
 		public static int round (double value);
 		[CCode (cname = "cvSqrt")]
 		public static float sqrt (double value);
+	}
+	namespace File {
+		[Compact, CCode (cname = "CvFileStorage", free_function = "cvReleaseFileStorage", free_function_address_of = true)]
+		public class Storage {
+			[CCode (cname = "cvOpenFileStorage")]
+			public Storage (string filename, Memory.Storage? memstorage, int flags);
+			
+			[CCode (cname = "cvReadRealByName")]
+			public double read_real_by_name (Node? map, string name, double default = 0.0);
+			
+			[CCode (cname = "cvWriteReal")]
+			public void write_real (string name, double value);
+		}
+		
+		[Compact, CCode (cname = "CvFileNode")]
+		public class Node {
+		}
+		
+		[CCode (cname = "int", has_type_id = false, cprefix = "CV_STORAGE_")]
+		public enum Mode {
+			READ,
+			WRITE
+		}
+		
 	}
 
 	namespace Memory {
@@ -692,7 +822,7 @@ namespace OpenCV {
 		[CCode (cname = "CV_RGB")]
 		public Scalar.from_rgb (double red, double green, double blue);
 		[CCode (cname = "cvGet2D")]
-		public Scalar.get_2D (IPL.Image image, int width, int height);
+		public Scalar.get_2D (Array image, int width, int height);
 
 		[CCode (cname = "cvScalarToRawData")]
 		public void to_raw_data ([CCode (array_length = false)] uint8[] data, int type, int extend_to_12 = 0);
@@ -1005,6 +1135,8 @@ namespace OpenCV {
 			public void set_roi (OpenCV.Rectangle roi);
 			[CCode (cname = "cvSetImageCOI")]
 			public void set_coi (int coi);
+			[CCode (cname = "cvResize")]
+			public void resize (Image dst, InterpolationType inter = InterpolationType.LINEAR);
 
 			[CCode (cname = "nSize")]
 			public int n_size;
@@ -1084,6 +1216,19 @@ namespace OpenCV {
 			[CCode (cname = "nShiftR")]
 			public int n_shift_r;
 		}
+		[CCode (cname = "int", has_type_id = false, cprefix = "CV_INTER_")]
+		public enum InterpolationType {
+			NN,
+			LINEAR,
+			AREA,
+			CUBIC
+		}
+			
+		[CCode (cname = "int", has_type_id = false, cprefix = "IPL_ORIGIN_")]
+		public enum Origin {
+			TL,
+			BL
+		}
 
 		[CCode (cname = "IplConvKernelFP", has_type_id = false)]
 		public struct ConvKernelFP {
@@ -1101,5 +1246,15 @@ namespace OpenCV {
 
 		[CCode (cname = "IPL_DEPTH_8U")]
 		public const int DEPTH_8U;	
+		[CCode (cname = "IPL_DEPTH_64F")]
+		public const int DEPTH_64F;
 	}
+	[CCode (cname = "CV_DXT_FORWARD")]
+	public const int DXT_FORWARD;
+	[CCode (cname = "CV_DXT_MUL_CONJ")]
+	public const int DXT_MUL_CONJ;
+	[CCode (cname = "CV_DXT_INV_SCALE")]
+	public const int DXT_INV_SCALE;
+	[CCode (cname = "CV_LU")]
+	public const int LU;
 }

@@ -23,7 +23,7 @@ typedef struct
 *@param maceFilter filter struct
 *@param path Path String to Save
 */
-void saveMace(mace * maceFilter,char *path);
+void saveMace(mace * maceFilter,const char *path);
 
 
 /**
@@ -33,6 +33,15 @@ void saveMace(mace * maceFilter,char *path);
 *@result ChiSquare Diff
 */
 double LBPdiff(    CvMat* model,    CvMat* test);
+
+/**
+* LBP Diff ChiSquar Distance
+*@param model Model Feature
+*@param test Test Feature
+*@result ChiSquare Diff
+*/
+double LBPCustomDiff(    CvMat* model,    CvMat* test , CvMat*);
+
 /**
 * Check for Uniform Pattern
 *@param i check Intensity Value

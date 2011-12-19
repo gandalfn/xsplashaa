@@ -58,7 +58,7 @@ xsaa_face_authentification_webcam_new ()
 void
 xsaa_face_authentification_webcam_free (XSAAFaceAuthentificationWebcam* self)
 {
-    delete self->m_pWebcam;
+    delete self->m_pWebcam; self->m_pWebcam = 0;
     g_slice_free (XSAAFaceAuthentificationWebcam, self);
 }
 
@@ -91,7 +91,7 @@ xsaa_face_authentification_webcam_image_paint_new ()
 void
 xsaa_face_authentification_webcam_image_paint_free (XSAAFaceAuthentificationWebcamImagePaint* self)
 {
-    delete self->m_pWebcamImagePaint;
+    delete self->m_pWebcamImagePaint; self->m_pWebcamImagePaint = 0;
     g_slice_free (XSAAFaceAuthentificationWebcamImagePaint, self);
 }
 
@@ -120,7 +120,7 @@ xsaa_face_authentification_detector_new ()
 void
 xsaa_face_authentification_detector_free (XSAAFaceAuthentificationDetector* self)
 {
-    delete self->m_pDetector;
+    delete self->m_pDetector; self->m_pDetector = 0;
     g_slice_free (XSAAFaceAuthentificationDetector, self);
 }
 
@@ -166,7 +166,7 @@ xsaa_face_authentification_detector_run_detector (XSAAFaceAuthentificationDetect
     self->m_pDetector->runDetector (inInput);
 }
 
-const char*
+int
 xsaa_face_authentification_detector_query_message (XSAAFaceAuthentificationDetector* self)
 {
     return self->m_pDetector->queryMessage ();
@@ -256,7 +256,7 @@ xsaa_face_authentification_verifier_new_for_uid (uid_t inUID)
 void
 xsaa_face_authentification_verifier_free (XSAAFaceAuthentificationVerifier* self)
 {
-    delete self->m_pVerifier;
+    delete self->m_pVerifier; self->m_pVerifier = 0;
     g_slice_free (XSAAFaceAuthentificationVerifier, self);
 }
 
@@ -293,18 +293,18 @@ xsaa_face_authentification_verifier_verify_face (XSAAFaceAuthentificationVerifie
 const char*
 xsaa_face_authentification_verifier_get_faces_directory (XSAAFaceAuthentificationVerifier* self)
 {
-    return self->m_pVerifier->facesDirectory;
+    return self->m_pVerifier->facesDirectory.c_str ();
 }
 
 const char*
 xsaa_face_authentification_verifier_get_model_directory (XSAAFaceAuthentificationVerifier* self)
 {
-    return self->m_pVerifier->modelDirectory;
+    return self->m_pVerifier->modelDirectory.c_str ();
 }
 
 const char*
 xsaa_face_authentification_verifier_get_config_directory (XSAAFaceAuthentificationVerifier* self)
 {
-    return self->m_pVerifier->configDirectory;
+    return self->m_pVerifier->configDirectory.c_str ();
 }
 

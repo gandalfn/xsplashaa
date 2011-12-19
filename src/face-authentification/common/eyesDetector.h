@@ -1,70 +1,80 @@
-/** @file */
-
-#include "cv.h"
+#ifndef _INCL_EYES_DETECTOR
+#define _INCL_EYES_DETECTOR
 
 /**
-* Eye Structure, Information that can describe the detected Eye on the Face Image
+* Eye structure. Information that describe the detected eyes on the face image
 */
-extern "C"
-{
 struct eyes
 {
-    CvPoint LE; /**< Co-ordinates of the Left Eye */
-    CvPoint RE; /**< Co-ordinates of the Right Eye */
-    int Length; /**< Length Eye */
+    CvPoint LE; /** Coordinates of the Left Eye */
+    CvPoint RE; /** Coordinates of the Right Eye */
+    int Length; /** Length Eye */
 };
-}
+
 /**
-* Eye Detector Class. This Class Runs the OpenCV Haar Detect Functions for finding Eyes.
+* Eye detector class. This class runs the OpenCV Haar detection functions for finding eyes.
 */
 class eyesDetector
 {
-public:
+  private:
+      /**
+      *Eye Cascade Structures
+      */
+      CvHaarClassifierCascade* nested_cascade_;
+      CvHaarClassifierCascade* nested_cascade_2_;
+      
+      /**
+      * Work area for Haar detection
+      */
+      CvMemStorage* storage_;
+
+      /**
+      * Internal Variable to track if both eyes were detected
+      * @see checkEyeDetected
+      */
+      bool bothEyesDetected_;
+      
+      /**
+      * Copy constructor
+      * @param eyesDetector, original value to copy
+      */
+      eyesDetector(eyesDetector&);
+
+      /**
+      * Assignment operator
+      * @param eyesDetector, original value to assign
+      */
+      eyesDetector& operator =(const eyesDetector&);      
+
+  public:
     /**
-    * Eye Information that can describe the detected Eye on the Face Image
-    @see struct eyes
+    * Eye information that describes the detected eye on the face image
+    * @see struct eyes
     */
     struct eyes eyesInformation;
-
+    
     /**
-    *The Constuctor
-    *Initializes internal variables
+    * The constuctor
+    * Initializes internal variables
     */
-    eyesDetector(void);
+    eyesDetector();
+    
     /**
-    *function to run the Detection Algorithm on param image
-    *@param input The IplImage on which the Algorithm should be run on
-    *@return 1 if success , 0 for failure
+    * The destructor
     */
-    void runEyesDetector(IplImage * input,IplImage * fullImage,CvPoint LE);
+    virtual ~eyesDetector();
+    
     /**
-    *Returns 1 or 0 , depending on Success or Failure of the detection algorithm
-    *@result 1 on success , 0 on failure
+    * Function to run the detection algorithm on param image
+    * @param input The IplImage on which the algorithm should be run on
     */
-    int checkEyeDetected();
-
-
-
-
-private:
+    void runEyesDetector(IplImage* input, IplImage* fullImage, CvPoint LE);
+    
     /**
-    *Eye Cascade Structure 1
+    * Depending on success or failure of the detection algorithm, a state is returned
+    * @result true on success, 0 on failure
     */
-    CvHaarClassifierCascade* nested_cascade;
-    /**
-    *Eye Cascade Structure 2
-    */
-    CvHaarClassifierCascade* nested_cascade_2;
-    /**
-    *Work Area for Haar Detection
-    */
-    CvMemStorage* storage;
-
-    /**
-    *Internal Variable to Track if Both eyes were detected
-    *@see checkEyeDetected
-    */
-    int bothEyesDetected;
-
+    bool checkEyeDetected();
 };
 
+#endif // _INCL_EYES_DETECTOR

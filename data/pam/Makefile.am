@@ -2,10 +2,12 @@ pamdir = $(sysconfdir)/pam.d
 
 pam_DATA = \
     xsplashaa \
-    xsplashaa-face-authentication \
+    face-authentification \
+    xsplashaa-face-authentification \
     xsplashaa-autologin
 
 EXTRA_DIST = \
     xsplashaa \
-    xsplashaa-face-authentication \
+    face-authentification \
+    xsplashaa-face-authentification \
     xsplashaa-autologin

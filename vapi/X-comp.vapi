@@ -7,14 +7,14 @@ namespace X
     [CCode (cheader_filename = "X11/Xauth.h", cname="Xauth", type_id = "XAuth", free_function="XauDisposeAuth", destroy_function="")]
     public struct Auth {
         public ushort family;
-        public ushort address_length;
-        public string address;
-        public ushort number_length;
-        public string number;
-        public ushort name_length;
-        public string name;
-        public ushort data_length;
-        public string data;
+        [CCode (array_length_cname = "address_length")]
+        public char[] address;
+        [CCode (array_length_cname = "number_length")]
+        public char[] number;
+        [CCode (array_length_cname = "name_length")]
+        public char[] name;
+        [CCode (array_length_cname = "data_length")]
+        public char[] data;
 
         [CCode (cheader_filename = "X11/Xauth.h", cname="XauReadAuth")]
         public static unowned Auth? read(FileStream f);
@@ -40,4 +40,3 @@ namespace X
     [CCode (cname = "InputOnly")]
     public const int InputOnly;
 }
-

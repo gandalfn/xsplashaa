@@ -41,15 +41,15 @@ Rewritten
 /**
 * Shared Memory Size for Image , 320X240
 */
-#define IMAGE_SIZE 307200
+#define FA_IMAGE_SIZE 307200
 /**
 * Image Width of Webcam
 */
-#define IMAGE_WIDTH 320
+#define FA_IMAGE_WIDTH 320
 /**
 * Image Height of Webcam
 */
-#define IMAGE_HEIGHT 240
+#define FA_IMAGE_HEIGHT 240
 
 //DEFAULT PARAMETERS FOR MACE FILTER PEAK TO SIDE LOBE RATIO
 
@@ -78,4 +78,6 @@ Rewritten
 #define AUTHENTICATE 7
 #define DISPLAY_ERROR 1
 #define EXIT_GUI 2
+
+#define PFA_PATH "/.pam-face-authentication"
 

@@ -601,6 +601,9 @@ namespace Os
     public void setpwent ();
     [CCode (cheader_filename = "pwd.h")]
     public unowned Passwd? getpwnam (string name);
+    [CCode (cheader_filename = "pwd.h")]
+    public unowned Passwd? getpwuid (uid_t uid);
+
 
     [CCode (cheader_filename = "unistd.h")]
     public int chown (string filename, uid_t owner, gid_t group);

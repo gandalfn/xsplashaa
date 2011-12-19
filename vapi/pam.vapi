@@ -6,7 +6,7 @@ namespace Pam
     public class Handle {
 
         [CCode (cname = "pam_get_user", cheader_filename = "security/pam_modules.h", sentinel = "")]
-        public int get_user(out string user, string? prompt);
+        public int get_user(ref unowned string user, string? prompt);
         [CCode (cname = "pam_set_item", cheader_filename = "security/pam_modules.h", sentinel = "")]
         public int set_item(int type_item, ...);
         [CCode (cname = "pam_get_item", cheader_filename = "security/pam_modules.h", sentinel = "")]
@@ -36,10 +36,10 @@ namespace Pam
 
     [CCode (cname = "struct pam_xauth_data", destroy_function="")]
     public struct XauthData {
-        public int namelen;
-        public string name;
-        public int datalen;
-        public string data;
+        [CCode (array_length_cname = "namelen")]
+        public char[] name;
+        [CCode (array_length_cname = "datalen")]
+        public char[] data;
     }
 
     [Compact]
@@ -57,7 +57,7 @@ namespace Pam
     }
 
     [CCode (has_target = false)]
-    public delegate int ConvFunc (int num_msg, [CCode (array_length = false)]ref Message[] msg, [CCode (array_length = false)]ref Response[] resp, void *appdata_ptr);
+    public delegate int ConvFunc (int num_msg, [CCode (array_length = false)]ref Message[] msg, out Response* resp, void *appdata_ptr);
 
     [CCode (cname="struct pam_conv")]
     public struct Conv {
@@ -119,4 +119,3 @@ namespace Pam
     public const int TEXT_INFO;
     public const int ERROR_MSG;
 }
-

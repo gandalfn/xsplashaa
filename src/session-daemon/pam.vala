@@ -31,7 +31,7 @@ namespace XSAA
     }
 
     private static int
-    on_pam_conversation(int inNumMsg, [CCode (array_length = false)]ref Pam.Message[] inMessages, [CCode (array_length = false)]ref Pam.Response[] outResp, void* inAppdataPtr)
+    on_pam_conversation(int inNumMsg, [CCode (array_length = false)]ref Pam.Message[] inMessages, [CCode (array_length = false)]out Pam.Response* outResp, void* inAppdataPtr)
     {
         unowned PamSession pam = (PamSession)inAppdataPtr;
         outResp = new Pam.Response[inNumMsg];
@@ -128,11 +128,35 @@ namespace XSAA
             if (auth != null)
             {
                 var pam_xauth = Pam.XauthData();
-                pam_xauth.namelen = auth.name_length;
-                pam_xauth.name = auth.name;
-                pam_xauth.datalen = auth.data_length;
-                pam_xauth.data = auth.data;
+
+                if (auth.name != null && auth.name.length > 0)
+                {
+                    pam_xauth.name = new char [auth.name.length + 1];
+                    GLib.Memory.copy (pam_xauth.name, auth.name, auth.name.length);
+                    pam_xauth.name[auth.name.length] = '\0';
+                    pam_xauth.name.length--;
+                }
+                else
+                {
+                    pam_xauth.name = null;
+                    pam_xauth.name.length = 0;
+                }
+
+                if (auth.data != null && auth.data.length > 0)
+                {
+                    pam_xauth.data = new char [auth.data.length + 1];
+                    GLib.Memory.copy (pam_xauth.data, auth.data, auth.data.length);
+                    pam_xauth.data[auth.data.length] = '\0';
+                    pam_xauth.data.length--;
+                }
+                else
+                {
+                    pam_xauth.data = null;
+                    pam_xauth.data.length = 0;
+                }
+
                 auth.dispose();
+
                 if (m_PamHandle.set_item(Pam.XAUTHDATA, &pam_xauth) != Pam.SUCCESS)
                 {
                     throw new PamError.START("Error on set xauth");
@@ -275,4 +299,3 @@ namespace XSAA
         }
     }
 }
-

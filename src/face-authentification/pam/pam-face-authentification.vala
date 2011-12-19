@@ -69,18 +69,19 @@ namespace XSAA
 
             public IPC () throws PamFaceAuthentificationError
             {
+                int err = -1;
                 m_PixelsId = Os.shmget (FaceAuthentification.Pam.IpcKey.IMAGE, FaceAuthentification.IMAGE_SIZE, Os.IPC_CREAT | 0666);
-                if (m_PixelsId <= 0)
+                if (m_PixelsId == err)
                     throw new PamFaceAuthentificationError.IPC ("Unable to get shared memory");
                 m_Pixels = (uchar[])Os.shmat (m_PixelsId, null, 0);
-                if ((int)m_Pixels <= 0)
+                if ((void*)m_Pixels == (void*)err)
                     throw new PamFaceAuthentificationError.IPC ("Unable to get shared memory");
 
                 m_StatusId = Os.shmget (FaceAuthentification.Pam.IpcKey.STATUS, sizeof (int), Os.IPC_CREAT | 0666);
-                if (m_StatusId <= 0)
+                if (m_StatusId == err)
                     throw new PamFaceAuthentificationError.IPC ("Unable to get shared memory");
                 m_pStatus = Os.shmat (m_StatusId, null, 0);
-                if ((int)m_pStatus <= 0)
+                if ((void*)m_pStatus == (void*)err)
                     throw new PamFaceAuthentificationError.IPC ("Unable to get shared memory");
             }
 
@@ -240,8 +241,8 @@ namespace XSAA
         if (conv == null || conv.conv == null)
             return;
 
-        Pam.Response[] resp = null;
-        conv.conv (1, ref msg, ref resp, conv.appdata_ptr);
+        Pam.Response* resp = null;
+        conv.conv (1, ref msg, out resp, conv.appdata_ptr);
     }
 
     public static void
@@ -261,17 +262,17 @@ namespace XSAA
         if (conv == null || conv.conv == null)
             return;
 
-        Pam.Response[] resp = null;
-        conv.conv (1, ref msg, ref resp, conv.appdata_ptr);
+        Pam.Response* resp = null;
+        conv.conv (1, ref msg, out resp, conv.appdata_ptr);
     }
 
     // methods
     public int
     sm_authenticate (Pam.Handle inHandle, int inFlags, string[] inArgs)
     {
-        string username;
+        unowned string username = null;
 
-        int ret = inHandle.get_user (out username, null);
+        int ret = inHandle.get_user (ref username, null);
         if (ret != Pam.SUCCESS)
         {
             //Pam.output_debug ("get user returned error: %s", inHandle.strerror (ret));

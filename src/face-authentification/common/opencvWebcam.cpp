@@ -1,9 +1,7 @@
-/** @file */
-
 /*
     OpenCV Webcam CLASS
-    Copyright (C) 2009 Rohan Anil (rohan.anil@gmail.com) -BITS Pilani Goa Campus
-    http://code.google.com/p/pam-face-authentication/
+    Copyright (C) 2010 Rohan Anil (rohan.anil@gmail.com) -BITS Pilani Goa Campus
+    http://www.pam-face-authentication.org
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,60 +16,60 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "opencvWebcam.h"
 #include "cv.h"
 #include "highgui.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <math.h>
-#include <float.h>
-#include <limits.h>
-#include <time.h>
-#include <ctype.h>
-#include "opencvWebcam.h"
 #include "pam_face_defines.h"
-static IplImage * orginalFrame=0;
-IplImage * frame=0;
-IplImage * frame_copy=0;
 
+//------------------------------------------------------------------------------
 opencvWebcam::opencvWebcam()
 {
-
 }
+
+//------------------------------------------------------------------------------
+opencvWebcam::~opencvWebcam()
+{
+}
+
+//------------------------------------------------------------------------------
+bool opencvWebcam::startCamera()
+{
+   int i = 0;
+
+   capture_ = cvCaptureFromCAM(i);
+   if(!capture_) capture_ = cvCaptureFromCAM(CV_CAP_ANY);
+   if(!capture_) return false;
+     else return true;
+}
+
+//------------------------------------------------------------------------------
 void opencvWebcam::stopCamera()
 {
-   if(capture!=0)
-   cvReleaseCapture( &capture );
-}
-int opencvWebcam::startCamera()
-{
-     // capture =cvCaptureFromAVI("/home/rohananil/ggm2.avi");
-    capture =cvCaptureFromCAM(0);
-    if(capture==0)
-    return 0;
-    else
-    return 1;
+   if(capture_) cvReleaseCapture(&capture_);
 }
 
-IplImage *opencvWebcam::queryFrame()
+//------------------------------------------------------------------------------
+IplImage* opencvWebcam::queryFrame()
 {
-    orginalFrame = cvQueryFrame( capture );
-    if (orginalFrame==NULL) return 0;
-    frame = cvCreateImage( cvSize(IMAGE_WIDTH,IMAGE_HEIGHT),IPL_DEPTH_8U, orginalFrame->nChannels );
-    cvResize(orginalFrame,frame, CV_INTER_LINEAR);
-    if ( !frame )
-        return 0;
+    static IplImage* originalFrame = 0;
+    IplImage* frame = 0;
+    IplImage* frame_copy = 0;
 
-    frame_copy = cvCreateImage( cvSize(frame->width,frame->height),IPL_DEPTH_8U, frame->nChannels );
-    if ( frame->origin == IPL_ORIGIN_TL )
-        cvCopy( frame, frame_copy, 0 );
-    else
-        cvFlip( frame, frame_copy, 0 );
+    originalFrame = cvQueryFrame(capture_);
+    if(!originalFrame) return 0;
+
+    frame = cvCreateImage(cvSize(FA_IMAGE_WIDTH, FA_IMAGE_HEIGHT),
+      IPL_DEPTH_8U, originalFrame->nChannels);
+    cvResize(originalFrame, frame, CV_INTER_LINEAR);
+    if(!frame) return 0;
+
+    frame_copy = cvCreateImage(cvSize(frame->width, frame->height),
+      IPL_DEPTH_8U, frame->nChannels);
+    if(frame->origin == IPL_ORIGIN_TL) cvCopy(frame, frame_copy, 0);
+      else cvFlip(frame, frame_copy, 0);
+
     cvReleaseImage(&frame);
 
     return frame_copy;
-
-
 }
 
