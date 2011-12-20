@@ -1,20 +1,22 @@
-/* -*- Mode: C; indent-tabs-mode: nil; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * xsaa-timeline.vala
- * Copyright (C) Nicolas Bruguier 2010 <gandalfn@club-internet.fr>
- * 
- * xsplashaa is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
+/* timeline.vala
+ *
+ * Copyright (C) 2009-2011  Supersonic Imagine
+ *
+ * This library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
- * xsplashaa is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU Lesser General Public License for more details.
- * 
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Author:
+ * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
 public enum XSAA.TimelineDirection
@@ -41,9 +43,9 @@ public class XSAA.Timeline : Object
     /**
      * Timeline direction
      */
-    public TimelineDirection direction { 
+    public TimelineDirection direction {
         get {
-            return m_Direction; 
+            return m_Direction;
         }
         set {
             if (m_Direction != value)
@@ -57,7 +59,7 @@ public class XSAA.Timeline : Object
     /**
      * Timeline speed in frame per second
      */
-    public uint speed { 
+    public uint speed {
         get {
             return m_Fps;
         }
@@ -75,23 +77,23 @@ public class XSAA.Timeline : Object
     }
 
     /**
-     * Number of frame in Timeline 
+     * Number of frame in Timeline
      */
     public uint n_frames { get; set; default = 0; }
 
     /**
      * Timeline duration in msecs
      */
-    public uint duration { 
+    public uint duration {
         get {
-            return m_Duration; 
+            return m_Duration;
         }
         set {
             if (m_Duration != value)
             {
                 m_Duration = value;
                 n_frames = m_Duration * m_Fps / 1000;
-            } 
+            }
         }
     }
 
@@ -124,7 +126,7 @@ public class XSAA.Timeline : Object
     }
 
     /**
-     * Timeline progress 
+     * Timeline progress
      */
     public double progress {
         get {
@@ -196,9 +198,9 @@ public class XSAA.Timeline : Object
     private inline bool
     is_complete ()
     {
-        return ((m_Direction == TimelineDirection.FORWARD) && 
-                (m_CurrentFrameNum >= n_frames)) || 
-               ((m_Direction == TimelineDirection.BACKWARD) && 
+        return ((m_Direction == TimelineDirection.FORWARD) &&
+                (m_CurrentFrameNum >= n_frames)) ||
+               ((m_Direction == TimelineDirection.BACKWARD) &&
                 (m_CurrentFrameNum <= 0));
     }
 
@@ -369,7 +371,7 @@ public class XSAA.Timeline : Object
     }
 
     /**
-     * Skip inNbFrames 
+     * Skip inNbFrames
      *
      * @param inNbFrames number of frames to skip
      */
@@ -403,3 +405,4 @@ public class XSAA.Timeline : Object
         s_TimeoutPool.set_priority (inPriority);
     }
 }
+

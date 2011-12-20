@@ -1,4 +1,4 @@
-/* main.vala
+/* iuser.vala
  *
  * Copyright (C) 2009-2011  Nicolas Bruguier
  *
@@ -27,4 +27,3 @@ public interface XSAA.User : DBus.Object
     public abstract uint frequency        { get; }
     public abstract int face_icon_shm_id  { get; }
 }
-

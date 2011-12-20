@@ -1,4 +1,4 @@
-/* event-boot.vala
+/* event-progress.vala
  *
  * Copyright (C) 2009-2011  Nicolas Bruguier
  *
@@ -67,4 +67,3 @@ namespace XSAA
         }
     }
 }
-

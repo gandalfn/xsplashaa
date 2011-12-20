@@ -1,4 +1,4 @@
-/* xsaa-session.vala
+/* session.vala
  *
  * Copyright (C) 2009-2010  Nicolas Bruguier
  *

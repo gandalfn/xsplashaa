@@ -1,4 +1,4 @@
-/* session-daemon.vala
+/* freedesktop.vala
  *
  * Copyright (C) 2009-2010  Nicolas Bruguier
  *
@@ -76,4 +76,3 @@ namespace FreeDesktop
         stop() throws DBus.Error;
     }
 }
-

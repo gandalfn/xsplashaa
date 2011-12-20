@@ -1,20 +1,22 @@
-/* -*- Mode: C; indent-tabs-mode: nil; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * xsaa-timeout-interval.vala
- * Copyright (C) Nicolas Bruguier 2010 <gandalfn@club-internet.fr>
- * 
- * cairo-compmgr is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
+/* timeout-interval.vala
+ *
+ * Copyright (C) 2009-2011  Supersonic Imagine
+ *
+ * This library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
- * cairo-compmgr is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU Lesser General Public License for more details.
- * 
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Author:
+ * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
 [CCode (has_target = false)]
@@ -38,7 +40,7 @@ internal struct XSAA.TimeoutInterval
     private inline uint
     get_ticks (TimeVal inCurrentTime)
     {
-        return (uint)((inCurrentTime.tv_sec - m_StartTime.tv_sec) * 1000 + 
+        return (uint)((inCurrentTime.tv_sec - m_StartTime.tv_sec) * 1000 +
                       (inCurrentTime.tv_usec - m_StartTime.tv_usec) / 1000);
     }
 
@@ -104,3 +106,4 @@ internal struct XSAA.TimeoutInterval
         return comparison < 0 ? -1 : comparison > 0 ? 1 : 0;
     }
 }
+

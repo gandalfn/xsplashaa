@@ -1,4 +1,4 @@
-/* xsaa-users.vala
+/* users.vala
  *
  * Copyright (C) 2009-2010  Nicolas Bruguier
  *
@@ -151,7 +151,7 @@ namespace XSAA
                 ctx.paint ();
                 surface.finish ();
 
-                GLib.debug ("Face icon %s: key = 0x%x, id = %i",
+                Log.debug ("Face icon %s: key = 0x%x, id = %i",
                             login, (int)m_FaceIconShmKey, m_FaceIconShmId);
             }
         }
@@ -294,7 +294,7 @@ namespace XSAA
         private void
         load_config()
         {
-            GLib.debug ("load config %s", Config.PACKAGE_CONFIG_FILE);
+            Log.debug ("load config %s", Config.PACKAGE_CONFIG_FILE);
 
             if (FileUtils.test(Config.PACKAGE_CONFIG_FILE, FileTest.EXISTS))
             {
@@ -368,7 +368,7 @@ namespace XSAA
         private void
         add (User user)
         {
-            GLib.debug ("add user %s", user.login);
+            Log.debug ("add user %s", user.login);
 
             int pos = get_nearest_user (user);
 
@@ -406,4 +406,3 @@ namespace XSAA
         }
     }
 }
-

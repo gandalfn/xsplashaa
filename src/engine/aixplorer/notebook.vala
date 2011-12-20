@@ -1,4 +1,4 @@
-/* table.vala
+/* notebook.vala
  *
  * Copyright (C) 2009-2011  Nicolas Bruguier
  *

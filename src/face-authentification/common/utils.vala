@@ -47,6 +47,160 @@ namespace XSAA.FaceAuthentification
     }
 
     /**
+     * Check for Uniform Pattern
+     *
+     * @param inI check Intensity Value
+     *
+     * @return ``true`` if its Uniform Patterns , ``false`` otherwise
+     */
+    public bool
+    check_bit (int inI)
+    {
+        int bit8 = (inI % 2);
+        int bit7 = ((inI / 2)   % 2);
+        int bit6 = ((inI / 4)   % 2);
+        int bit5 = ((inI / 8)   % 2);
+        int bit4 = ((inI / 16)  % 2);
+        int bit3 = ((inI / 32)  % 2);
+        int bit2 = ((inI / 64)  % 2);
+        int bit1 = ((inI / 128) % 2);
+        int bitVector[9] = { bit1, bit8, bit7, bit6, bit5, bit4, bit3, bit2, bit1};
+        int current = bitVector[0];
+        int count = 0;
+        for (int i = 0; i < 9; ++i)
+        {
+            if (current != bitVector[i])
+                count++;
+            current = bitVector[i];
+        }
+
+        if (count > 2)
+            return true;
+
+        return false;
+    }
+
+    /**
+     * Check for Uniform Pattern
+     *
+     * @param inImage Image Input
+     * @param inPx X Co-ordinate
+     * @param inPy Y Co-ordinate
+     * @param inThreshold Threshold to Check
+     *
+     * @return 1 if its above , 0 otherwise
+     */
+    public double
+    get_bit (OpenCV.IPL.Image inImage, double inPx, double inPy, double inThreshold)
+    {
+        if (inPx < 0 || inPy < 0 || inPx >= inImage.width || inPy >= inImage.height)
+            return 0;
+        else
+        {
+            OpenCV.Scalar s = OpenCV.Scalar.get_2D (inImage, (int)inPy, (int)inPx);
+            if (s.val[0] >= inThreshold)
+                return 1;
+            else
+                return 0;
+        }
+    }
+
+    /**
+     * Create LBP Hist Feature
+     *
+     * @param inImage Image Input
+     * @param inFeaturesFinal Features Final
+     */
+    public void
+    feature_lbp_hist (OpenCV.IPL.Image inImage, OpenCV.Matrix inFeaturesFinal)
+    {
+        inFeaturesFinal.zero ();
+
+        int lbpArry[256];
+
+        OpenCV.IPL.Image imgLBP = new OpenCV.IPL.Image (OpenCV.Size (inImage.width, inImage.height), 8, 1);
+        imgLBP.zero ();
+        for (int i = 0; i < inImage.height; ++i)
+        {
+            for (int j = 0; j < inImage.width; ++j)
+            {
+                int p1x,p2x,p3x,p4x,p5x,p6x,p7x,p8x;
+                int p1y,p2y,p3y,p4y,p5y,p6y,p7y,p8y;
+
+                p1x = j - 1;
+                p1y = i - 1;
+                p2x = j;
+                p2y = i - 1;
+                p3x = j + 1;
+                p3y = i - 1;
+                p4x = j + 1;
+                p4y = i;
+                p5x = j + 1;
+                p5y = i + 1;
+                p6x = j;
+                p6y = i + 1;
+                p7x = j - 1;
+                p7y = i + 1;
+                p8x = j - 1;
+                p8y = i;
+                OpenCV.Scalar s = OpenCV.Scalar.get_2D (inImage, i, j);
+
+                double bit1 = 128 * get_bit (inImage, p1x, p1y, s.val[0]);
+                double bit2 =  64 * get_bit (inImage, p2x, p2y, s.val[0]);
+                double bit3 =  32 * get_bit (inImage, p3x, p3y, s.val[0]);
+                double bit4 =  16 * get_bit (inImage, p4x, p4y, s.val[0]);
+                double bit5 =   8 * get_bit (inImage, p5x, p5y, s.val[0]);
+                double bit6 =   4 * get_bit (inImage, p6x, p6y, s.val[0]);
+                double bit7 =   2 * get_bit (inImage, p7x, p7y, s.val[0]);
+                double bit8 =   1 * get_bit (inImage, p8x, p8y, s.val[0]);
+                OpenCV.Scalar s1 = OpenCV.Scalar (bit1 + bit2 + bit3 + bit4 + bit5 + bit6 + bit7 + bit8, 0, 0);
+                imgLBP.set_2d(i, j, s1);
+            }
+        }
+
+        int Nx = (int)GLib.Math.floor ((inImage.width ) / 35);
+        int Ny = (int)GLib.Math.floor ((inImage.height) / 30);
+
+        for (int i = 0; i < Ny; ++i)
+        {
+            for (int j = 0; j < Nx; ++j)
+            {
+                int count = 0;
+                OpenCV.Scalar s = OpenCV.Scalar (0);
+
+                for (int k = 0; k < 256; ++k)
+                {
+                    if (!check_bit (k))
+                    {
+                        inFeaturesFinal.set_2d(i * Nx * 59 + j * 59 + count, 0, s);
+                        lbpArry[k] = count;
+                        count++;
+                    }
+                    else
+                    {
+                        inFeaturesFinal.set_2d (i * Nx * 59 + j * 59 + 58, 0, s);
+                        lbpArry[k] = 58;
+                    }
+                }
+
+                int startX = 35 * j;
+                int startY = 30 * i;
+                for (int l = 0; l < 30; ++l)
+                {
+                    for (int m = 0; m < 35; ++m)
+                    {
+                        OpenCV.Scalar s0 = OpenCV.Scalar.get_2D (imgLBP, startY + l, startX + m);
+                        int val = (int)s0.val[0];
+                        OpenCV.Scalar s1 = OpenCV.Scalar.get_2D (inFeaturesFinal, i * Nx * 59 + j * 59 + lbpArry[val], 0);
+                        s1.val[0] += 1;
+                        inFeaturesFinal.set_2d (i * Nx * 59 + j * 59 + lbpArry[val], 0, s1);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Computes Mace ( Minimum Average Correlation Energy ) Filter for the Set of Images
      *
      * @param inImages Array of IplImages
@@ -356,5 +510,102 @@ namespace XSAA.FaceAuthentification
         }
 
         return M1 / GLib.Math.sqrt (valueOfPCER);
+    }
+
+    /**
+     * Computes PSLR of Filter and Image
+     *
+     * @param inMaceFilterVisualize 2D Fourier Space Filter
+     * @param inImage Test Image
+     * @param inSizeOfImage Size to Resize to
+     *
+     * @return peakToSideLobeRatio
+     */
+    public int
+    peak_to_side_lobe_ratio (OpenCV.Matrix inMaceFilterVisualize, OpenCV.IPL.Image inImage, int inSizeOfImage)
+    {
+        OpenCV.IPL.Image face = new OpenCV.IPL.Image (OpenCV.Size (inImage.width, inImage.height), 8, 1);
+        inImage.convert_color (face, OpenCV.ColorConvert.BGR2GRAY);
+
+        OpenCV.IPL.Image grayImage = new OpenCV.IPL.Image (OpenCV.Size (inSizeOfImage,inSizeOfImage), 8, 1);
+        face.resize (grayImage, OpenCV.IPL.InterpolationType.LINEAR);
+        grayImage.equalize_hist (grayImage);
+
+        int size_of_image_2x = inSizeOfImage * 2;
+
+        OpenCV.IPL.Image realInput       = new OpenCV.IPL.Image (OpenCV.Size (inSizeOfImage, inSizeOfImage), OpenCV.IPL.DEPTH_64F, 1);
+        OpenCV.IPL.Image realInputDouble = new OpenCV.IPL.Image (OpenCV.Size (size_of_image_2x, size_of_image_2x), OpenCV.IPL.DEPTH_64F, 1);
+        OpenCV.IPL.Image imaginaryInput  = new OpenCV.IPL.Image (OpenCV.Size (size_of_image_2x, size_of_image_2x), OpenCV.IPL.DEPTH_64F, 1);
+        OpenCV.IPL.Image complexInput    = new OpenCV.IPL.Image (OpenCV.Size (size_of_image_2x, size_of_image_2x), OpenCV.IPL.DEPTH_64F, 2);
+
+        grayImage.convert_scale (realInput, 1.0, 0.0);
+
+        imaginaryInput.zero ();
+        realInputDouble.zero ();
+
+        OpenCV.Matrix tmp = new OpenCV.Matrix (0, 0, 0);
+        realInputDouble.get_subrectangle (tmp, OpenCV.Rectangle (0, 0, inSizeOfImage, inSizeOfImage));
+        realInput.copy (tmp);
+        realInputDouble.merge (imaginaryInput, null, null, complexInput);
+
+        OpenCV.Matrix dftImage = new OpenCV.Matrix (size_of_image_2x, size_of_image_2x, OpenCV.Type.FC64_2);
+        dftImage.get_subrectangle (tmp, OpenCV.Rectangle (0, 0, size_of_image_2x, size_of_image_2x));
+        complexInput.copy (tmp, null);
+        dftImage.DFT (dftImage, OpenCV.DXT_FORWARD, 0);
+        dftImage.multiply_spectrums (inMaceFilterVisualize, dftImage, OpenCV.DXT_MUL_CONJ);
+        dftImage.DFT (dftImage ,OpenCV.DXT_INV_SCALE, 0);
+
+        OpenCV.IPL.Image image_Re = new OpenCV.IPL.Image (OpenCV.Size (size_of_image_2x, size_of_image_2x), OpenCV.IPL.DEPTH_64F, 1);
+        OpenCV.IPL.Image image_Im = new OpenCV.IPL.Image (OpenCV.Size (size_of_image_2x, size_of_image_2x), OpenCV.IPL.DEPTH_64F, 1);
+
+        dftImage.split (image_Re, image_Im, null, null);
+        shift_dft (image_Re, image_Re);
+
+        double m1,M1;
+        OpenCV.Point p1,p2;
+        image_Re.min_max_loc (out m1, out M1, out p1, out p2, null);
+        image_Re.convert_scale (image_Re, 1.0, 1.0 * (-m1));
+        image_Re.min_max_loc (out m1, out M1, out p1, out p2, null);
+
+        int rad1 = (int)GLib.Math.floor ((double)(45.0 / 64.0) * (double)inSizeOfImage);
+        int rad2 = (int)GLib.Math.floor ((double)(27.0 / 64.0) * (double)inSizeOfImage);
+
+        double val = 0;
+        double num = 0;
+
+        for (int l = 0; l < size_of_image_2x; ++l)
+        {
+            for (int m = 0; m < size_of_image_2x; ++m)
+            {
+                double rad = GLib.Math.sqrt ((GLib.Math.pow (m - inSizeOfImage, 2) + GLib.Math.pow (l - inSizeOfImage, 2)));
+
+                if (rad < rad1 && rad > rad2)
+                {
+                    OpenCV.Scalar s1 = OpenCV.Scalar.get_2D (image_Re, l, m);
+                    val += s1.val[0];
+                    num++;
+                }
+            }
+        }
+        val = val / num;
+
+        double std2 = 0;
+        for (int l = 0; l < size_of_image_2x; ++l)
+        {
+            for (int m = 0; m < size_of_image_2x; ++m)
+            {
+                double rad = GLib.Math.sqrt ((GLib.Math.pow (m - inSizeOfImage, 2) + GLib.Math.pow (l - inSizeOfImage, 2)));
+                if (rad < rad1 && rad > rad2)
+                {
+                    OpenCV.Scalar s1 = OpenCV.Scalar.get_2D (image_Re, l, m);
+                    std2 += GLib.Math.pow (val - s1.val[0], 2);
+                }
+            }
+        }
+
+        std2 /= num;
+        std2 = GLib.Math.sqrt (std2);
+        OpenCV.Scalar sca = OpenCV.Scalar.get_2D (image_Re, inSizeOfImage, inSizeOfImage);
+        return (int)GLib.Math.floor ((sca.val[0] - val) / std2);
     }
 }

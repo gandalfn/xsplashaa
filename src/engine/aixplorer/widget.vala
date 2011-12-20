@@ -1,4 +1,4 @@
-/* entry.vala
+/* widget.vala
  *
  * Copyright (C) 2009-2011  Nicolas Bruguier
  *

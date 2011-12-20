@@ -89,13 +89,13 @@ namespace XSAA
                 if (inAutologin) service = "xsplashaa-autologin";
 
                 var session = new Session(m_Connection, m_Manager, service, inUser, inDisplay, inDevice);
-                GLib.message ("open session %s", outPath);
+                Log.info ("open session %s", outPath);
                 m_Connection.register_object(outPath, session);
                 m_Sessions.insert (outPath, session);
             }
             catch (GLib.Error err)
             {
-                GLib.critical ("error on create session : %s", err.message);
+                Log.critical ("error on create session : %s", err.message);
                 return false;
             }
 
@@ -110,7 +110,7 @@ namespace XSAA
         public void
         close_session(DBus.ObjectPath? inPath)
         {
-            GLib.debug ("close session %s", inPath);
+            Log.debug ("close session %s", inPath);
             m_Sessions.remove(inPath);
         }
 
@@ -120,14 +120,14 @@ namespace XSAA
         public void
         reboot()
         {
-            GLib.debug ("reboot");
+            Log.debug ("reboot");
             try
             {
                 m_Manager.restart();
             }
             catch (DBus.Error err)
             {
-                GLib.critical ("error on ask reboot %s", err.message);
+                Log.critical ("error on ask reboot %s", err.message);
             }
         }
 
@@ -137,14 +137,14 @@ namespace XSAA
         public void
         halt()
         {
-            GLib.debug ("halt");
+            Log.debug ("halt");
             try
             {
                 m_Manager.stop();
             }
             catch (DBus.Error err)
             {
-                GLib.critical ("error on ask halt %s", err.message);
+                Log.critical ("error on ask halt %s", err.message);
             }
         }
 
@@ -222,7 +222,7 @@ namespace XSAA
     {
         XSAA.Log.set_default_logger (new XSAA.Log.Syslog (XSAA.Log.Level.DEBUG, "xsaa-session-daemon"));
 
-        GLib.debug ("start");
+        Log.debug ("start");
 
         try
         {
@@ -233,7 +233,7 @@ namespace XSAA
         }
         catch (GLib.OptionError err)
         {
-            GLib.critical ("option parsing failed: %s", err.message);
+            Log.critical ("option parsing failed: %s", err.message);
             return -1;
         }
 
@@ -241,7 +241,7 @@ namespace XSAA
         {
             if (Os.daemon (0, 0) < 0)
             {
-                GLib.critical ("error on launch has daemon");
+                Log.critical ("error on launch has daemon");
                 return -1;
             }
         }
@@ -269,13 +269,12 @@ namespace XSAA
         }
         catch (GLib.Error err)
         {
-            GLib.critical ("%s", err.message);
+            Log.critical ("%s", err.message);
             return -1;
         }
 
-        GLib.debug ("end");
+        Log.debug ("end");
 
         return 0;
     }
 }
-

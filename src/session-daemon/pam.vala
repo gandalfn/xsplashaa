@@ -1,4 +1,4 @@
-/* xsaa-pam.vala
+/* pam.vala
  *
  * Copyright (C) 2009-2010  Nicolas Bruguier
  *
@@ -42,10 +42,10 @@ namespace XSAA
             switch (msg.msg_style)
             {
                 case Pam.PROMPT_ECHO_ON:
-                    GLib.message ("echo on message : %s", msg.msg);
+                    Log.info ("echo on message : %s", msg.msg);
                     break;
                 case Pam.PROMPT_ECHO_OFF:
-                    GLib.message ("echo off message : %s", msg.msg);
+                    Log.info ("echo off message : %s", msg.msg);
                     string pass = pam.passwd ();
                     if (pass != null)
                     {
@@ -59,15 +59,15 @@ namespace XSAA
                     }
                     break;
                 case Pam.TEXT_INFO:
-                    GLib.message ("text info message : %s", msg.msg);
+                    Log.info ("text info message : %s", msg.msg);
                     pam.info(msg.msg);
                     break;
                 case Pam.ERROR_MSG:
-                    GLib.message ("error message : %s", msg.msg);
+                    Log.info ("error message : %s", msg.msg);
                     pam.error_msg(msg.msg);
                     break;
                 default:
-                    GLib.message ("unkown message");
+                    Log.info ("unkown message");
                     break;
             }
         }
@@ -96,7 +96,7 @@ namespace XSAA
         // methods
         public PamSession(string inService, string inUsername, int inDisplay, string inXauthFile, string inDevice) throws PamError
         {
-            GLib.debug ("Create pam session for %s", inUsername);
+            Log.debug ("Create pam session for %s", inUsername);
             m_User = inUsername;
 
             m_Conv = Pam.Conv();
@@ -178,12 +178,12 @@ namespace XSAA
         {
             unowned Os.Passwd passwd = Os.getpwnam(m_User);
             string face_authentication_dir = passwd.pw_dir + "/.pam-face-authentication/faces";
-            GLib.debug ("check if %s exist", face_authentication_dir);
+            Log.debug ("check if %s exist", face_authentication_dir);
             if (GLib.FileUtils.test (face_authentication_dir, GLib.FileTest.EXISTS))
             {
                 bool found = false;
 
-                GLib.debug ("found %s check if face exist", face_authentication_dir);
+                Log.debug ("found %s check if face exist", face_authentication_dir);
                 try
                 {
                     GLib.Dir dir = GLib.Dir.open (face_authentication_dir, 0);
@@ -279,7 +279,7 @@ namespace XSAA
             }
 
             m_PamHandle.end(Pam.SUCCESS);
-            GLib.debug ("close pam session");
+            Log.debug ("close pam session");
         }
 
         public void
@@ -294,7 +294,7 @@ namespace XSAA
             foreach (string key in m_Envs.get_keys())
             {
                 Os.setenv(key, m_Envs.lookup (key), 1);
-                GLib.debug ("pam env %s=%s", key, m_Envs.lookup (key));
+                Log.debug ("pam env %s=%s", key, m_Envs.lookup (key));
             }
         }
     }

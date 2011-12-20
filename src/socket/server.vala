@@ -1,4 +1,4 @@
-/* xsaa-server.vala
+/* server.vala
  *
  * Copyright (C) 2009-2010  Nicolas Bruguier
  *

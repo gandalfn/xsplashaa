@@ -1,4 +1,4 @@
-/* engine.vala
+/* engine-item.vala
  *
  * Copyright (C) 2009-2011  Nicolas Bruguier
  *

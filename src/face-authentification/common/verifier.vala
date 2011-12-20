@@ -216,7 +216,7 @@ namespace XSAA.FaceAuthentification
 
             for (int i = leftIndex; i < rightIndex; ++i)
             {
-                OpenCV.IPL.Image[] eye = new OpenCV.IPL.Image [temp.face_images[i].faces.length];
+                OpenCV.IPL.Image[] eye        = new OpenCV.IPL.Image [temp.face_images[i].faces.length];
                 OpenCV.IPL.Image[] insideFace = new OpenCV.IPL.Image [temp.face_images[i].faces.length];
 
                 for (int index = 0; index < temp.face_images[i].faces.length; ++index)
@@ -234,12 +234,140 @@ namespace XSAA.FaceAuthentification
                     temp.face_images[i].faces[index].reset_roi ();
                 }
 
-                OpenCV.Matrix maceFilterFace = compute_mace (temp.face_images[i].faces, FACE_MACE_SIZE);
-                OpenCV.Matrix maceFilterEye = compute_mace (eye, EYE_MACE_SIZE);
+                OpenCV.Matrix maceFilterFace       = compute_mace (temp.face_images[i].faces, FACE_MACE_SIZE);
+                OpenCV.Matrix maceFilterEye        = compute_mace (eye, EYE_MACE_SIZE);
                 OpenCV.Matrix maceFilterInsideFace = compute_mace (insideFace, INSIDE_FACE_MACE_SIZE);
 
                 OpenCV.IPL.Image averageImage = new OpenCV.IPL.Image (temp.face_images[i].faces[0].get_size (), OpenCV.IPL.DEPTH_64F, 1);
                 averageImage.zero ();
+                int avFace = 0, avEye = 0, avInsideFace = 0;
+
+                GLib.List<int?> maceFaceValuesPSLR          = new GLib.List<int?> ();
+                GLib.List<double?> maceFaceValuesPCER       = new GLib.List<double?> ();
+                GLib.List<int?> maceEyeValuesPSLR           = new GLib.List<int?> ();
+                GLib.List<double?> maceEyeValuesPCER        = new GLib.List<double?> ();
+                GLib.List<int?> maceInsideFaceValuesPSLR    = new GLib.List<int?> ();
+                GLib.List<double?> maceInsideFaceValuesPCER = new GLib.List<double?> ();
+
+                for (int index = 0; index < temp.face_images[i].faces.length; ++index)
+                {
+                    OpenCV.IPL.Image averageImageFace = new OpenCV.IPL.Image (temp.face_images[i].faces[index].get_size (), OpenCV.IPL.DEPTH_64F, 1);
+                    OpenCV.IPL.Image averageImageFace64 = new OpenCV.IPL.Image (temp.face_images[i].faces[index].get_size (), 8, 1);
+                    temp.face_images[i].faces[index].convert_color (averageImageFace64, OpenCV.ColorConvert.BGR2GRAY);
+                    averageImageFace64.convert_scale (averageImageFace, 1.0, 0.0);
+                    averageImage.add (averageImageFace, averageImage);
+
+                    double macePCERValue = peak_corr_plane_energy (maceFilterFace, temp.face_images[i].faces[index], FACE_MACE_SIZE);
+                    int macePSLRValue = peak_to_side_lobe_ratio (maceFilterFace, temp.face_images[i].faces[index], FACE_MACE_SIZE);
+                    avFace += macePSLRValue;
+                    maceFaceValuesPSLR.append (macePSLRValue);
+                    maceFaceValuesPCER.append (macePCERValue);
+
+                    macePCERValue = peak_corr_plane_energy (maceFilterEye, eye[index], EYE_MACE_SIZE);
+                    macePSLRValue = peak_to_side_lobe_ratio (maceFilterEye, eye[index], EYE_MACE_SIZE);
+                    avEye += macePSLRValue;
+                    maceEyeValuesPSLR.append (macePSLRValue);
+                    maceEyeValuesPCER.append (macePCERValue);
+
+                    macePCERValue = peak_corr_plane_energy (maceFilterInsideFace, insideFace[index], INSIDE_FACE_MACE_SIZE);
+                    macePSLRValue = peak_to_side_lobe_ratio (maceFilterInsideFace, insideFace[index], INSIDE_FACE_MACE_SIZE);
+                    avInsideFace += macePSLRValue;
+                    maceInsideFaceValuesPSLR.append (macePSLRValue);
+                    maceInsideFaceValuesPCER.append (macePCERValue);
+                }
+
+                avFace /= temp.face_images[i].faces.length;
+                avEye /= temp.face_images[i].faces.length;
+                avInsideFace /= temp.face_images[i].faces.length;
+
+                int Nx = (int)GLib.Math.floor ((averageImage.width ) / 35);
+                int Ny = (int)GLib.Math.floor ((averageImage.height) / 30);
+                OpenCV.Matrix featureLBPHistMatrix = new OpenCV.Matrix (Nx * Ny * 59, 1, OpenCV.Type.FC64_1);
+                feature_lbp_hist (averageImage, featureLBPHistMatrix);
+
+                OpenCV.IPL.Image weights = new OpenCV.IPL.Image (OpenCV.Size (5 * 4, temp.face_images[i].faces.length), OpenCV.IPL.DEPTH_64F, 1);
+                for (int index = 0; index < temp.face_images[i].faces.length; ++index)
+                {
+                    OpenCV.IPL.Image averageImageFace = new OpenCV.IPL.Image (temp.face_images[i].faces[index].get_size (), OpenCV.IPL.DEPTH_64F, 1);
+                    OpenCV.IPL.Image averageImageFace64 = new OpenCV.IPL.Image (temp.face_images[i].faces[index].get_size (), 8, 1);
+                    temp.face_images[i].faces[index].convert_color (averageImageFace64, OpenCV.ColorConvert.BGR2GRAY);
+                    averageImageFace64.convert_scale (averageImageFace, 1.0, 0.0);
+
+                    OpenCV.Matrix featureLBPHistMatrixFace = new OpenCV.Matrix (Nx * Ny * 59, 1, OpenCV.Type.FC64_1);
+                    feature_lbp_hist (averageImageFace, featureLBPHistMatrixFace);
+
+                    for (int l = 0; l < 5; ++l)
+                    {
+                        for (int j = 0; j < 4; ++j)
+                        {
+                            double chiSquare = 0;
+
+                            for (int k = 0; k < 59; ++k)
+                            {
+                                OpenCV.Scalar s1 = OpenCV.Scalar.get_2D (featureLBPHistMatrixFace, l * 4 * 59 + j * 59 + k, 0);
+                                OpenCV.Scalar s2 = OpenCV.Scalar.get_2D (featureLBPHistMatrix, l * 4 * 59 + j * 59 + k, 0);
+
+                                double hist1 = s1.val[0];
+                                double hist2 = s2.val[0];
+
+                                if ((hist1 + hist2) != 0)
+                                    chiSquare += GLib.Math.pow (hist1 - hist2, 2) / (hist1 + hist2);
+                            }
+                            OpenCV.Scalar s1 = OpenCV.Scalar (chiSquare);
+                            weights.set_2d (index, j * 5 + l, s1);
+                        }
+                    }
+                }
+
+                OpenCV.IPL.Image variance = new OpenCV.IPL.Image (OpenCV.Size (5 * 4, 1), OpenCV.IPL.DEPTH_64F, 1);
+                OpenCV.IPL.Image sum      = new OpenCV.IPL.Image (OpenCV.Size (5 * 4, 1), OpenCV.IPL.DEPTH_64F, 1);
+                OpenCV.IPL.Image sumSq    = new OpenCV.IPL.Image (OpenCV.Size (5 * 4, 1), OpenCV.IPL.DEPTH_64F, 1);
+                OpenCV.IPL.Image meanSq   = new OpenCV.IPL.Image (OpenCV.Size (5 * 4, 1), OpenCV.IPL.DEPTH_64F, 1);
+                variance.zero ();
+                sum.zero ();
+                sumSq.zero ();
+
+                for (int index = 0; index < temp.face_images[i].faces.length; ++index)
+                {
+                    for (int l = 0; l < 5; ++l)
+                    {
+                        for (int j = 0; j < 4; ++j)
+                        {
+                            OpenCV.Scalar s1, s2, s3, s4;
+
+                            s1 = OpenCV.Scalar.get_2D (weights, index, j * 5 + l);
+                            s2 = OpenCV.Scalar.get_2D (sum, 0, j * 5 + l);
+                            s3 = OpenCV.Scalar (s1.val[0] + s2.val[0]);
+                            s4 = OpenCV.Scalar.get_2D (sumSq, 0, j * 5 + l);
+
+                            sum.set_2d (0, j * 5 + l, s3);
+                            s1.val[0] *= s1.val[0];
+                            s1.val[0] += s4.val[0];
+                            sumSq.set_2d (0, j * 5 + l, s1);
+                        }
+                    }
+                }
+
+                sum.convert_scale (sum, 1 / (double)temp.face_images[i].faces.length);
+                sumSq.convert_scale (sumSq, 1 / (double)temp.face_images[i].faces.length);
+                sum.multiply (sum, meanSq);
+                sumSq.subtract (meanSq, variance);
+
+                ((OpenCV.Array)null).divide (variance, variance);
+                OpenCV.Scalar totalVariance = variance.sum ();
+                OpenCV.Matrix finalWeights = new OpenCV.Matrix (4, 5, OpenCV.Type.FC64_1);
+                for (int j = 0; j < 4; ++j)
+                {
+                    for (int l = 0; l < 5; ++l)
+                    {
+                        OpenCV.Scalar s1 = OpenCV.Scalar.get_2D (variance, 0, j * 5 + l);
+                        s1.val[0] = (s1.val[0] * 20) / totalVariance.val[0];
+                        finalWeights.set_2d(j, l, s1);
+                    }
+                }
+
+                string lbpFacePath = "%s/%s_face_lbp.xml".printf (model_directory, temp.name[i]);
+                OpenCV.File.Storage fs = new OpenCV.File.Storage (lbpFacePath, null, OpenCV.File.Mode.WRITE);
             }
         }
     }

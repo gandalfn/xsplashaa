@@ -59,7 +59,11 @@ namespace XSAA.Aixplorer
                 if (visibility <= Goo.CanvasItemVisibility.INVISIBLE)
                 {
                     Log.debug ("stop thobber");
-                    m_Animator.stop ();
+                    if (m_Animator.is_playing)
+                    {
+                        m_Current = m_Initial;
+                        m_Animator.stop ();
+                    }
                 }
             });
         }

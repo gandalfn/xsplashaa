@@ -50,7 +50,7 @@ namespace XSAA
         {
             if (inSigNum == Os.SIGUSR1)
             {
-                GLib.debug ("received display is ready");
+                Log.debug ("received display is ready");
                 s_IsReady = true;
             }
         }
@@ -58,7 +58,7 @@ namespace XSAA
         // methods
         public Display(string inCmd, int inNumber) throws DisplayError
         {
-            GLib.debug ("create display %i: %s", inNumber, inCmd);
+            Log.debug ("create display %i: %s", inNumber, inCmd);
             m_Number = inNumber;
 
             if (m_SigHandled == 0)
@@ -82,7 +82,7 @@ namespace XSAA
 
                     try
                     {
-                        GLib.message ("launch display command: %s", inCmd);
+                        Log.info ("launch display command: %s", inCmd);
                         Process.spawn_async(null, argvp, null,
                                             SpawnFlags.SEARCH_PATH |
                                             SpawnFlags.DO_NOT_REAP_CHILD,
@@ -107,7 +107,7 @@ namespace XSAA
 
         ~Display ()
         {
-            GLib.debug ("destroy display");
+            Log.debug ("destroy display");
 
             kill ();
         }
@@ -115,7 +115,7 @@ namespace XSAA
         private void
         on_child_setup()
         {
-            GLib.debug ("display child setup");
+            Log.debug ("display child setup");
             Os.signal(Os.SIGUSR1, Os.SIG_IGN);
             Os.signal(Os.SIGINT, Os.SIG_IGN);
             Os.signal(Os.SIGTTIN, Os.SIG_IGN);
@@ -125,18 +125,18 @@ namespace XSAA
         private void
         on_m_ChildWatch(GLib.Pid inPid, int inStatus)
         {
-            GLib.debug ("display child watch %lu: %i", inPid, inStatus);
+            Log.debug ("display child watch %lu: %i", inPid, inStatus);
 
             if (m_ChildWatch != 0)
             {
                 if (Process.if_exited(inStatus))
                 {
-                    GLib.message ("display exited : %i", inStatus);
+                    Log.info ("display exited : %i", inStatus);
                     exited();
                 }
                 else if (Process.if_signaled(inStatus))
                 {
-                    GLib.message ("display signaled : %i", inStatus);
+                    Log.info ("display signaled : %i", inStatus);
                     died();
                 }
 
@@ -175,7 +175,7 @@ namespace XSAA
                 ucr_len == sizeof (Os.UCred))
             {
                 m_Pid = ucr.pid;
-                GLib.message ("found running display : %lu", m_Pid);
+                Log.info ("found running display : %lu", m_Pid);
             }
 
             return m_Pid > 0;
@@ -213,14 +213,14 @@ namespace XSAA
 
                 device = "/dev/tty" + vt.to_string();
 
-                GLib.message ("open display device %s", device);
+                Log.info ("open display device %s", device);
                 int fd = Os.open(device, Os.O_RDWR);
                 if (fd > 0)
                 {
                     if (Os.ioctl(fd, Os.KDSETMODE, Os.KD_GRAPHICS) < 0)
-                        GLib.critical ("KDSETMODE KD_GRAPHICS failed !");
+                        Log.critical ("KDSETMODE KD_GRAPHICS failed !");
                     if (Os.ioctl(fd, Os.KDSKBMODE, Os.K_RAW) < 0)
-                        GLib.critical ("KDSETMODE KD_RAW failed !");
+                        Log.critical ("KDSETMODE KD_RAW failed !");
 
                     Os.termios? tty_attr = Os.termios ();
                     Os.ioctl(fd, Os.KDGKBMODE, tty_attr);
@@ -239,7 +239,7 @@ namespace XSAA
             }
             else
             {
-                GLib.critical ("cannot open display :%i", m_Number);
+                Log.critical ("cannot open display :%i", m_Number);
             }
 
             return device;
@@ -252,10 +252,9 @@ namespace XSAA
                 GLib.Source.remove (m_ChildWatch);
             if ((int)m_Pid > 0)
             {
-                GLib.debug ("killing display server %lu", m_Pid);
+                Log.debug ("killing display server %lu", m_Pid);
                 Os.kill((Os.pid_t)m_Pid, Os.SIGTERM);
             }
         }
     }
 }
-

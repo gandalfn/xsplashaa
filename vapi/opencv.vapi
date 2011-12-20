@@ -17,6 +17,10 @@ namespace OpenCV {
 
 	[Compact, CCode (cname = "CvArr", has_type_id = false)]
 	public class Array {
+		[CCode (cname = "cvZero")]
+		public void zero ();
+		[CCode (cname = "cvSum")]
+		public OpenCV.Scalar sum ();
 		[CCode (cname = "cvGetCol")]
 		public OpenCV.Matrix get_col (OpenCV.Matrix submat, int col);
 		[CCode (cname = "cvGetCols")]
@@ -1119,8 +1123,6 @@ namespace OpenCV {
 			[CCode (cname = "cvLoadImage", cheader_filename = "highgui.h")]
 			public Image.load (string filename, OpenCV.IPL.Image.LoadType type = OpenCV.IPL.Image.LoadType.COLOR);
 			
-			[CCode (cname = "cvZero")]
-			public void zero ();
 			[CCode (cname = "cvCloneImage")]
 			public Image clone ();
 			[CCode (cname = "cvInitImageHeader")]
