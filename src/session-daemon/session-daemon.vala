@@ -170,7 +170,7 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                Log.error ("Error on send shutdow to splash");
+                Log.error ("Error on send shutdown to splash");
             }
         }
 
@@ -278,3 +278,4 @@ namespace XSAA
         return 0;
     }
 }
+

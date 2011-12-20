@@ -78,17 +78,20 @@ namespace XSAA.Aixplorer
         get_face_pixbuf (int inShmId)
         {
             Gdk.Pixbuf ret = null;
-            unowned uchar[] src = (uchar[])Os.shmat(inShmId, null, 0);
-
-            if (src != null)
+            if (inShmId >= 0)
             {
-                Cairo.ImageSurface surface = new Cairo.ImageSurface.for_data (src,
-                                                                              Cairo.Format.ARGB32,
-                                                                              ICON_SIZE, ICON_SIZE,
-                                                                              Cairo.Format.ARGB32.stride_for_width (ICON_SIZE));
-                CairoContext ctx = new CairoContext (surface);
-                ret = ctx.to_pixbuf ();
-                Os.shmdt (src);
+                unowned uchar[] src = (uchar[])Os.shmat(inShmId, null, 0);
+
+                if (src != null)
+                {
+                    Cairo.ImageSurface surface = new Cairo.ImageSurface.for_data (src,
+                                                                                  Cairo.Format.ARGB32,
+                                                                                  ICON_SIZE, ICON_SIZE,
+                                                                                  Cairo.Format.ARGB32.stride_for_width (ICON_SIZE));
+                    CairoContext ctx = new CairoContext (surface);
+                    ret = ctx.to_pixbuf ();
+                    Os.shmdt (src);
+                }
             }
 
             return ret;

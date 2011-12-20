@@ -129,9 +129,10 @@ dnl Define directory
 dnl ****************************************************************************
 idbusdir=${datadir}/xsplashaa/dbus
 faceauthdatadir=${datadir}/xsplashaa/face-authentification
+iconsdir=${datadir}/xsplashaa/icons
 AC_SUBST(idbusdir)
 AC_SUBST(faceauthdatadir)
-
+AC_SUBST(iconsdir)
 
 AC_CONFIG_FILES([
     Makefile
@@ -152,6 +153,7 @@ AC_CONFIG_FILES([
     po/Makefile.in
     data/Makefile
     data/xsplashaa.desktop
+    data/icons/Makefile
     data/dbus/Makefile
     data/dbus/fr.supersonicimagine.XSAA.Manager.service
     data/face-authentification/Makefile

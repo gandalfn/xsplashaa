@@ -70,6 +70,7 @@ namespace XSAA
             load_config();
 
             Gdk.Screen screen = Gdk.Screen.get_default();
+            screen.composited_changed.connect (on_composite_changed);
             Gdk.Rectangle geometry;
             screen.get_monitor_geometry(0, out geometry);
 
@@ -158,6 +159,28 @@ namespace XSAA
             else
             {
                 Log.warning ("unable to found %s", Config.PACKAGE_CONFIG_FILE);
+            }
+        }
+
+        private void
+        on_composite_changed ()
+        {
+            if (window != null && window.is_visible () && !window.get_screen ().is_composited ())
+            {
+                Log.debug ("Composite changed and window is visible");
+                Gdk.Display display = Gdk.Display.get_default ();
+                for (int cpt = 0; cpt < display.get_n_screens (); ++cpt)
+                {
+                    Gdk.Screen screen = display.get_screen(cpt);
+                    Gdk.Window root = screen.get_root_window ();
+                    Gdk.property_delete (root, Gdk.Atom.intern ("_XROOTPMAP_ID", true));
+                    Gdk.property_delete (root, Gdk.Atom.intern ("ESETROOT_PMAP_ID", true));
+                }
+                window.hide ();
+                display.flush ();
+                window.show ();
+                window.focus (Gdk.CURRENT_TIME);
+                display.flush ();
             }
         }
 

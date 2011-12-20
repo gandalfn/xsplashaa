@@ -1,4 +1,4 @@
-SUBDIRS = dbus init initramfs pam themes jail-mount.d face-authentification
+SUBDIRS = icons dbus init initramfs pam themes jail-mount.d face-authentification
 
 autostartdir = $(sysconfdir)/xdg/autostart
 

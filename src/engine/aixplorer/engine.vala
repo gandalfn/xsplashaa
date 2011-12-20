@@ -81,6 +81,7 @@ namespace XSAA.Aixplorer
         }
 
         // private
+        private bool                               m_TouchscreenDectected = false;
         private string                             m_Id;
         private int                                m_Layer = -1;
         private unowned Goo.CanvasItem?            m_Root;
@@ -521,42 +522,40 @@ namespace XSAA.Aixplorer
                     break;
 
                 case EventMessage.Type.QUESTION:
-                    unowned Notebook ts_notebook = (Notebook)find ("ts-notebook");
-                    unowned Text question_message = (Text)find ("ts-question-message");
-
-                    if (ts_notebook != null || question_message != null)
+                    if (m_TouchscreenDectected)
                     {
-                        ts_notebook.current_page = 1;
-                        question_message.text = inEvent.args.text;
+                        unowned Notebook ts_notebook = (Notebook)find ("ts-notebook");
+                        unowned Text question_message = (Text)find ("ts-question-message");
+
+                        if (ts_notebook != null || question_message != null)
+                        {
+                            ts_notebook.current_page = 1;
+                            question_message.text = inEvent.args.text;
+                        }
+                    }
+                    else
+                    {
+                        event_notify (new EventMessage.response (EventMessage.Response.NO));
                     }
                     break;
             }
         }
 
-        public void
-        append_child (EngineItem inChild)
+        private void
+        on_screen_size_changed ()
         {
-            if (inChild is Goo.CanvasItemSimple)
-            {
-                childs.insert (inChild.id, inChild);
-                m_Root.add_child ((Goo.CanvasItemSimple)inChild, inChild.layer);
-            }
-        }
-
-        public override void
-        realize ()
-        {
-            base.realize ();
+            Log.debug ("Monitor changed");
 
             unowned Table? main = (Table?)find ("main");
             unowned Table? touchscreen = (Table?)find ("touchscreen");
             if (main != null && touchscreen != null)
             {
-                int width, height;
-                window.get_size (out width, out height);
+                unowned Gdk.Screen screen = window.get_screen ();
+                int width = screen.get_width (), height = screen.get_height ();
 
                 if (height < main.height + touchscreen.height)
                 {
+                    m_TouchscreenDectected = false;
                     touchscreen.visibility = Goo.CanvasItemVisibility.HIDDEN;
                     main.expand = true;
                     main.changed (true);
@@ -567,6 +566,7 @@ namespace XSAA.Aixplorer
                 else
                 {
                     Log.info ("Keep touchscreen");
+                    m_TouchscreenDectected = true;
                     touchscreen.visibility = Goo.CanvasItemVisibility.VISIBLE;
                     main.expand = false;
                     main.changed (true);
@@ -596,6 +596,26 @@ namespace XSAA.Aixplorer
             {
                 GLib.warning ("unable to find main or touchscreen table");
             }
+        }
+
+        public void
+        append_child (EngineItem inChild)
+        {
+            if (inChild is Goo.CanvasItemSimple)
+            {
+                childs.insert (inChild.id, inChild);
+                m_Root.add_child ((Goo.CanvasItemSimple)inChild, inChild.layer);
+            }
+        }
+
+        public override void
+        realize ()
+        {
+            base.realize ();
+
+            unowned Gdk.Screen screen = window.get_screen ();
+            screen.size_changed.connect (on_screen_size_changed);
+            on_screen_size_changed ();
 
             unowned Entry? prompt = (Entry?)find ("prompt");
             unowned Text message = (Text)find ("prompt-message");

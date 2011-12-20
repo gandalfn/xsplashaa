@@ -31,7 +31,7 @@ namespace XSAA
         private string          m_RealName;
         private string          m_FaceIconFilename;
         private Os.key_t        m_FaceIconShmKey;
-        private int             m_FaceIconShmId;
+        private int             m_FaceIconShmId = -1;
         private unowned uchar[] m_FaceIconPixels;
         public uint             m_Frequency;
 
@@ -94,6 +94,9 @@ namespace XSAA
                 }
             }
 
+            if (m_FaceIconFilename == null)
+                m_FaceIconFilename = Config.PACKAGE_ICONS_DIR + "/face.png";
+
             create_face_icon_shm ();
 
             m_Frequency = 0;
@@ -101,7 +104,9 @@ namespace XSAA
 
         ~User ()
         {
+            Log.debug ("Destroy %s", login);
             Os.shmdt (m_FaceIconPixels);
+            Os.shmctl (m_FaceIconShmId, Os.IPC_RMID, null);
         }
 
         private void
@@ -126,9 +131,7 @@ namespace XSAA
             if (face_pixbuf != null)
             {
                 m_FaceIconShmKey = GLib.Quark.from_string (login);
-                m_FaceIconShmId = Os.shmget(m_FaceIconShmKey,
-                                            ICON_SIZE * ICON_SIZE *  4,
-                                            Os.IPC_CREAT | 0666);
+                m_FaceIconShmId = Os.shmget(m_FaceIconShmKey, ICON_SIZE * ICON_SIZE *  4, Os.IPC_CREAT | 0666);
                 m_FaceIconPixels = (uchar[])Os.shmat(face_icon_shm_id, null, 0);
 
                 Cairo.ImageSurface surface = new Cairo.ImageSurface.for_data (m_FaceIconPixels,
@@ -165,13 +168,7 @@ namespace XSAA
             if (m_Frequency < inOther.m_Frequency)
                 return 1;
 
-            if (uid < inOther.uid)
-                return -1;
-
-            if (uid > inOther.uid)
-                return 1;
-
-            return GLib.strcmp (m_RealName, inOther.m_RealName);
+            return (int)(uid - inOther.uid);
         }
     }
 
@@ -220,7 +217,7 @@ namespace XSAA
                 requires (m_Index >= 0)
                 requires (m_Index < m_Users.m_Size)
             {
-                return m_Users.m_Content[m_Index].val;
+                return m_Users.m_pContent[m_Index].val;
             }
         }
 
@@ -228,7 +225,7 @@ namespace XSAA
         private DBus.Connection m_Connection;
         private int             m_Size = 0;
         private int             m_Reserved = 4;
-        private Node*           m_Content;
+        private Node*           m_pContent;
         private string          m_IgnoreUsers = "nobody nobody4 noaccess";
         private string          m_IgnoreShells = "/bin/false /usr/sbin/nologin";
         private int             m_MinimumUid = 1000;
@@ -245,7 +242,7 @@ namespace XSAA
         {
             m_Connection = inConn;
 
-            m_Content = new Node [m_Reserved];
+            m_pContent = GLib.Slice.alloc0 (m_Reserved * sizeof (Node));
 
             load_config ();
 
@@ -291,6 +288,12 @@ namespace XSAA
             Os.endpwent ();
         }
 
+        ~Users ()
+        {
+            if (m_pContent != null)
+                GLib.Slice.free (m_Reserved * sizeof (Node), m_pContent);
+        }
+
         private void
         load_config()
         {
@@ -328,12 +331,12 @@ namespace XSAA
             {
                 while (right >= left)
                 {
-                    int medium = (left + right) / 2;
-                    int res = m_Content[medium].val.compare (user);
+                    int medium = (int)(((uint)left + (uint)right) >> 1);
+                    int res = m_pContent[medium].val.compare (user);
 
                     if (res == 0)
                     {
-                        while (medium < m_Size && m_Content[medium].val.compare (user) == 0)
+                        while (medium < m_Size && m_pContent[medium].val.compare (user) == 0)
                             medium++;
                         return medium;
                     }
@@ -360,8 +363,10 @@ namespace XSAA
             {
                 int oldReserved = m_Reserved;
                 m_Reserved = 2 * m_Reserved;
-                m_Content = GLib.realloc (m_Content, m_Reserved * sizeof (Node));
-                GLib.Memory.set (&m_Content[oldReserved], 0, oldReserved * sizeof (Node));
+                void* o = (void*)m_pContent;
+                m_pContent = GLib.Slice.alloc0 (m_Reserved * sizeof (Node));
+                GLib.Memory.copy (m_pContent, o, oldReserved * sizeof (Node));
+                GLib.Slice.free (oldReserved * sizeof (Node), o);
             }
         }
 
@@ -372,17 +377,19 @@ namespace XSAA
 
             int pos = get_nearest_user (user);
 
+            int num = m_Size;
             m_Size++;
             grow ();
 
             if (pos < m_Size - 1)
-                GLib.Memory.move (&m_Content[pos + 1], &m_Content[pos],
-                                  (m_Size - pos - 1) * sizeof (Node));
+            {
+                GLib.Memory.move (&m_pContent[pos + 1], &m_pContent[pos], (m_Size - pos - 1) * sizeof (Node));
+                GLib.Memory.set (&m_pContent[pos], 0, sizeof (Node));
+            }
 
-            m_Content[pos].val = user;
+            m_pContent[pos].val = user;
 
-            DBus.ObjectPath path = new DBus.ObjectPath ("/fr/supersonicimagine/XSAA/Manager/User/" +
-                                                        pos.to_string());
+            DBus.ObjectPath path = new DBus.ObjectPath ("/fr/supersonicimagine/XSAA/Manager/User/" + num.to_string());
 
             m_Connection.register_object(path, user);
         }
@@ -406,3 +413,4 @@ namespace XSAA
         }
     }
 }
+

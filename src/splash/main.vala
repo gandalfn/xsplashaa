@@ -437,6 +437,8 @@ namespace XSAA
             if (m_Device == null)
                 m_Device = "/dev/tty1";
 
+            m_Display.reload_input_device ();
+
             try
             {
                 if (m_Connection == null)

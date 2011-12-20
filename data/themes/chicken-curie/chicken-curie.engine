@@ -43,45 +43,40 @@
                             <text id="loading-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#7BC4F5"
                                   text="Loading..."/>
-                            <throbber id="loading-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="chicken-curie"/>
+                            <throbber id="loading-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
                         </table>
                         <table id="checking-filesystem" visibility="1" row="1" column="0" x_fill="true">
                             <text id="checking-filesystem-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#7BC4F5"
                                   text="Checking filesystem..."/>
-                            <throbber id="checking-filesystem-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="chicken-curie"/>
+                            <throbber id="checking-filesystem-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
                         </table>
                         <table id="starting" visibility="1" row="2" column="0" x_fill="true">
                             <text id="starting-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#7BC4F5"
                                   text="Starting..."/>
-                            <throbber id="starting-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="chicken-curie"/>
+                            <throbber id="starting-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
                         </table>
                         <table id="checking-device" visibility="1" row="3" column="0" x_fill="true">
                             <text id="checking-device-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#7BC4F5"
                                   text="Checking peripherals..."/>
-                            <throbber id="checking-device-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="chicken-curie"/>
+                            <throbber id="checking-device-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
                         </table>
                         <table id="session" visibility="1" row="4" column="0" x_fill="true">
                             <text id="launch-sesion-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#7BC4F5"
                                   text="Launching session..."/>
-                            <throbber id="launch-sesion-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="chicken-curie"/>
+                            <throbber id="launch-sesion-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
                         </table>
                     </table>
                     <!--prompt table -->
                     <table id="prompt-table" page_num="1" animation="vertical-slide" x_align="0.5" y_align="0.0"
                            row_spacing="12" column_spacing="12">
-                        <notebook id="users-notebook" row="0" column="0" x_align="0.5" y_align="0.5" columns="3"
+                        <notebook id="users-notebook" row="0" column="0" x_align="0.5" y_align="0.5" columns="4"
                                   top_padding="24" bottom_padding="24">
                             <users id="users" page_num="0" animation="horizontal-slide"
-                                   y_fill="true" x_fill="true" x_align="0.5" y_align="0.0"
+                                   y_fill="true" x_align="0.5" y_align="0.0"
                                    height="250" widget_font="Liberation Bold 18"/>
                             <table id="prompt-table" page_num="1" animation="horizontal-slide" x_align="0.5" y_align="0.5"
                                    row_spacing="12" column_spacing="12" homogeneous_rows="true">
@@ -122,8 +117,7 @@
                             <text id="shutdown-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#7BC4F5"
                                   text="shutdown in progress..."/>
-                            <throbber id="shutdown-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="chicken-curie"/>
+                            <throbber id="shutdown-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
                         </table>
                     </table>
                 </notebook>

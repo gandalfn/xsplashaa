@@ -34,6 +34,7 @@ xsplashaa_x11_common() {
 }
 
 xsplashaa_start () {
+    $XSPLASHAA_SESSION_DAEMON
     pidof xsplashaa Xorg > /lib/init/rw/sendsigs.omit.d/xsplashaa
     pidof dbus-daemon > /lib/init/rw/sendsigs.omit.d/xsplashaa-dbus
     $XSPLASHAA_CLIENT --dbus --socket $XSPLASHAA_SOCKET
@@ -51,3 +52,4 @@ xsplashaa_quit () {
 xsplashaaa_set_phase() {
     $XSPLASHAA_CLIENT --phase="$1" --socket $XSPLASHAA_SOCKET
 }
+

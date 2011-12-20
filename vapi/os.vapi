@@ -272,6 +272,9 @@ namespace Os
     public void longjmp(jmp_buf env, int val);
 
     [CCode (cheader_filename = "sys/ipc.h,sys/shm.h")]
+    public int shmctl(int id, int cmd, void* buf);
+
+    [CCode (cheader_filename = "sys/ipc.h,sys/shm.h")]
     public int shmget(key_t key, size_t size, int shmflg);
 
     [CCode (cheader_filename = "sys/ipc.h,sys/sem.h")]
@@ -296,6 +299,9 @@ namespace Os
 
     [CCode (cheader_filename = "sys/ipc.h")]
     public const int IPC_CREAT;
+
+    [CCode (cheader_filename = "sys/ipc.h")]
+    public const int IPC_RMID;
 
     [CCode (cheader_filename = "sys/ipc.h")]
     public const int IPC_EXCL;

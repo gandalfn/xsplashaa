@@ -43,7 +43,7 @@ namespace XSAA
             add_state (new StateServiceCheck (m_Peripherals));
 
             // create check touchscreen state
-            add_state (new StateCheckTouchscreen (m_Peripherals));
+            add_state (new StateCheckTouchscreen (m_Peripherals, inNumber));
 
             // create configure touchscreen state
             add_state (new StateConfigureTouchscreen (m_Peripherals, inNumber));

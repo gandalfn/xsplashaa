@@ -26,36 +26,31 @@
                             <text id="loading-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#DCE7EC"
                                   text="Loading..."/>
-                            <throbber id="loading-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="debian"/>
+                            <throbber id="loading-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
                         </table>
                         <table id="checking-filesystem" visibility="1" row="1" column="0" x_fill="true">
                             <text id="checking-filesystem-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#DCE7EC"
                                   text="Checking filesystem..."/>
-                            <throbber id="checking-filesystem-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="debian"/>
+                            <throbber id="checking-filesystem-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
                         </table>
                         <table id="starting" visibility="1" row="2" column="0" x_fill="true">
                             <text id="starting-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#DCE7EC"
                                   text="Starting..."/>
-                            <throbber id="starting-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="debian"/>
+                            <throbber id="starting-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
                         </table>
                         <table id="checking-device" visibility="1" row="3" column="0" x_fill="true">
                             <text id="checking-device-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#DCE7EC"
                                   text="Checking peripherals..."/>
-                            <throbber id="checking-device-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="debian"/>
+                            <throbber id="checking-device-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
                         </table>
                         <table id="session" visibility="1" row="4" column="0" x_fill="true">
                             <text id="launch-sesion-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#DCE7EC"
                                   text="Launching session..."/>
-                            <throbber id="launch-sesion-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="debian"/>
+                            <throbber id="launch-sesion-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
                         </table>
                     </table>
                     <!--prompt table -->
@@ -104,8 +99,7 @@
                             <text id="shutdown-label" row="0" column="0" x_align="0.0"
                                   font="Liberation Bold 18" fill_color="#DCE7EC"
                                   text="shutdown in progress..."/>
-                            <throbber id="shutdown-throbber" row="0" column="1" x_expand="false" x_align="1.0"
-                                      theme_name="debian"/>
+                            <throbber id="shutdown-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
                         </table>
                     </table>
                 </notebook>

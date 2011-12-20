@@ -8,5 +8,7 @@ namespace Config
         public const string PACKAGE_VERSION;
         public const string PACKAGE_CHROOT_DIR;
         public const string PACKAGE_ENGINE_DIR;
+        public const string PACKAGE_ICONS_DIR;
         public const string VERSION;
 }
+

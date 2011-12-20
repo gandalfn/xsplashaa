@@ -5,9 +5,6 @@ theme_DATA = \
     background.png \
     distrib-logo.png \
     logo.png \
-    throbber-initial.png \
-    throbber-spinner.png \
-    throbber-finish.png \
     restart-press.svg \
     restart-release.svg \
     shutdown-press.svg \

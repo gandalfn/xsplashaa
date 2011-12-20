@@ -55,6 +55,8 @@ namespace XSAA.Aixplorer
         // methods
         construct
         {
+            load_patterns (null);
+
             notify["visibility"].connect (() => {
                 if (visibility <= Goo.CanvasItemVisibility.INVISIBLE)
                 {
@@ -80,20 +82,29 @@ namespace XSAA.Aixplorer
             return new Cairo.Pattern.for_surface (surface);
         }
 
+        private string
+        get_icon_path (string? inName)
+        {
+            if (inName != null)
+                return Config.PACKAGE_DATA_DIR + "/" + inName;
+
+            return Config.PACKAGE_ICONS_DIR;
+        }
+
         private void
-        load_patterns (string inName)
+        load_patterns (string? inName)
         {
             try
             {
-                Gdk.Pixbuf spinner = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + inName + "/throbber-spinner.png");
+                Gdk.Pixbuf spinner = new Gdk.Pixbuf.from_file(get_icon_path (inName) + "/throbber-spinner.png");
 
-                Gdk.Pixbuf initial = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + inName + "/throbber-initial.png");
+                Gdk.Pixbuf initial = new Gdk.Pixbuf.from_file(get_icon_path (inName) + "/throbber-initial.png");
                 m_Initial = pixbuf_to_pattern (initial);
 
-                Gdk.Pixbuf finish = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + inName + "/throbber-finish.png");
+                Gdk.Pixbuf finish = new Gdk.Pixbuf.from_file(get_icon_path (inName) + "/throbber-finish.png");
                 m_Finish = pixbuf_to_pattern (finish);
 
-                Gdk.Pixbuf nok = new Gdk.Pixbuf.from_file(Config.PACKAGE_DATA_DIR + "/" + inName + "/throbber-nok.png");
+                Gdk.Pixbuf nok = new Gdk.Pixbuf.from_file(get_icon_path (inName) + "/throbber-nok.png");
                 m_NOk = pixbuf_to_pattern (nok);
 
                 uint size = initial.get_width() > initial.get_height() ? initial.get_width() : initial.get_height();
@@ -106,9 +117,7 @@ namespace XSAA.Aixplorer
                 {
                     for (uint j = 0; j < spinner.get_width(); j += size, ++cpt)
                     {
-                        Gdk.Pixbuf pixbuf = new Gdk.Pixbuf.subpixbuf(spinner, (int)j,
-                                                                    (int)i, (int)size,
-                                                                    (int)size);
+                        Gdk.Pixbuf pixbuf = new Gdk.Pixbuf.subpixbuf(spinner, (int)j, (int)i, (int)size, (int)size);
                         m_Frames[cpt] = pixbuf_to_pattern (pixbuf);
                     }
                 }
@@ -180,3 +189,4 @@ namespace XSAA.Aixplorer
         }
     }
 }
+
