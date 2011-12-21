@@ -60,7 +60,7 @@ namespace XSAA
         {
             string filename = Config.PACKAGE_DATA_DIR + "/" + inName + "/" + inName + ".engine";
             if (!FileUtils.test(filename, FileTest.EXISTS))
-                throw new EngineLoaderError.NOT_FOUND ("Could not found %s", filename);
+                throw new EngineLoaderError.NOT_FOUND ("Could not find %s", filename);
 
             try
             {
@@ -90,7 +90,7 @@ namespace XSAA
 
                 if (m_Engine == null)
                 {
-                    throw new EngineLoaderError.PARSE ("error on parse %s: could not found engine desscription", filename);
+                    throw new EngineLoaderError.PARSE ("error on parse %s: could not find engine desscription", filename);
                 }
             }
             catch (GLib.Error err)

@@ -317,7 +317,7 @@ namespace XSAA
             }
             else
             {
-                GLib.warning ("unable to found %s", Config.PACKAGE_CONFIG_FILE);
+                GLib.warning ("unable to find %s", Config.PACKAGE_CONFIG_FILE);
             }
         }
 

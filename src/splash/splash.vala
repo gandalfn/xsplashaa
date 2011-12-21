@@ -158,7 +158,7 @@ namespace XSAA
             }
             else
             {
-                Log.warning ("unable to found %s", Config.PACKAGE_CONFIG_FILE);
+                Log.warning ("unable to find %s", Config.PACKAGE_CONFIG_FILE);
             }
         }
 

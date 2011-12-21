@@ -76,7 +76,7 @@ namespace XSAA
 
                 m_Peripherals.allied_panel.panel_changed.disconnect (on_panel_changed);
                 if (panel == null || panel.length == 0)
-                    error ("Unable to found Allied Panel device");
+                    error ("Unable to find Allied Panel device");
                 else
                     base.on_run ();
                 m_IdTimeout = 0;
@@ -92,7 +92,7 @@ namespace XSAA
             {
                 if (m_Peripherals.allied_panel == null)
                 {
-                    error ("Unable to found Allied Panel device");
+                    error ("Unable to find Allied Panel device");
                 }
                 else
                 {
@@ -105,7 +105,7 @@ namespace XSAA
                         // check if bootloader is here
                         if (bootloader == null || bootloader.length == 0)
                         {
-                            error ("Unable to found Allied Panel device");
+                            error ("Unable to find Allied Panel device");
                         }
                         // we found bootloader switch on panel
                         else
@@ -124,7 +124,7 @@ namespace XSAA
             }
             catch (GLib.Error err)
             {
-                error ("Unable to found Allied Panel device");
+                error ("Unable to find Allied Panel device");
             }
         }
     }

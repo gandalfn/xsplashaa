@@ -181,7 +181,7 @@ namespace XSAA
             }
             else
             {
-                Log.warning ("unable to found %s config file", Config.PACKAGE_CONFIG_FILE);
+                Log.warning ("unable to find %s config file", Config.PACKAGE_CONFIG_FILE);
             }
         }
 
