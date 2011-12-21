@@ -162,5 +162,17 @@ namespace XSAA
 
             send(new Message.message (inMessage));
         }
+
+        /**
+         * Send error message
+         */
+        public void
+        error(string inMessage)
+        {
+            Log.debug ("send error %s message", inMessage);
+
+            send(new Message.error (inMessage));
+        }
     }
 }
+

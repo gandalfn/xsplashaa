@@ -33,7 +33,8 @@ namespace XSAA
         PULSE,
         PROGRESS,
         CLOSE_SESSION,
-        MESSAGE
+        MESSAGE,
+        ERROR
     }
 
     /**
@@ -190,5 +191,14 @@ namespace XSAA
         {
             GLib.Object (message_type: MessageType.MESSAGE, data: inMessage);
         }
+
+        /**
+         * Create a new error message
+         */
+        public Message.error (string inMessage)
+        {
+            GLib.Object (message_type: MessageType.ERROR, data: inMessage);
+        }
     }
 }
+

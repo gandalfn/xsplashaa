@@ -134,6 +134,7 @@ namespace XSAA
             m_Socket.pulse.connect(on_start_pulse);
             m_Socket.progress.connect(progress);
             m_Socket.message.connect (message);
+            m_Socket.error.connect (error);
         }
 
         private void

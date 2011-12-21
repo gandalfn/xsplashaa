@@ -41,7 +41,7 @@ namespace XSAA
         }
 
         public SSI.Devices.Module.Touchscreen.Device touchscreen {
-            owned get {
+            get {
                 if (m_Touchscreen == null && m_Service != null)
                 {
                     try
@@ -76,7 +76,7 @@ namespace XSAA
         }
 
         public SSI.Devices.Module.AlliedPanel.DeviceManager allied_panel {
-            owned get {
+            get {
                 if (m_AlliedPanel == null && m_Service != null)
                 {
                     try
@@ -100,7 +100,7 @@ namespace XSAA
         }
 
         public SSI.Devices.Module.AlliedPanel.Bootloader allied_panel_bootloader {
-            owned get {
+            get {
                 if (m_AlliedPanel != null && m_Bootloader == null)
                 {
                     string path = m_AlliedPanel.bootloader;

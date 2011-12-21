@@ -55,6 +55,8 @@ namespace XSAA
         {
             m_Peripherals = inPeripherals;
             m_Number = inNumber;
+
+            load_config ();
         }
 
         private void

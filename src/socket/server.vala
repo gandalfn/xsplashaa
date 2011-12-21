@@ -38,6 +38,7 @@ namespace XSAA
         public signal void close_session();
         public signal void quit();
         public signal void message(string inMessage);
+        public signal void error(string inMessage);
 
         // methods
         /**
@@ -208,6 +209,13 @@ namespace XSAA
                 }
                 break;
 
+                case MessageType.ERROR:
+                {
+                    Log.info ("received error message: %s", inMessage.data);
+                    error(inMessage.data);
+                }
+                break;
+
                 default:
                     Log.warning ("Received an invalid message");
                     break;
@@ -215,3 +223,4 @@ namespace XSAA
         }
     }
 }
+
