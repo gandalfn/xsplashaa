@@ -21,6 +21,13 @@
 
 namespace XSAA.FaceAuthentification
 {
+    public enum VerifyStatus
+    {
+        IMPOSTER,
+        OK,
+        NO_BIOMETRICS
+    }
+
     public class FaceImages
     {
         public OpenCV.IPL.Image[] faces;
@@ -448,5 +455,187 @@ namespace XSAA.FaceAuthentification
                 insideFaceMaceFilter.save (model_directory);
             }
         }
+
+        /**
+         * Adds a set of face images and calls createBiometricModels
+         *
+         * @param inSet Set of IplImage of Faces
+         */
+        public void
+        add_face_set (OpenCV.IPL.Image[] inSet)
+        {
+            string dirNameUnique = create_set_dir ();
+            string dirName = faces_directory + "/" + dirNameUnique;
+
+            for (int i = 0; i < inSet.length; ++i)
+            {
+                string filename = "%s/%d.jpg".printf (dirName, i);
+                inSet[i].save_image (filename);
+            }
+
+            create_biometric_models (dirNameUnique);
+        }
+
+        /**
+         * Removes the Set from $HOME/.pam-face-authentication/faces/$SETNAME/
+         * and its models call createBiometricModels afterwards
+         *
+         * @param inSetName Name of the Set
+         */
+        public void
+        remove_face_set (string inSetName)
+        {
+            try
+            {
+                string dirname = "%s/%s".printf (faces_directory, inSetName);
+
+                GLib.Dir dir = GLib.Dir.open (faces_directory);
+                unowned string file = null;
+
+                while ((file = dir.read_name ()) != null)
+                {
+                    if (file.substring (file.length - 3) == "jpg")
+                    {
+                        GLib.FileUtils.remove (dirname + "/" + file);
+                    }
+                }
+
+                GLib.FileUtils.remove("%s/%s_face_lbp.xml".printf (model_directory, inSetName));
+                GLib.FileUtils.remove("%s/%s_face_mace.xml".printf (model_directory, inSetName));
+                GLib.FileUtils.remove("%s/%s_eye_mace.xml".printf (model_directory, inSetName));
+                GLib.FileUtils.remove("%s/%s_inside_face_mace.xml".printf (model_directory, inSetName));
+                GLib.DirUtils.remove(dirname);
+            }
+            catch (GLib.FileError err)
+            {
+                Log.critical ("Error on remove %s: %s", inSetName, err.message);
+            }
+        }
+
+        /**
+         * VerifyFace - Does the verification of the param image with the current user
+         *
+         * @param inFace face image
+         *
+         * @return status of verification
+         */
+        public VerifyStatus
+        verify_face (OpenCV.IPL.Image? inFace)
+        {
+            VerifyStatus status = VerifyStatus.IMPOSTER;
+
+            if (inFace == null) return status;
+
+            OpenCV.IPL.Image face = new OpenCV.IPL.Image (OpenCV.Size (140, 150), 8, inFace.n_channels);
+            OpenCV.IPL.Image faceGray = new OpenCV.IPL.Image (OpenCV.Size (140, 150), 8, 1);
+
+            int Nx = (int)GLib.Math.floor(faceGray.width / 35);
+            int Ny = (int)GLib.Math.floor(faceGray.height / 30);
+
+            OpenCV.Matrix featureLBPHistMatrix = new OpenCV.Matrix (Nx * Ny * 59, 1, OpenCV.Type.FC64_1);
+            inFace.resize (inFace, OpenCV.IPL.InterpolationType.LINEAR);
+            face.convert_color (faceGray, OpenCV.ColorConvert.BGR2GRAY);
+            feature_lbp_hist (faceGray, featureLBPHistMatrix);
+
+            OpenCV.IPL.Image eye = new OpenCV.IPL.Image  (OpenCV.Size (140, 60), 8, face.n_channels);
+            face.set_roi (OpenCV.Rectangle (0, 0, 140, 60));
+            face.resize (eye, OpenCV.IPL.InterpolationType.LINEAR);
+            face.reset_roi ();
+
+            OpenCV.IPL.Image insideFace = new OpenCV.IPL.Image  (OpenCV.Size (80, 105), 8, face.n_channels);
+            face.set_roi (OpenCV.Rectangle (30, 45, 80, 105));
+            face.resize (insideFace, OpenCV.IPL.InterpolationType.LINEAR);
+            face.reset_roi ();
+
+            Config newConfig = Config.file (config_directory);
+            int nb_files = 0;
+
+            try
+            {
+                GLib.Dir dir = GLib.Dir.open (faces_directory);
+                unowned string file = null;
+                while ((file = dir.read_name ()) != null)
+                {
+                    if (file != "." && file != "..")
+                    {
+                        string lbp = "%s/%s_face_lbp.xml".printf (model_directory, file);
+                        OpenCV.File.Storage fileStorage = new OpenCV.File.Storage (lbp, null, OpenCV.File.Mode.READ);
+                        if (fileStorage == null) continue;
+
+                        unowned OpenCV.Matrix? lbpModel = (OpenCV.Matrix)fileStorage.read_by_name (null, "lbp", null);
+                        unowned OpenCV.Matrix? weights = (OpenCV.Matrix)fileStorage.read_by_name (null, "weights", null);
+                        if (lbpModel == null) continue;
+                        if (weights == null) continue;
+
+                        double lbpThresh = fileStorage.read_real_by_name (null, "thresholdLbp", 8000.0);
+                        double val = lbp_custom_diff (lbpModel, featureLBPHistMatrix, weights);
+                        double step = lbpThresh / 8;
+
+                        double thresholdLBP = lbpThresh;
+                        double percentageModifier = ((0.80 - newConfig.percentage) * 100);
+                        int baseIncrease = (int)GLib.Math.floor (GLib.Math.log10 (lbpThresh)) - 2;
+                        while (baseIncrease > 0)
+                        {
+                            percentageModifier *= 10;
+                            baseIncrease--;
+                        }
+                        thresholdLBP += percentageModifier * 1.2;
+
+                        if (val < (thresholdLBP + step))
+                        {
+                            string facePath = "%s/%s_face_mace.xml".printf (model_directory, file);
+                            fileStorage = new OpenCV.File.Storage (facePath, null, OpenCV.File.Mode.READ);
+                            if (fileStorage == null) continue;
+                            unowned OpenCV.Matrix? maceFilterUser = (OpenCV.Matrix)fileStorage.read_by_name (null, "maceFilter", null);
+                            int PSLR = fileStorage.read_int_by_name (null, "thresholdPSLR", 100);
+                            int valu = peak_to_side_lobe_ratio (maceFilterUser, face, FACE_MACE_SIZE);
+
+                            string eyePath = "%s/%s_eye_mace.xml".printf (model_directory, file);
+                            fileStorage = new OpenCV.File.Storage (eyePath, null, OpenCV.File.Mode.READ);
+                            if (fileStorage == null) continue;
+                            maceFilterUser = (OpenCV.Matrix)fileStorage.read_by_name (null, "maceFilter", null);
+                            PSLR += fileStorage.read_int_by_name (null, "thresholdPSLR", 100);
+                            valu += peak_to_side_lobe_ratio (maceFilterUser, eye, EYE_MACE_SIZE);
+
+                            string insideFacePath = "%s/%s_inside_face_mace.xml".printf (model_directory, file);
+                            fileStorage = new OpenCV.File.Storage (insideFacePath, null, OpenCV.File.Mode.READ);
+                            if (fileStorage == null) continue;
+                            maceFilterUser = (OpenCV.Matrix)fileStorage.read_by_name (null, "maceFilter", null);
+                            PSLR += fileStorage.read_int_by_name (null, "thresholdPSLR", 100);
+                            valu += peak_to_side_lobe_ratio (maceFilterUser, insideFace, INSIDE_FACE_MACE_SIZE);
+
+                            int pcent = (int)(((double)valu / (double)PSLR) * 100);
+                            int lowerPcent = (int)(newConfig.percentage * 100.0);
+                            int upperPcent = (int)((newConfig.percentage + ((1 - newConfig.percentage) / 4)) * 100.0);
+
+                            if (pcent >= upperPcent)
+                            {
+                                status = VerifyStatus.OK;
+                                break;
+                            }
+                            else if (pcent < lowerPcent)
+                            {
+                            }
+                            else
+                            {
+                                double newThres = thresholdLBP + ((double)((double)(pcent - lowerPcent) / (double)(upperPcent - lowerPcent)) * (double)(step));
+                                if (val < newThres)
+                                {
+                                    status = VerifyStatus.OK;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (GLib.FileError err)
+            {
+                status = VerifyStatus.NO_BIOMETRICS;
+            }
+
+            return nb_files > 0 ? status : VerifyStatus.NO_BIOMETRICS;
+        }
     }
 }
+

@@ -183,6 +183,9 @@ namespace OpenCV {
 
 		[CCode (cname = "cvSet2D")]
 		public void set_2d (int inIdx0, int inIdx1, Scalar val);
+		
+		[CCode (cname = "cvSaveImage", instance_pos = 1.1)]
+		public int save_image (string filename, [CCode (array_length = false)]int[]? params = null);
 	}
 
 	[CCode (cname = "int", has_type_id = false, lower_case_cprefix = "CV_", cprefix="CV_")]
@@ -676,9 +679,15 @@ namespace OpenCV {
 			[CCode (cname = "cvOpenFileStorage")]
 			public Storage (string filename, Memory.Storage? memstorage, int flags, string? encoding = null);
 			
+			[CCode (cname = "cvReadByName")]
+			public void* read_by_name (Node? map, string name, AttributeList? attr);
+			
 			[CCode (cname = "cvReadRealByName")]
 			public double read_real_by_name (Node? map, string name, double default = 0.0);
 			
+			[CCode (cname = "cvReadIntByName")]
+			public int read_int_by_name (Node? map, string name, int default = 0);
+
 			[CCode (cname = "cvWriteReal")]
 			public void write_real (string name, double value);
 			
