@@ -52,6 +52,27 @@ namespace XSAA.FaceAuthentification
         public string model_directory { get; private set; default = ""; }
         public string config_directory { get; private set; default = ""; }
 
+        // static methods
+        private static int
+        cmp_double (double? inA, double? inB)
+        {
+            if (inA < inB)
+                return -1;
+            if (inA > inB)
+                return 1;
+            return 0;
+        }
+
+        private static int
+        cmp_int (int? inA, int? inB)
+        {
+            if (inA < inB)
+                return -1;
+            if (inA > inB)
+                return 1;
+            return 0;
+        }
+
         // methods
         /**
          * Create a new verifier object for current user
@@ -368,6 +389,63 @@ namespace XSAA.FaceAuthentification
 
                 string lbpFacePath = "%s/%s_face_lbp.xml".printf (model_directory, temp.name[i]);
                 OpenCV.File.Storage fs = new OpenCV.File.Storage (lbpFacePath, null, OpenCV.File.Mode.WRITE);
+                fs.write ("lbp", featureLBPHistMatrix, OpenCV.File.AttributeList ());
+                fs.write("weights", finalWeights, OpenCV.File.AttributeList ());
+
+                GLib.List<double?> lbpAv = new GLib.List<double?> ();
+
+                for (int index = 0; index < temp.face_images[i].faces.length; ++index)
+                {
+                    OpenCV.Matrix featureLBPHistMatrixTest = new OpenCV.Matrix (Nx * Ny * 59, 1, OpenCV.Type.FC64_1);
+                    OpenCV.IPL.Image imageFace = new OpenCV.IPL.Image (temp.face_images[i].faces[index].get_size (), 8, 1);
+                    temp.face_images[i].faces[index].convert_color (imageFace, OpenCV.ColorConvert.BGR2GRAY);
+
+                    feature_lbp_hist (imageFace, featureLBPHistMatrixTest);
+                    lbpAv.append (lbp_custom_diff (featureLBPHistMatrixTest, featureLBPHistMatrix, finalWeights));
+                }
+                lbpAv.sort (cmp_double);
+                int half = (temp.face_images[i].faces.length / 2) - 1;
+                if (half > 0)
+                {
+                    while (half >= 0)
+                    {
+                        unowned GLib.List? f = lbpAv.first ();
+                        lbpAv.delete_link (f);
+                        --half;
+                    }
+                }
+                fs.write_real ("thresholdLbp", lbpAv.first ().data);
+
+                maceFaceValuesPSLR.sort (cmp_int);
+                maceFaceValuesPCER.sort (cmp_double);
+                maceEyeValuesPSLR.sort (cmp_int);
+                maceEyeValuesPCER.sort (cmp_double);
+                maceInsideFaceValuesPSLR.sort (cmp_int);
+                maceInsideFaceValuesPCER.sort (cmp_double);
+
+                Mace faceMaceFilter = Mace ();
+                faceMaceFilter.threshold_pcer = maceFaceValuesPCER.first ().data;
+                int pslr = maceFaceValuesPSLR.first ().data;
+                faceMaceFilter.threshold_pslr = pslr + (avFace - pslr) / 10;
+                faceMaceFilter.filter = maceFilterFace;
+                faceMaceFilter.mace_filter_name = "%s_face_mace.xml".printf (temp.name[i]);
+                faceMaceFilter.save (model_directory);
+
+                Mace eyeMaceFilter = Mace ();
+                eyeMaceFilter.threshold_pcer = maceEyeValuesPCER.first ().data;
+                pslr = maceEyeValuesPSLR.first ().data;
+                eyeMaceFilter.threshold_pslr = pslr + (avEye - pslr) / 10;
+                eyeMaceFilter.filter = maceFilterEye;
+                eyeMaceFilter.mace_filter_name = "%s_eye_mace.xml".printf (temp.name[i]);
+                eyeMaceFilter.save (model_directory);
+
+                Mace insideFaceMaceFilter = Mace ();
+                insideFaceMaceFilter.threshold_pcer = maceInsideFaceValuesPCER.first().data;
+                pslr = maceInsideFaceValuesPSLR.first ().data;
+                insideFaceMaceFilter.threshold_pslr = pslr + (avInsideFace - pslr) / 10;
+                insideFaceMaceFilter.filter = maceFilterInsideFace;
+                insideFaceMaceFilter.mace_filter_name = "%s_inside_face_mace.xml".printf (temp.name[i]);
+                insideFaceMaceFilter.save (model_directory);
             }
         }
     }

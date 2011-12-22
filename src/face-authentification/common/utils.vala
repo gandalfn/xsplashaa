@@ -46,6 +46,28 @@ namespace XSAA.FaceAuthentification
         }
     }
 
+    internal struct Mace
+    {
+        public double                 threshold_pcer;
+        public int                    threshold_pslr;
+        public string                 mace_filter_name;
+        public unowned OpenCV.Matrix? filter;
+
+        public Mace ()
+        {
+        }
+
+        public void
+        save (string inPath)
+        {
+            string fullpath = "%s/%s".printf (inPath, mace_filter_name);
+            OpenCV.File.Storage fs = new OpenCV.File.Storage (fullpath, null, OpenCV.File.Mode.WRITE);
+            fs.write ("maceFilter", filter, OpenCV.File.AttributeList ());
+            fs.write_int ("thresholdPSLR", threshold_pslr);
+            fs.write_real ("thresholdPCER", threshold_pcer);
+        }
+    }
+
     /**
      * Check for Uniform Pattern
      *
@@ -198,6 +220,53 @@ namespace XSAA.FaceAuthentification
                 }
             }
         }
+    }
+
+    /**
+     * LBP Diff ChiSquar Distance
+     *
+     * @param inModel Model Feature
+     * @param iTest Test Feature
+     * @result inWeight Diff
+     */
+    public double
+    lbp_custom_diff (OpenCV.Matrix inModel, OpenCV.Matrix inTest, OpenCV.Matrix inWeight)
+    {
+        double[,] weights = {
+            { 1  , 1, 3, 1, 1   },
+            { 1  , 2, 3, 2, 1   },
+            { 1  , 2, 2, 2, 1   },
+            { 0.3, 1, 1, 1, 0.3 }
+        };
+
+        for (int i = 0; i < 5; ++i)
+        {
+            for (int j = 0; j < 4; ++j)
+            {
+                OpenCV.Scalar s1 = OpenCV.Scalar.get_2D (inWeight, j, i);
+                weights[j,i] = s1.val[0];
+            }
+        }
+
+        double chiSquare = 0;
+        for (int i = 0; i < 5; ++i)
+        {
+            for (int j = 0; j < 4; ++j)
+            {
+                for (int k = 0; k < 59; ++k)
+                {
+                    OpenCV.Scalar s1 = OpenCV.Scalar.get_2D (inModel, i * 4 * 59 + j * 59 + k, 0);
+                    OpenCV.Scalar s2 = OpenCV.Scalar.get_2D (inTest, i * 4 * 59 + j * 59 + k, 0);
+                    double hist1 = s1.val[0];
+                    double hist2 = s2.val[0];
+
+                    if ((hist1 + hist2) != 0)
+                        chiSquare += (weights[j,i] * (GLib.Math.pow (hist1 - hist2, 2) / (hist1 + hist2)));
+                }
+            }
+        }
+
+        return chiSquare;
     }
 
     /**

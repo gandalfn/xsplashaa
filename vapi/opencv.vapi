@@ -681,12 +681,24 @@ namespace OpenCV {
 			
 			[CCode (cname = "cvWriteReal")]
 			public void write_real (string name, double value);
+			
+			[CCode (cname = "cvWriteInt")]
+			public void write_int (string name, int value);
+			
+			[CCode (cname = "cvWrite")]
+			public void write (string name, void* value, AttributeList attr);
 		}
 		
 		[Compact, CCode (cname = "CvFileNode")]
 		public class Node {
 		}
 		
+		[SimpleType, CCode (cname = "CvAttrList")]
+		public struct AttributeList {
+			[CCode (cname = "cvAttrList")]
+			public AttributeList ([CCode (array_length = false, array_null_terminated = false)]string[]? attr = null, AttributeList? next = null);
+		}
+
 		[CCode (cname = "int", has_type_id = false, cprefix = "CV_STORAGE_")]
 		public enum Mode {
 			READ,
