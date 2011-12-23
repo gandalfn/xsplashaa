@@ -677,4 +677,62 @@ namespace XSAA.FaceAuthentification
         OpenCV.Scalar sca = OpenCV.Scalar.get_2D (image_Re, inSizeOfImage, inSizeOfImage);
         return (int)GLib.Math.floor ((sca.val[0] - val) / std2);
     }
+
+    /**
+     * Computes Center of Mass of Image in a Particular Direction
+     *
+     * @param inSrc Source Image
+     * @param inFlagXY  direction, 0 -X , 1 -Y
+     *
+     * @return Co-ordinate
+     */
+    public double
+    center_of_mass(OpenCV.IPL.Image inSrc, bool inFlagXY)
+    {
+        OpenCV.PixelPosition8u? pos_src = (OpenCV.PixelPosition8u?)GLib.malloc (sizeof (OpenCV.PixelPosition8u));
+        OpenCV.PixelPosition8u.init_pixel (pos_src, inSrc.image_data, inSrc.width_step, inSrc.get_size (), 0, 0, inSrc.origin);
+
+        int to1;
+        int to2;
+        if (!inFlagXY)
+        {
+            to1 = inSrc.width;
+            to2 = inSrc.height;
+        }
+        else
+        {
+            to1 = inSrc.height;
+            to2 = inSrc.width;
+        }
+
+        uchar* ptr_src;
+        uchar Intensity;
+        double sumPixels[400];
+        double totalX2=0;
+        double totalX1=0;
+        double totalX0=0;
+        for (int x = 0; x < to1; ++x)
+        {
+            sumPixels[x] = 0;
+            for (int y = 0; y < to2; ++y)
+            {
+                if (!inFlagXY)
+                    ptr_src = pos_src.move_to (x, y, 1);
+                else
+                    ptr_src = pos_src.move_to (y, x, 1);
+
+                Intensity = ptr_src[0];
+
+                if (Intensity < 140 || Intensity > 200)
+                    sumPixels[x] += 255 - Intensity;
+
+            }
+
+
+            totalX2 += (sumPixels[x] * (x + 1));
+            totalX1 += (sumPixels[x]);
+        }
+        totalX0 = totalX2 / totalX1;
+        return totalX0;
+    }
 }

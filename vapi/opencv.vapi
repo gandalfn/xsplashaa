@@ -523,7 +523,7 @@ namespace OpenCV {
 	[Compact, CCode (cname = "CvHaarClassifierCascade", has_free_function = false)]
 	public class HaarClassifierCascade {
 		[CCode (cname = "cvLoad", type = "void*")]
-		public static unowned HaarClassifierCascade? load (string filename, OpenCV.Memory.Storage storage, string? name = null, out string? real_name = null);
+		public static unowned HaarClassifierCascade? load (string filename, OpenCV.Memory.Storage? storage, string? name = null, out string? real_name = null);
 
 		[CCode (cname = "cvHaarDetectObjects", instance_pos = 1.9)]
 		public unowned OpenCV.Sequence<OpenCV.Rectangle?> detect_objects (OpenCV.Array image, OpenCV.Memory.Storage storage, double scale_factor = 1.0, int min_neighbors = 3, OpenCV.HaarClassifierCascade.Flags flags = 0, OpenCV.Size min_size = OpenCV.Size (0, 0));
@@ -762,6 +762,23 @@ namespace OpenCV {
 		public static void* alloc ();
 		[CCode (cname = "cvFree")]
 		public static void free (void* ptr);
+	}
+	
+	[SimpleType, CCode (cname = "CvPixelPosition8u", has_type_id = false)]
+	public struct PixelPosition8u {
+		public uchar*  currline;
+    		public uchar*  topline;
+    		public uchar*  bottomline;
+    		public int     x;
+    		public int     width;
+    		public int     height;
+    		public int     step;
+   	 	public int     step_arr[3];
+
+		[CCode (cname = "CV_INIT_PIXEL_POS")]
+		public static PixelPosition8u init_pixel (PixelPosition8u pixel, uchar* origin, int step, OpenCV.Size roi, int x, int y, int orientation);
+		[CCode (cname = "CV_MOVE_TO")]
+		public uchar* move_to (int x, int y, int flag);
 	}
 
 	[SimpleType, CCode (cname = "CvPoint", has_type_id = false)]

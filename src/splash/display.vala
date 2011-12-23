@@ -263,7 +263,7 @@ namespace XSAA
             if ((int)m_Pid > 0)
             {
                 Log.debug ("Reload input devices");
-                Os.kill((Os.pid_t)m_Pid, Os.SIGUSR2);
+                //Os.kill((Os.pid_t)m_Pid, Os.SIGUSR2);
             }
         }
     }

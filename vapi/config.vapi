@@ -9,6 +9,6 @@ namespace Config
         public const string PACKAGE_CHROOT_DIR;
         public const string PACKAGE_ENGINE_DIR;
         public const string PACKAGE_ICONS_DIR;
+        public const string PACKAGE_FACEAUTH_DATA_DIR;
         public const string VERSION;
 }
-

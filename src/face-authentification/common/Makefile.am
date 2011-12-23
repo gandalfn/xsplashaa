@@ -48,6 +48,8 @@ libxsaa_face_authentification_vala_la_SOURCES = \
     utils.vala \
     webcam.vala \
     tracker.vala \
+    eyes-detector.vala \
+    face-detector.vala \
     verifier.vala
 
 libxsaa_face_authentification_vala_la_LIBADD = \
