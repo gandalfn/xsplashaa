@@ -173,6 +173,17 @@ namespace XSAA
 
             send(new Message.error (inMessage));
         }
+
+        /**
+         * Send fatal error message
+         */
+        public void
+        fatal_error(string inMessage)
+        {
+            Log.debug ("send fatal error %s message", inMessage);
+
+            send(new Message.fatal_error (inMessage));
+        }
     }
 }
 

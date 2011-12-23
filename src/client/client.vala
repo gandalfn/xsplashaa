@@ -33,6 +33,7 @@ namespace XSAA
         { "close-session", 'c', 0, OptionArg.NONE, ref sCloseSession, "Close session", null },
         { "message", 0, 0, OptionArg.STRING, ref sMessage, null, "Message" },
         { "error", 0, 0, OptionArg.STRING, ref sError, null, "Error message" },
+        { "fatal-error", 0, 0, OptionArg.STRING, ref sFatalError, null, "Fatal error message" },
         { "socket", 0, 0, OptionArg.STRING, ref sSocketName, null, "SOCKET" },
         { null }
     };
@@ -47,6 +48,7 @@ namespace XSAA
     static int    sProgress = 0;
     static string sMessage = null;
     static string sError = null;
+    static string sFatalError = null;
     static string sSocketName;
 
     static int
@@ -98,10 +100,18 @@ namespace XSAA
             client.message (sMessage.substring (0, int.min (sMessage.length, 1000)).replace ("|", "-"));
         else if (sError != null)
             client.error (sError.substring (0, int.min (sError.length, 1000)).replace ("|", "-"));
+        else if (sFatalError != null)
+            client.fatal_error (sFatalError.substring (0, int.min (sFatalError.length, 1000)).replace ("|", "-"));
         else
             return -1;
 
         return 0;
     }
+}
+
+static int
+main (string[] inArgs)
+{
+
 }
 

@@ -47,6 +47,8 @@ namespace XSAA
         private DBus.Connection m_Connection = null;
         private XSAA.Manager    m_Manager = null;
 
+        private uint                  m_FatalErrorShutdownId = 0;
+
         private bool                  m_Check = true;
         private StateCheckPeripherals m_CheckPeripherals = null;
         private uint                  m_CheckShutdownId = 0;
@@ -95,6 +97,7 @@ namespace XSAA
                 m_Socket.session.connect (on_session_ready);
                 m_Socket.close_session.connect (on_init_shutdown);
                 m_Socket.quit.connect (on_quit);
+                m_Socket.fatal_error.connect (on_fatal_error);
             }
             catch (GLib.Error err)
             {
@@ -131,6 +134,7 @@ namespace XSAA
                 m_Socket.session.connect (on_session_ready);
                 m_Socket.close_session.connect (on_init_shutdown);
                 m_Socket.quit.connect (on_quit);
+                m_Socket.fatal_error.connect (on_fatal_error);
             }
             catch (GLib.Error err)
             {
@@ -273,6 +277,36 @@ namespace XSAA
             }
 
             return ret;
+        }
+
+        private void
+        on_fatal_error (string inMessage)
+        {
+            if (m_FatalErrorShutdownId == 0)
+            {
+                int nb_seconds = 60;
+                string msg = "%s\nThe system will be automatically shutdown in %i seconds".printf (inMessage, nb_seconds);
+                m_Splash.error (msg);
+                m_FatalErrorShutdownId = GLib.Timeout.add_seconds (1, () => {
+                    if (m_FatalErrorShutdownId != 0)
+                    {
+                        nb_seconds--;
+                        if (nb_seconds > 0)
+                        {
+                            string m = "%s\nThe system will be automatically shutdown in %i seconds".printf (inMessage, nb_seconds);
+                            m_Splash.error (m);
+                        }
+                        else
+                        {
+                            m_FatalErrorShutdownId = 0;
+                            m_Splash.error ("");
+                            //on_shutdown_request ();
+                        }
+                    }
+
+                    return m_FatalErrorShutdownId != 0;
+                });
+            }
         }
 
         private bool
@@ -796,7 +830,7 @@ namespace XSAA
     static int
     main (string[] args)
     {
-        Log.set_default_logger (new XSAA.Log.KMsg (XSAA.Log.Level.DEBUG, "xsplashaa"));
+        Log.set_default_logger (new XSAA.Log.Stderr (XSAA.Log.Level.DEBUG, "xsplashaa"));
 
         Log.debug ("starting");
 

@@ -526,7 +526,7 @@ namespace OpenCV {
 		public static unowned HaarClassifierCascade? load (string filename, OpenCV.Memory.Storage? storage, string? name = null, out string? real_name = null);
 
 		[CCode (cname = "cvHaarDetectObjects", instance_pos = 1.9)]
-		public unowned OpenCV.Sequence<OpenCV.Rectangle?> detect_objects (OpenCV.Array image, OpenCV.Memory.Storage storage, double scale_factor = 1.0, int min_neighbors = 3, OpenCV.HaarClassifierCascade.Flags flags = 0, OpenCV.Size min_size = OpenCV.Size (0, 0));
+		public unowned OpenCV.Sequence<OpenCV.Rectangle?> detect_objects (OpenCV.Array image, OpenCV.Memory.Storage storage, double scale_factor = 1.0, int min_neighbors = 3, OpenCV.HaarClassifierCascade.Flags flags = 0, OpenCV.Size min_size = OpenCV.Size (0, 0), OpenCV.Size max_size = OpenCV.Size (0, 0));
 		[CCode (cname = "cvSetImagesForHaarClassifierCascade")]
 		public void set_images (OpenCV.Array sum, OpenCV.Array sqsum, OpenCV.Array tilted_sum, double scale);
 		[CCode (cname = "cvRunHaarClassifierCascade")]

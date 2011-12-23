@@ -34,7 +34,8 @@ namespace XSAA
         PROGRESS,
         CLOSE_SESSION,
         MESSAGE,
-        ERROR
+        ERROR,
+        FATAL_ERROR
     }
 
     /**
@@ -198,6 +199,14 @@ namespace XSAA
         public Message.error (string inMessage)
         {
             GLib.Object (message_type: MessageType.ERROR, data: inMessage);
+        }
+
+        /**
+         * Create a new fatal error message
+         */
+        public Message.fatal_error (string inMessage)
+        {
+            GLib.Object (message_type: MessageType.FATAL_ERROR, data: inMessage);
         }
     }
 }

@@ -39,6 +39,7 @@ namespace XSAA
         public signal void quit();
         public signal void message(string inMessage);
         public signal void error(string inMessage);
+        public signal void fatal_error(string inMessage);
 
         // methods
         /**
@@ -213,6 +214,13 @@ namespace XSAA
                 {
                     Log.info ("received error message: %s", inMessage.data);
                     error(inMessage.data);
+                }
+                break;
+
+                case MessageType.FATAL_ERROR:
+                {
+                    Log.info ("received fatal error message: %s", inMessage.data);
+                    fatal_error(inMessage.data);
                 }
                 break;
 
