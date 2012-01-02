@@ -38,6 +38,9 @@ libxsaa_face_authentification_vala_la_CFLAGS = \
     $(XSPLASHAA_FACE_AUTHENTIFICATION_CFLAGS)
 
 libxsaa_face_authentification_vala_la_VALAFLAGS = \
+    --header=face-authentification-vala.h \
+    --library=xsaa-face-authentification-vala \
+    --vapi=xsaa-face-authentification-vala.vapi \
     --pkg=gobject-2.0 \
     --pkg=pam \
     --pkg=opencv \
@@ -50,6 +53,7 @@ libxsaa_face_authentification_vala_la_SOURCES = \
     tracker.vala \
     eyes-detector.vala \
     face-detector.vala \
+    detector.vala \
     verifier.vala
 
 libxsaa_face_authentification_vala_la_LIBADD = \
@@ -60,7 +64,9 @@ VALAFILES = \
 
 CLEANFILES = \
     $(VALAFILES:.vala=.c) \
-    libxsaa_face_authentification_vala_la_vala.stamp
+    libxsaa_face_authentification_vala_la_vala.stamp \
+    xsaa-face-authentification-vala.vapi \
+    face-authentification-vala.h
 
 EXTRA_DIST = \
     xsaa-face-authentification.vapi

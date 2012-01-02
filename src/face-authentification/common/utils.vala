@@ -735,4 +735,23 @@ namespace XSAA.FaceAuthentification
         totalX0 = totalX2 / totalX1;
         return totalX0;
     }
+
+    /**
+     * Rotates an Image By an Angle
+     *
+     * @param inAngle Angle at which Point should be turned
+     * @param inCentreX Pivot Center X Co-ordinate
+     * @param inCentreY Pivot Center Y Co-ordinate
+     * @param inImg Source Image
+     * @param inDstImg Destination Image
+     */
+    public void
+    rotate(double inAngle, float inCentreX, float inCentreY, OpenCV.IPL.Image inImg, OpenCV.IPL.Image inDstImg)
+    {
+        OpenCV.Matrix translate = new OpenCV.Matrix (2, 3, OpenCV.Type.FC32_1);
+        OpenCV.Point2D32f centre = OpenCV.Point2D32f (inCentreX, inCentreY);
+
+        centre.rotation_matrix (inAngle, 1.0, translate);
+        inImg.warp_affine (inDstImg, translate, OpenCV.INTER_LINEAR + OpenCV.WARP_FILL_OUTLIERS, OpenCV.Scalar.all (0));
+    }
 }
