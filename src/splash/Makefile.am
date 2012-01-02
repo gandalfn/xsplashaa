@@ -1,6 +1,7 @@
 XSPLASHAA_VAPI_DEPS = \
     $(top_builddir)/src/log/xsaa-log.vapi \
     $(top_builddir)/src/xml/xsaa-xml.vapi \
+    $(top_builddir)/src/input/xsaa-input.vapi \
     $(top_builddir)/src/socket/xsaa-socket.vapi \
     $(top_builddir)/src/graphics/xsaa-graphics.vapi \
     $(top_builddir)/src/timeline/xsaa-timeline.vapi \

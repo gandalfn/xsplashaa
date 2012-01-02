@@ -38,6 +38,7 @@ namespace XSAA
         private int            m_Fd = 0;
         private Os.SockAddrUn  m_SAddr;
         private GLib.IOChannel m_Channel;
+        private uint           m_IdWatch;
 
         // accessors
         /**
@@ -95,7 +96,7 @@ namespace XSAA
                                              inSocketName);
             }
 
-            if (Os.setsockopt(m_Fd, Os.SOL_SOCKET, Os.SO_REUSEADDR, out state, sizeof(int)) != 0)
+            if (Os.setsockopt(m_Fd, Os.SOL_SOCKET, Os.SO_REUSEADDR, ref state, sizeof(int)) != 0)
             {
                 throw new SocketError.CREATE("error on setsockopt socket %s",
                                              inSocketName);
@@ -110,9 +111,12 @@ namespace XSAA
                 m_Channel = new IOChannel.unix_new(m_Fd);
                 m_Channel.set_encoding(null);
                 m_Channel.set_buffered(false);
-                m_Channel.add_watch(IOCondition.IN, () => {
-                    in ();
-                    return true;
+                m_IdWatch = m_Channel.add_watch(IOCondition.IN, () => {
+                    if (m_IdWatch != 0)
+                    {
+                        in ();
+                    }
+                    return m_IdWatch != 0;
                 });
             }
             catch (GLib.Error err)
@@ -124,6 +128,8 @@ namespace XSAA
 
         ~Socket()
         {
+            if (m_IdWatch != 0) GLib.Source.remove (m_IdWatch);
+            m_IdWatch = 0;
             if (m_Fd > 0) Os.close(m_Fd);
         }
 
@@ -172,4 +178,3 @@ namespace XSAA
         }
     }
 }
-

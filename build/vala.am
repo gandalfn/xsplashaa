@@ -9,6 +9,7 @@ VALAFLAGS = \
     --thread \
     --vapidir=${top_srcdir}/vapi \
     --pkg=config \
+    --pkg=posix \
     --pkg=os \
     $(addprefix --pkg=, $(notdir $(basename $(XSPLASHAA_VAPI_DEPS)))) \
     $(addprefix --vapidir=, $(dir $(XSPLASHAA_VAPI_DEPS)))

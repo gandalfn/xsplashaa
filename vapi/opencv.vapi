@@ -186,6 +186,8 @@ namespace OpenCV {
 		
 		[CCode (cname = "cvSaveImage", instance_pos = 1.1)]
 		public int save_image (string filename, [CCode (array_length = false)]int[]? params = null);
+		[CCode (cname = "cvWarpAffine")]
+		public void warp_affine (OpenCV.Array dst, OpenCV.Matrix mapMatrix, int flags, OpenCV.Scalar fillScalar);
 	}
 
 	[CCode (cname = "int", has_type_id = false, lower_case_cprefix = "CV_", cprefix="CV_")]
@@ -795,7 +797,7 @@ namespace OpenCV {
 		public int y;
 	}
 
-	[CCode (cname = "CvPoint2D32f", has_type_id = false)]
+	[SimpleType, CCode (cname = "CvPoint2D32f", has_type_id = false)]
 	public struct Point2D32f {
 		public float x;
 		public float y;
@@ -807,6 +809,9 @@ namespace OpenCV {
 
 		[CCode (cname = "cvPointFrom32f")]
 		public Point to_point (OpenCV.Point2D32f point);
+
+		[CCode (cname = "cv2DRotationMatrix")]
+		public OpenCV.Matrix rotation_matrix (double angle, double scale, OpenCV.Matrix mapMatrix);
 	}
 
 	[CCode (cname = "CvPoint2D32f", has_type_id = false)]
@@ -1297,4 +1302,8 @@ namespace OpenCV {
 	public const int DXT_INV_SCALE;
 	[CCode (cname = "CV_LU")]
 	public const int LU;
+	[CCode (cname = "CV_INTER_LINEAR")]
+	public const int INTER_LINEAR;
+	[CCode (cname = "CV_WARP_FILL_OUTLIERS")]
+	public const int WARP_FILL_OUTLIERS;
 }

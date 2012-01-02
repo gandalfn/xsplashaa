@@ -45,7 +45,8 @@ namespace XSAA
         private Splash          m_Splash;
         private Display         m_Display;
         private DBus.Connection m_Connection = null;
-        private XSAA.Manager    m_Manager = null;
+        private Manager         m_Manager = null;
+        private Input.Event     m_Event = null;
 
         private uint                  m_FatalErrorShutdownId = 0;
 
@@ -98,6 +99,12 @@ namespace XSAA
                 m_Socket.close_session.connect (on_init_shutdown);
                 m_Socket.quit.connect (on_quit);
                 m_Socket.fatal_error.connect (on_fatal_error);
+
+                Input.EventWatch watchs[2];
+                watchs[0] = Input.EventWatch.POWER_BUTTON;
+                watchs[1] = Input.EventWatch.F12_BUTTON;
+                m_Event = new Input.Event (watchs);
+                m_Event.event.connect (on_input_event);
             }
             catch (GLib.Error err)
             {
@@ -190,6 +197,29 @@ namespace XSAA
         }
 
         private void
+        on_input_event (Input.EventWatch inWatch, uint inValue)
+        {
+            switch (inWatch)
+            {
+                case Input.EventWatch.POWER_BUTTON:
+                    if (m_Session == null)
+                    {
+                        on_shutdown_request ();
+                    }
+                    break;
+
+                case Input.EventWatch.F12_BUTTON:
+                    if (m_CheckShutdownId != 0)
+                    {
+                        GLib.Source.remove (m_CheckShutdownId);
+                        m_CheckShutdownId = 0;
+                        m_CheckPeripherals.resume_after_error ();
+                    }
+                    break;
+            }
+        }
+
+        private void
         on_check_peripherals_message (string inMessage)
         {
             m_Splash.message (inMessage);
@@ -266,7 +296,7 @@ namespace XSAA
                         {
                             m_CheckShutdownId = 0;
                             m_Splash.error ("");
-                            //on_shutdown_request ();
+                            on_shutdown_request ();
                         }
                     }
 
@@ -300,7 +330,7 @@ namespace XSAA
                         {
                             m_FatalErrorShutdownId = 0;
                             m_Splash.error ("");
-                            //on_shutdown_request ();
+                            on_shutdown_request ();
                         }
                     }
 
@@ -353,19 +383,6 @@ namespace XSAA
             m_Splash.restart.connect (on_restart_request);
             m_Splash.shutdown.connect (on_shutdown_request);
             m_Splash.question_response.connect (on_question_response);
-            m_Splash.add_events (Gdk.EventMask.KEY_PRESS_MASK);
-            m_Splash.key_press_event.connect ((e) => {
-                if (m_CheckShutdownId != 0)
-                {
-                    if (e.keyval == 0xffc9)
-                    {
-                        GLib.Source.remove (m_CheckShutdownId);
-                        m_CheckShutdownId = 0;
-                        m_CheckPeripherals.resume_after_error ();
-                    }
-                }
-                return false;
-            });
             m_Splash.show ();
             m_Splash.window.focus (Gdk.CURRENT_TIME);
             s_Shutdown |= GLib.FileUtils.test (SHUTDOWN_FILENAME, GLib.FileTest.EXISTS);
@@ -594,15 +611,22 @@ namespace XSAA
         {
             Log.debug ("restart request");
 
-            try
+            if (m_Manager != null)
             {
-                m_Manager.reboot();
-                m_Manager = null;
-                m_Connection = null;
+                try
+                {
+                    m_Manager.reboot();
+                    m_Manager = null;
+                    m_Connection = null;
+                }
+                catch (GLib.Error err)
+                {
+                    Log.critical ("error on launch restart: %s", err.message);
+                }
             }
-            catch (GLib.Error err)
+            else
             {
-                Log.critical ("error on launch restart: %s", err.message);
+                Os.reboot (Os.RebootCommands.AUTOBOOT);
             }
             m_Splash.show_shutdown();
         }
@@ -612,15 +636,22 @@ namespace XSAA
         {
             Log.debug ("shutdown request");
 
-            try
+            if (m_Manager != null)
             {
-                m_Manager.halt();
-                m_Manager = null;
-                m_Connection = null;
+                try
+                {
+                    m_Manager.halt();
+                    m_Manager = null;
+                    m_Connection = null;
+                }
+                catch (GLib.Error err)
+                {
+                    Log.critical ("error on launch shutdown: %s", err.message);
+                }
             }
-            catch (GLib.Error err)
+            else
             {
-                Log.critical ("error on launch shutdown: %s", err.message);
+                Os.reboot (Os.RebootCommands.POWER_OFF);
             }
             m_Splash.show_shutdown();
         }
@@ -950,4 +981,3 @@ namespace XSAA
         return 0;
      }
 }
-

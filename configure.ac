@@ -139,6 +139,8 @@ AC_CONFIG_FILES([
     src/Makefile
     src/log/Makefile
     src/socket/Makefile
+    src/netlink/Makefile
+    src/input/Makefile
     src/xml/Makefile
     src/client/Makefile
     src/graphics/Makefile

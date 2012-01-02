@@ -10,6 +10,12 @@ namespace Os
     [CCode (cheader_filename = "sys/socket.h")]
     public const int SOL_SOCKET;
 
+    [CCode (cheader_filename = "asm/types.h,sys/socket.h,linux/netlink.h")]
+    public const int SO_SNDBUF;
+
+    [CCode (cheader_filename = "sys/socket.h")]
+    public const int SO_RCVBUF;
+
     [CCode (cheader_filename = "sys/socket.h")]
     public const int SO_REUSEADDR;
 
@@ -32,11 +38,64 @@ namespace Os
     [CCode (cheader_filename = "fcntl.h")]
     public const int FD_CLOEXEC;
 
+    [CCode (cheader_filename = "sys/types.h,sys/socket.h")]
+    public size_t recvmsg(int sockfd, MsgHdr msg, int flags);
+
+    [CCode (cheader_filename = "sys/types.h,sys/socket.h")]
+    public size_t sendmsg(int sockfd, MsgHdr msg, int flags);
+
     [CCode (cheader_filename = "sys/socket.h", sentinel = "")]
     public int getsockopt(int fd, int level, int optname, ...);
 
     [CCode (cheader_filename = "sys/socket.h", sentinel = "")]
+    public int getsockname(int fd, ...);
+
+    [CCode (cheader_filename = "sys/socket.h", sentinel = "")]
     public int setsockopt(int fd, int level, int optname, ...);
+
+    [CCode (cheader_filename = "linux/netlink.h")]
+    public uint32 NLMSG_ALIGN (uint32 len);
+
+    [CCode (cheader_filename = "linux/netlink.h")]
+    public uint32 RTA_ALIGN (uint32 len);
+
+    [CCode (cheader_filename = "linux/rtnetlink.h")]
+    public int RTA_PAYLOAD (void* rta);
+
+    [CCode (cname = "struct sockaddr_nl", has_type_id = false, cheader_filename = "sys/socket.h,linux/netlink.h", destroy_function = "")]
+    public struct SockAddrNl : SockAddr {
+        public int nl_family;
+        public ushort nl_pad;
+        public uint32 nl_pid;
+        public uint32 nl_groups;
+    }
+
+    [CCode (cname = "struct msghdr", has_type_id = false, cheader_filename = "sys/socket.h", destroy_function = "")]
+    public struct MsgHdr
+    {
+        public void*                     msg_name;
+        public Posix.socklen_t           msg_namelen;
+
+        [CCode (array_length_cname = "msg_iovlen")]
+        public unowned Posix.iovector[]? msg_iov;
+
+        public void*                     msg_control;
+        public size_t                    msg_controllen;
+        public int                       msg_flags;
+    }
+
+    [CCode (cname = "struct nlmsghdr", has_copy_function = false, has_type_id = false, cheader_filename = "linux/netlink.h", destroy_function = "")]
+    public struct NlMsgHdr
+    {
+        public uint32 nlmsg_len;
+        public uint16 nlmsg_type;
+        public uint16 nlmsg_flags;
+        public uint32 nlmsg_seq;
+        public uint32 nlmsg_pid;
+    }
+
+    [CCode (cheader_filename = "linux/netlink.h")]
+    public void* NLMSG_DATA (NlMsgHdr nlh);
 
     [CCode (cheader_filename = "syslog.h")]
     public const int LOG_PID;
@@ -717,5 +776,16 @@ namespace Os
     public int nice (int inc);
     [CCode (cheader_filename = "sys/wait.h")]
     public pid_t wait (out int status);
-}
 
+    [CCode (cprefix = "RB_", has_type_id = false, cheader_filename = "unistd.h,sys/reboot.h")]
+    public enum RebootCommands {
+         AUTOBOOT,
+         HALT_SYSTEM,
+         ENABLE_CAD,
+         DISABLE_CAD,
+         POWER_OFF
+    }
+
+    [CCode (cheader_filename = "unistd.h,sys/reboot.h")]
+    public int reboot (RebootCommands cmd);
+}

@@ -1,9 +1,10 @@
 initramfsmodulesdir = $(datadir)/initramfs-tools/modules.d
 
 initramfsmodules_DATA = \
-    intel \
+    evdev \
     nvidia
 
 EXTRA_DIST = \
-    intel \
+    evdev \
     nvidia
+
