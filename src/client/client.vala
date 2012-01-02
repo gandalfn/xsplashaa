@@ -108,10 +108,3 @@ namespace XSAA
         return 0;
     }
 }
-
-static int
-main (string[] inArgs)
-{
-
-}
-
