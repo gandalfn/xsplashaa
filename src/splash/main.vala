@@ -48,6 +48,9 @@ namespace XSAA
         private Manager         m_Manager = null;
         private Input.Event     m_Event = null;
 
+        private uint                  m_RebootRequestId = 0;
+        private uint                  m_ShutdownRequestId = 0;
+
         private uint                  m_FatalErrorShutdownId = 0;
 
         private bool                  m_Check = true;
@@ -142,6 +145,12 @@ namespace XSAA
                 m_Socket.close_session.connect (on_init_shutdown);
                 m_Socket.quit.connect (on_quit);
                 m_Socket.fatal_error.connect (on_fatal_error);
+
+                Input.EventWatch watchs[2];
+                watchs[0] = Input.EventWatch.POWER_BUTTON;
+                watchs[1] = Input.EventWatch.F12_BUTTON;
+                m_Event = new Input.Event (watchs);
+                m_Event.event.connect (on_input_event);
             }
             catch (GLib.Error err)
             {
@@ -202,14 +211,14 @@ namespace XSAA
             switch (inWatch)
             {
                 case Input.EventWatch.POWER_BUTTON:
-                    if (m_Session == null)
+                    if (m_Session == null && inValue == 1)
                     {
                         on_shutdown_request ();
                     }
                     break;
 
                 case Input.EventWatch.F12_BUTTON:
-                    if (m_CheckShutdownId != 0)
+                    if (m_CheckShutdownId != 0 && inValue == 1)
                     {
                         GLib.Source.remove (m_CheckShutdownId);
                         m_CheckShutdownId = 0;
@@ -609,7 +618,7 @@ namespace XSAA
         private void
         on_restart_request ()
         {
-            Log.debug ("restart request");
+            Log.info ("restart request");
 
             if (m_Manager != null)
             {
@@ -624,9 +633,21 @@ namespace XSAA
                     Log.critical ("error on launch restart: %s", err.message);
                 }
             }
-            else
+            else if (m_RebootRequestId == 0)
             {
-                Os.reboot (Os.RebootCommands.AUTOBOOT);
+                if (m_ShutdownRequestId != 0)
+                {
+                    GLib.Source.remove (m_ShutdownRequestId);
+                    m_ShutdownRequestId = 0;
+                }
+                m_RebootRequestId = GLib.Timeout.add_seconds (3, () => {
+                    if (m_RebootRequestId != 0)
+                    {
+                        Os.reboot (Os.RebootCommands.AUTOBOOT);
+                        m_RebootRequestId = 0;
+                    }
+                    return false;
+                });
             }
             m_Splash.show_shutdown();
         }
@@ -634,7 +655,7 @@ namespace XSAA
         private void
         on_shutdown_request ()
         {
-            Log.debug ("shutdown request");
+            Log.info ("shutdown request");
 
             if (m_Manager != null)
             {
@@ -649,9 +670,21 @@ namespace XSAA
                     Log.critical ("error on launch shutdown: %s", err.message);
                 }
             }
-            else
+            else if (m_ShutdownRequestId == 0)
             {
-                Os.reboot (Os.RebootCommands.POWER_OFF);
+                if (m_RebootRequestId != 0)
+                {
+                    GLib.Source.remove (m_RebootRequestId);
+                    m_RebootRequestId = 0;
+                }
+                m_ShutdownRequestId = GLib.Timeout.add_seconds (3, () => {
+                    if (m_ShutdownRequestId != 0)
+                    {
+                        Os.reboot (Os.RebootCommands.POWER_OFF);
+                        m_ShutdownRequestId = 0;
+                    }
+                    return false;
+                });
             }
             m_Splash.show_shutdown();
         }
@@ -659,7 +692,7 @@ namespace XSAA
         private void
         on_display_exit ()
         {
-            Log.debug ("display exit");
+            Log.info ("display exit");
 
             Gtk.main_quit();
             Os.exit(-1);
@@ -861,7 +894,7 @@ namespace XSAA
     static int
     main (string[] args)
     {
-        Log.set_default_logger (new XSAA.Log.Stderr (XSAA.Log.Level.DEBUG, "xsplashaa"));
+        Log.set_default_logger (new XSAA.Log.KMsg (XSAA.Log.Level.DEBUG, "xsplashaa"));
 
         Log.debug ("starting");
 
@@ -981,3 +1014,4 @@ namespace XSAA
         return 0;
      }
 }
+

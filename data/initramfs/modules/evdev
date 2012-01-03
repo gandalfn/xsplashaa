@@ -1,3 +1,6 @@
-button
 evdev
-
+button
+ehci-hcd
+ohci-hcd
+uhci-hcd
+usbhid
