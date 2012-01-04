@@ -51,11 +51,10 @@ namespace XSAA
         private uint                  m_RebootRequestId = 0;
         private uint                  m_ShutdownRequestId = 0;
 
-        private uint                  m_FatalErrorShutdownId = 0;
+        private bool                  m_PendingError = false;
 
         private bool                  m_Check = true;
         private StateCheckPeripherals m_CheckPeripherals = null;
-        private uint                  m_CheckShutdownId = 0;
         private int                   m_NumStep = 0;
         private EventBoot.Status      m_CheckPeripheralsStatus = EventBoot.Status.FINISHED;
 
@@ -218,10 +217,9 @@ namespace XSAA
                     break;
 
                 case Input.EventWatch.F12_BUTTON:
-                    if (m_CheckShutdownId != 0 && inValue == 1)
+                    if (m_PendingError && inValue == 1)
                     {
-                        GLib.Source.remove (m_CheckShutdownId);
-                        m_CheckShutdownId = 0;
+                        m_PendingError = false;
                         m_CheckPeripherals.resume_after_error ();
                     }
                     break;
@@ -285,33 +283,13 @@ namespace XSAA
         {
             bool ret = false;
 
-            if (m_CheckShutdownId == 0)
+            if (!m_PendingError)
             {
                 m_CheckPeripheralsStatus = EventBoot.Status.ERROR;
 
-                int nb_seconds = 60;
-                string msg = "%s\nThe system will be automatically shutdown in %i seconds\nPress Freeze or F12 button to continue".printf (inMessage, nb_seconds);
+                string msg = "%s\nPress power button to shutdown or\npress Freeze or F12 button to continue".printf (inMessage);
                 m_Splash.error (msg);
-                m_CheckShutdownId = GLib.Timeout.add_seconds (1, () => {
-                    if (m_CheckShutdownId != 0)
-                    {
-                        nb_seconds--;
-                        if (nb_seconds > 0)
-                        {
-                            string m = "%s\nThe system will be automatically shutdown in %i seconds\nPress Freeze or F12 button to continue".printf (inMessage, nb_seconds);
-                            m_Splash.error (m);
-                        }
-                        else
-                        {
-                            m_CheckShutdownId = 0;
-                            m_Splash.error ("");
-                            on_shutdown_request ();
-                        }
-                    }
-
-                    return m_CheckShutdownId != 0;
-                });
-
+                m_PendingError = true;
                 ret = true;
             }
 
@@ -321,31 +299,8 @@ namespace XSAA
         private void
         on_fatal_error (string inMessage)
         {
-            if (m_FatalErrorShutdownId == 0)
-            {
-                int nb_seconds = 60;
-                string msg = "%s\nThe system will be automatically shutdown in %i seconds".printf (inMessage, nb_seconds);
-                m_Splash.error (msg);
-                m_FatalErrorShutdownId = GLib.Timeout.add_seconds (1, () => {
-                    if (m_FatalErrorShutdownId != 0)
-                    {
-                        nb_seconds--;
-                        if (nb_seconds > 0)
-                        {
-                            string m = "%s\nThe system will be automatically shutdown in %i seconds".printf (inMessage, nb_seconds);
-                            m_Splash.error (m);
-                        }
-                        else
-                        {
-                            m_FatalErrorShutdownId = 0;
-                            m_Splash.error ("");
-                            on_shutdown_request ();
-                        }
-                    }
-
-                    return m_FatalErrorShutdownId != 0;
-                });
-            }
+            string msg = "%s\nnPress power button to shutdown".printf (inMessage);
+            m_Splash.error (msg);
         }
 
         private bool
@@ -640,6 +595,10 @@ namespace XSAA
                     GLib.Source.remove (m_ShutdownRequestId);
                     m_ShutdownRequestId = 0;
                 }
+                // stop init process
+                Os.kill (Os.SIGSTOP, 1);
+                // sync disks
+                Os.sync ();
                 m_RebootRequestId = GLib.Timeout.add_seconds (3, () => {
                     if (m_RebootRequestId != 0)
                     {
@@ -677,6 +636,10 @@ namespace XSAA
                     GLib.Source.remove (m_RebootRequestId);
                     m_RebootRequestId = 0;
                 }
+                // stop init process
+                Os.kill (Os.SIGSTOP, 1);
+                // sync disks
+                Os.sync ();
                 m_ShutdownRequestId = GLib.Timeout.add_seconds (3, () => {
                     if (m_ShutdownRequestId != 0)
                     {

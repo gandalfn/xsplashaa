@@ -752,6 +752,9 @@ namespace Os
     [CCode (cheader_filename = "signal.h")]
     public int kill (pid_t pid, int signum);
 
+    [CCode (cheader_filename = "unistd.h")]
+    public void sync ();
+
     [CCode (cheader_filename = "unistd.h,sys/types.h")]
     public int setgid (gid_t gid);
     [CCode (cheader_filename = "unistd.h,sys/types.h")]
@@ -789,3 +792,4 @@ namespace Os
     [CCode (cheader_filename = "unistd.h,sys/reboot.h")]
     public int reboot (RebootCommands cmd);
 }
+
