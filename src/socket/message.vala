@@ -35,6 +35,8 @@ namespace XSAA
         CLOSE_SESSION,
         MESSAGE,
         ERROR,
+        QUESTION,
+        RESPONSE,
         FATAL_ERROR
     }
 
@@ -199,6 +201,22 @@ namespace XSAA
         public Message.error (string inMessage)
         {
             GLib.Object (message_type: MessageType.ERROR, data: inMessage);
+        }
+
+        /**
+         * Create a new question message
+         */
+        public Message.question (string inMessage)
+        {
+            GLib.Object (message_type: MessageType.QUESTION, data: inMessage);
+        }
+
+        /**
+         * Create a new response message
+         */
+        public Message.response (bool inYes)
+        {
+            GLib.Object (message_type: MessageType.RESPONSE, data: inYes.to_string ());
         }
 
         /**

@@ -184,6 +184,35 @@ namespace XSAA
 
             send(new Message.fatal_error (inMessage));
         }
+
+        /**
+         * Send question message and wait for response
+         */
+        public bool
+        question (string inMessage)
+        {
+            bool ret = false;
+
+            Log.debug ("send question %s", inMessage);
+
+            MainLoop loop = new MainLoop(null, false);
+
+            in.connect(() => {
+                Log.debug ("response received");
+
+                Message message = null;
+                if (recv(out message) && message.message_type == MessageType.RESPONSE)
+                {
+                    ret = bool.parse (message.data);
+                    loop.quit ();
+                }
+            });
+
+            send(new Message.question (inMessage));
+            loop.run();
+
+            return ret;
+        }
     }
 }
 

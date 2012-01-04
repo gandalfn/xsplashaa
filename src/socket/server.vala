@@ -39,6 +39,7 @@ namespace XSAA
         public signal void quit();
         public signal void message(string inMessage);
         public signal void error(string inMessage);
+        public signal void question(string inMessage);
         public signal void fatal_error(string inMessage);
 
         // methods
@@ -207,6 +208,13 @@ namespace XSAA
                 {
                     Log.info ("received message message: %s", inMessage.data);
                     message(inMessage.data);
+                }
+                break;
+
+                case MessageType.QUESTION:
+                {
+                    Log.info ("received question message: %s", inMessage.data);
+                    question(inMessage.data);
                 }
                 break;
 
