@@ -198,12 +198,11 @@ namespace XSAA
             MainLoop loop = new MainLoop(null, false);
 
             in.connect(() => {
-                Log.debug ("response received");
-
                 Message message = null;
                 if (recv(out message) && message.message_type == MessageType.RESPONSE)
                 {
                     ret = bool.parse (message.data);
+                    Log.debug ("response received %s", ret.to_string ());
                     loop.quit ();
                 }
             });
@@ -211,6 +210,7 @@ namespace XSAA
             send(new Message.question (inMessage));
             loop.run();
 
+            Log.debug ("question response %s", ret.to_string ());
             return ret;
         }
     }

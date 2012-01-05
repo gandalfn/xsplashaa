@@ -39,7 +39,7 @@ namespace XSAA
         public signal void quit();
         public signal void message(string inMessage);
         public signal void error(string inMessage);
-        public signal void question(string inMessage);
+        public signal void question(string inMessage, GLib.IOChannel inClient);
         public signal void fatal_error(string inMessage);
 
         // methods
@@ -97,6 +97,7 @@ namespace XSAA
                     ioc.set_encoding(null);
                     ioc.set_buffered(false);
                     ioc.set_flags(ioc.get_flags() | IOFlags.NONBLOCK);
+                    ioc.set_close_on_unref (true);
                     ioc.add_watch(IOCondition.IN, on_client_message);
                 }
                 catch (IOChannelError err)
@@ -132,7 +133,6 @@ namespace XSAA
             {
                 Log.critical ("error on read socket");
             }
-            Os.close(inClient.unix_get_fd());
 
             return false;
         }
@@ -214,7 +214,7 @@ namespace XSAA
                 case MessageType.QUESTION:
                 {
                     Log.info ("received question message: %s", inMessage.data);
-                    question(inMessage.data);
+                    question(inMessage.data, inClient);
                 }
                 break;
 

@@ -52,6 +52,7 @@ namespace XSAA
         private uint                  m_ShutdownRequestId = 0;
 
         private bool                  m_PendingError = false;
+        private GLib.IOChannel        m_Client = null;
 
         private bool                  m_Check = true;
         private StateCheckPeripherals m_CheckPeripherals = null;
@@ -101,6 +102,7 @@ namespace XSAA
                 m_Socket.close_session.connect (on_init_shutdown);
                 m_Socket.quit.connect (on_quit);
                 m_Socket.fatal_error.connect (on_fatal_error);
+                m_Socket.question.connect (on_question);
 
                 Input.EventWatch watchs[2];
                 watchs[0] = Input.EventWatch.POWER_BUTTON;
@@ -144,6 +146,7 @@ namespace XSAA
                 m_Socket.close_session.connect (on_init_shutdown);
                 m_Socket.quit.connect (on_quit);
                 m_Socket.fatal_error.connect (on_fatal_error);
+                m_Socket.question.connect (on_question);
 
                 Input.EventWatch watchs[2];
                 watchs[0] = Input.EventWatch.POWER_BUTTON;
@@ -210,17 +213,40 @@ namespace XSAA
             switch (inWatch)
             {
                 case Input.EventWatch.POWER_BUTTON:
-                    if (m_Session == null && inValue == 1)
+                    if (inValue == 1)
                     {
-                        on_shutdown_request ();
+                        if (m_Client != null)
+                        {
+                            Message message = new Message.response (false);
+                            if (Os.write(m_Client.unix_get_fd(), message.raw, message.raw.length + 1) == 0)
+                                Log.critical ("error on send pong");
+                            m_Splash.error ("");
+                            m_Client = null;
+                        }
+
+                        if (m_Session == null)
+                        {
+                            on_shutdown_request ();
+                        }
                     }
                     break;
 
                 case Input.EventWatch.F12_BUTTON:
-                    if (m_PendingError && inValue == 1)
+                    if (inValue == 1)
                     {
-                        m_PendingError = false;
-                        m_CheckPeripherals.resume_after_error ();
+                        if (m_PendingError)
+                        {
+                            m_PendingError = false;
+                            m_CheckPeripherals.resume_after_error ();
+                        }
+                        else if (m_Client != null)
+                        {
+                            Message message = new Message.response (true);
+                            if (Os.write(m_Client.unix_get_fd(), message.raw, message.raw.length + 1) == 0)
+                                Log.critical ("error on send pong");
+                            m_Splash.error ("");
+                            m_Client = null;
+                        }
                     }
                     break;
             }
@@ -301,6 +327,14 @@ namespace XSAA
         {
             string msg = "%s\nnPress power button to shutdown".printf (inMessage);
             m_Splash.error (msg);
+        }
+
+        private void
+        on_question (string inMessage, GLib.IOChannel inClient)
+        {
+            string msg = "%s\nPress power button to shutdown or\npress Freeze or F12 button to continue".printf (inMessage);
+            m_Splash.error (msg);
+            m_Client = inClient;
         }
 
         private bool
