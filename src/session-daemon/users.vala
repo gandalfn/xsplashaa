@@ -162,7 +162,7 @@ namespace XSAA
         internal int
         compare (User inOther)
         {
-                if (m_Frequency > inOther.m_Frequency)
+            if (m_Frequency > inOther.m_Frequency)
                 return -1;
 
             if (m_Frequency < inOther.m_Frequency)

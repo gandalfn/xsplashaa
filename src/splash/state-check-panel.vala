@@ -40,6 +40,12 @@ namespace XSAA
             }
         }
 
+        public override GLib.Type error_state {
+            get {
+                return typeof (StateCheckSSIDab);
+            }
+        }
+
         /**
          * Create a new check panel state machine
          *

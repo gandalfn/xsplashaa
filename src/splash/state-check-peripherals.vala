@@ -56,6 +56,9 @@ namespace XSAA
 
             // create check panel firmware state
             add_state (new StateCheckPanelFirmware (m_Peripherals));
+
+            // create check ssidab state
+            add_state (new StateCheckSSIDab (m_Peripherals));
         }
 
         protected override void

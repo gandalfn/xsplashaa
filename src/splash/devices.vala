@@ -32,6 +32,7 @@ namespace XSAA
         private SSI.Devices.Module.Touchscreen.Device        m_Touchscreen = null;
         private SSI.Devices.Module.AlliedPanel.DeviceManager m_AlliedPanel = null;
         private SSI.Devices.Module.AlliedPanel.Bootloader    m_Bootloader = null;
+        private SSI.Devices.Module.SSIDab.DeviceManager      m_SSIDab = null;
 
         // accessors
         public bool service_available {
@@ -114,6 +115,30 @@ namespace XSAA
                 }
 
                 return m_Bootloader;
+            }
+        }
+
+        public SSI.Devices.Module.SSIDab.DeviceManager ssidab {
+            get {
+                if (m_SSIDab == null && m_Service != null)
+                {
+                    try
+                    {
+                        string path = m_Service.get_module_dbus_object ("SSIDab");
+                        if (path != null && path.length > 0)
+                        {
+                            m_SSIDab = (SSI.Devices.Module.SSIDab.DeviceManager)m_Connection.get_object ("fr.supersonicimagine.Devices",
+                                                                                                         "/fr/supersonicimagine/Devices/Module/SSIDab/DeviceManager",
+                                                                                                         "fr.supersonicimagine.Devices.Module.SSIDab.DeviceManager");
+                        }
+                    }
+                    catch (GLib.Error err)
+                    {
+                        Log.critical ("Error on get ssidab: %s", err.message);
+                    }
+                }
+
+                return m_SSIDab;
             }
         }
 

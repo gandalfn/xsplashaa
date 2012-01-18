@@ -40,6 +40,7 @@ namespace XSAA.Input
 
         // signals
         public signal void event (uint inType, uint inCode, uint inValue);
+        public signal void closed ();
 
         // static methods
         private static inline ulong
@@ -92,7 +93,9 @@ namespace XSAA.Input
                 m_Channel.set_buffered(false);
                 m_Channel.set_close_on_unref (true);
                 m_Channel.set_flags (m_Channel.get_flags () | GLib.IOFlags.NONBLOCK);
-                m_IdWatch = m_Channel.add_watch (GLib.IOCondition.IN | GLib.IOCondition.PRI, on_data);
+                m_IdWatch = m_Channel.add_watch (GLib.IOCondition.IN  |
+                                                 GLib.IOCondition.PRI |
+                                                 GLib.IOCondition.HUP, on_data);
             }
             catch (GLib.Error err)
             {
@@ -107,23 +110,31 @@ namespace XSAA.Input
         }
 
         private bool
-        on_data ()
+        on_data (GLib.IOChannel inChannel, GLib.IOCondition inCondition)
         {
             if (m_IdWatch != 0)
             {
-                try
+                if (inCondition == GLib.IOCondition.HUP)
                 {
-                    char[] buf = new char [sizeof(Linux.Input.Event)];
-                    size_t size;
-                    if (m_Channel.read_chars (buf, out size) == GLib.IOStatus.NORMAL && size == sizeof(Linux.Input.Event))
-                    {
-                        unowned Linux.Input.Event? evt = (Linux.Input.Event?)buf;
-                        event (evt.type, evt.code, evt.value);
-                    }
+                    closed ();
+                    m_IdWatch = 0;
                 }
-                catch (GLib.Error err)
+                else
                 {
-                    Log.critical ("error on read input event: %s", err.message);
+                    try
+                    {
+                        char[] buf = new char [sizeof(Linux.Input.Event)];
+                        size_t size;
+                        if (m_Channel.read_chars (buf, out size) == GLib.IOStatus.NORMAL && size == sizeof(Linux.Input.Event))
+                        {
+                            unowned Linux.Input.Event? evt = (Linux.Input.Event?)buf;
+                            event (evt.type, evt.code, evt.value);
+                        }
+                    }
+                    catch (GLib.Error err)
+                    {
+                        Log.critical ("error on read input event: %s", err.message);
+                    }
                 }
             }
 
@@ -159,3 +170,4 @@ namespace XSAA.Input
         }
     }
 }
+

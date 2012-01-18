@@ -98,6 +98,9 @@ namespace XSAA.Input
                             {
                                 m_Files.prepend (event);
                                 event.event.connect (on_event);
+                                event.closed.connect (() => {
+                                    m_Files.remove (event);
+                                });
                                 break;
                             }
                         }
@@ -169,6 +172,9 @@ namespace XSAA.Input
                                 {
                                     m_Files.prepend (event);
                                     event.event.connect (on_event);
+                                    event.closed.connect (() => {
+                                        m_Files.remove (event);
+                                    });
                                     break;
                                 }
                             }

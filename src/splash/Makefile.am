@@ -17,6 +17,7 @@ xsplashaa_SOURCES = \
     iuser.vala \
     iservice.vala \
     ipanel.vala \
+    issidab.vala \
     itouchscreen.vala \
     state-machine.vala \
     state-check-peripherals.vala \
@@ -26,6 +27,7 @@ xsplashaa_SOURCES = \
     state-calibrate-touchscreen.vala \
     state-check-panel.vala \
     state-check-panel-firmware.vala \
+    state-check-ssidab.vala \
     display.vala \
     devices.vala \
     splash.vala \
