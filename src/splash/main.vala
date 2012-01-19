@@ -329,8 +329,9 @@ namespace XSAA
         private void
         on_fatal_error (string inMessage)
         {
-            string msg = "%s\nnPress power button to shutdown".printf (inMessage);
+            string msg = "%s\nPress power button to shutdown".printf (inMessage);
             m_Splash.error (msg);
+            m_Splash.set_phase_status (m_Splash.current_phase, EventBoot.Status.ERROR);
         }
 
         private void
