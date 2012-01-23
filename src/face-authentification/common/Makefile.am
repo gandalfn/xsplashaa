@@ -1,52 +1,26 @@
+SUBDIRS = cpp
+
 XSPLASHAA_VAPI_DEPS = \
-    $(top_builddir)/src/log/xsaa-log.vapi
+    $(top_srcdir)/src/log/xsaa-log.vapi
 
 include $(top_srcdir)/build/vala.am
 
 noinst_LTLIBRARIES = \
-    libxsaa-face-authentification.la \
-    libxsaa-face-authentification-vala.la
+    libxsaa-face-authentification.la
 
-libxsaa_face_authentification_la_CPPFLAGS = \
-    $(XSPLASHAA_FACE_AUTHENTIFICATION_CFLAGS) \
-    $(AM_CPPFLAGS)
-
-libxsaa_face_authentification_la_SOURCES = \
-    detector.cpp \
-    detector.h \
-    eyesDetector.cpp \
-    eyesDetector.h \
-    faceDetector.cpp \
-    faceDetector.h \
-    opencvWebcam.cpp \
-    opencvWebcam.h \
-    tracker.cpp \
-    tracker.h \
-    utils.cpp \
-    utils.h \
-    verifier.cpp \
-    verifier.h \
-    webcamImagePaint.cpp \
-    webcamImagePaint.h \
-    face-authentification.cpp \
-    face-authentification.h
-
-libxsaa_face_authentification_la_LIBADD = \
-    $(XSPLASHAA_FACE_AUTHENTIFICATION_LIBS)
-
-libxsaa_face_authentification_vala_la_CFLAGS = \
+libxsaa_face_authentification_la_CFLAGS = \
     $(XSPLASHAA_FACE_AUTHENTIFICATION_CFLAGS)
 
-libxsaa_face_authentification_vala_la_VALAFLAGS = \
-    --header=face-authentification-vala.h \
-    --library=xsaa-face-authentification-vala \
-    --vapi=xsaa-face-authentification-vala.vapi \
+libxsaa_face_authentification_la_VALAFLAGS = \
+    --header=xsaa-face-authentification.h \
+    --library=xsaa-face-authentification \
+    --vapi=xsaa-face-authentification.vapi \
     --pkg=gobject-2.0 \
     --pkg=pam \
     --pkg=opencv \
     --pkg=posix
 
-libxsaa_face_authentification_vala_la_SOURCES = \
+libxsaa_face_authentification_la_SOURCES = \
     defines.vala \
     utils.vala \
     webcam.vala \
@@ -56,18 +30,19 @@ libxsaa_face_authentification_vala_la_SOURCES = \
     detector.vala \
     verifier.vala
 
-libxsaa_face_authentification_vala_la_LIBADD = \
+libxsaa_face_authentification_la_LIBADD = \
     $(XSPLASHAA_LIBS_DEPS)
 
 VALAFILES = \
-    $(filter %.vala,$(libxsaa_face_authentification_vala_la_SOURCES))
+    $(filter %.vala,$(libxsaa_face_authentification_la_SOURCES))
 
 CLEANFILES = \
     $(VALAFILES:.vala=.c) \
-    libxsaa_face_authentification_vala_la_vala.stamp \
-    xsaa-face-authentification-vala.vapi \
-    face-authentification-vala.h
+    libxsaa_face_authentification_la.stamp \
+    xsaa-face-authentification.vapi \
+    xsaa-face-authentification.h
 
 EXTRA_DIST = \
-    xsaa-face-authentification.vapi
+    xsaa-face-authentification.vapi \
+    xsaa-face-authentification.h
 

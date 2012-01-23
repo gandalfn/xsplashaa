@@ -1,6 +1,6 @@
 include $(top_srcdir)/build/common.am
 
-XSPLASHAA_LIBS_DEPS = $(subst .vapi,.la, $(subst xsaa,libxsaa,$(XSPLASHAA_VAPI_DEPS)))
+XSPLASHAA_LIBS_DEPS = $(subst $(top_srcdir), $(top_builddir), $(subst .vapi,.la, $(subst xsaa,libxsaa, $(XSPLASHAA_VAPI_DEPS))))
 
 INCLUDES = \
     $(addprefix -I, $(dir $(XSPLASHAA_VAPI_DEPS)))

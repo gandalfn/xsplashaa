@@ -1,10 +1,17 @@
-initramfscriptsdir = $(datadir)/initramfs-tools/scripts/init-premount
+initramfspremountdir = $(datadir)/initramfs-tools/scripts/init-premount
+initramfscriptsdir = $(datadir)/initramfs-tools/scripts
 
-initramfscripts_SCRIPTS = \
+initramfspremount_SCRIPTS = \
     xsplashaa
 
+initramfscripts_DATA = \
+    functions
+
 EXTRA_DIST = \
+    functions.in \
     xsplashaa.in
 
 DISTCLEANFILES = \
+    functions \
     xsplashaa
+

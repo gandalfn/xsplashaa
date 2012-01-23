@@ -4,7 +4,8 @@
 # Provides:          xsplashaa-phase3
 # Required-Start:    $local_fs xsplashaa-phase2
 # Required-Stop:
-# Should-Start:      xsplashaa-phase2
+# Should-Start:
+# Should-Stop:
 # Default-Start:     S
 # Default-Stop:
 # Short-Description: Set Xsplashaa Phase 3
@@ -25,20 +26,20 @@ DESC="Xorg graphical boot Phase3"
 set -e
 
 case "$1" in
-  start)
-	log_action_begin_msg "Setting xsplashaa phase 3 "
-	STATUS=0
-	$XSPLASHAA_CLIENT --phase=3 --socket $XSPLASHAA_SOCKET || STATUS=$?
-	log_action_end_msg $STATUS
-	;;
-  stop)
-	;;
-  *)
-	N=/etc/init.d/$NAME
-	# echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
-	echo "Usage: $N {start|stop}" >&2
-	exit 1
-	;;
+    start)
+        log_action_begin_msg "Setting xsplashaa phase 3 "
+        STATUS=0
+        $XSPLASHAA_CLIENT --phase=3 --socket $XSPLASHAA_SOCKET || STATUS=$?
+        log_action_end_msg $STATUS
+    ;;
+    stop)
+    ;;
+    *)
+        N=/etc/init.d/$NAME
+        # echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+        echo "Usage: $N {start|stop}" >&2
+        exit 1
+    ;;
 esac
 
 exit 0

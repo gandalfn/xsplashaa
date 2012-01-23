@@ -44,6 +44,7 @@ src/log/*.[ch]
 src/log/*.vapi
 src/session-daemon/*.[ch]
 src/session-daemon/*.vapi
+src/session-daemon/*.xml
 src/socket/*.[ch]
 src/socket/*.vapi
 src/timeline/*.[ch]
@@ -59,6 +60,17 @@ src/engine/aixplorer/*.[ch]
 src/engine/aixplorer/*.vapi
 src/xml/*.[ch]
 src/xml/*.vapi
+src/face-authentification/common/*.[ch]
+src/face-authentification/common/*.vapi
+src/face-authentification/pam/*.[ch]
+src/face-authentification/pam/*.vapi
+src/input/*.[ch]
+src/input/*.vapi
+src/netlink/*.[ch]
+src/netlink/*.vapi
+src/engine/test-engine
+src/input/test-input
+src/netlink/test-netlink
 test/*.c
 compile
 config.guess
@@ -71,6 +83,7 @@ data/init/xsplashaa-phase2
 data/init/xsplashaa-phase3
 data/initramfs/hooks/xsplashaa
 data/initramfs/scripts/xsplashaa
+data/initramfs/scripts/functions
 data/xsplashaa.desktop
 depcomp
 install-sh

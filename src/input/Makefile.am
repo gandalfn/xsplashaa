@@ -1,5 +1,5 @@
 XSPLASHAA_VAPI_DEPS = \
-    $(top_builddir)/src/log/xsaa-log.vapi
+    $(top_srcdir)/src/log/xsaa-log.vapi
 
 include $(top_srcdir)/build/vala.am
 
@@ -46,6 +46,10 @@ CLEANFILES = \
     xsaa-input.vapi \
     xsaa-input.h \
     test_input_vala.stamp
+
+EXTRA_DIST = \
+    xsaa-input.vapi \
+    xsaa-input.h
 
 .NOTPARALLEL: libxsaa-input.la test-input
 

@@ -49,5 +49,6 @@ splash_stop_indefinite()
 splash_user_input()
 {
 	splash_running || return 1
-	return 0
+	return $?
 }
+

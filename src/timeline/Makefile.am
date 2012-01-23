@@ -1,6 +1,6 @@
 XSPLASHAA_VAPI_DEPS = \
-    $(top_builddir)/src/log/xsaa-log.vapi \
-    $(top_builddir)/src/graphics/xsaa-graphics.vapi
+    $(top_srcdir)/src/log/xsaa-log.vapi \
+    $(top_srcdir)/src/graphics/xsaa-graphics.vapi
 
 include $(top_srcdir)/build/vala.am
 
@@ -10,7 +10,7 @@ noinst_LTLIBRARIES = libxsaa-timeline.la
 
 libxsaa_timeline_la_VALAFLAGS = \
     --thread \
-    --header=timeline.h \
+    --header=xsaa-timeline.h \
     --library=xsaa-timeline \
     --vapi=xsaa-timeline.vapi \
     --pkg=source \
@@ -38,5 +38,9 @@ CLEANFILES = \
     $(VALAFILES:.vala=.c) \
     libxsaa_timeline_la_vala.stamp \
     xsaa-timeline.vapi \
-    timeline.h
+    xsaa-timeline.h
+
+EXTRA_DIST = \
+    xsaa-timeline.vapi \
+    xsaa-timeline.h
 

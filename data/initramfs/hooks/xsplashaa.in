@@ -88,6 +88,7 @@ copy_exec_if_exist /usr/bin/xrdb /usr/bin
 copy_exec_if_exist /usr/bin/xkbcomp /usr/bin
 copy_exec_if_exist /usr/bin/setxkbmap /usr/bin
 copy_exec_if_exist /usr/bin/xsplashaa /usr/bin
+copy_exec_if_exist /usr/bin/xsplashaa-client /usr/bin
 copy_exec_if_exist /etc/passwd /etc
 copy_exec_if_exist /etc/shadow /etc
 copy_exec_if_exist /etc/group /etc

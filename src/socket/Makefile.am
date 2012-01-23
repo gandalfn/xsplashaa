@@ -1,5 +1,5 @@
 XSPLASHAA_VAPI_DEPS = \
-    $(top_builddir)/src/log/xsaa-log.vapi
+    $(top_srcdir)/src/log/xsaa-log.vapi
 
 include $(top_srcdir)/build/vala.am
 
@@ -7,7 +7,7 @@ noinst_LTLIBRARIES = libxsaa-socket.la
 
 libxsaa_socket_la_VALAFLAGS = \
     --thread \
-    --header=socket.h \
+    --header=xsaa-socket.h \
     --library=xsaa-socket \
     --vapi=xsaa-socket.vapi
 
@@ -27,5 +27,9 @@ CLEANFILES = \
     $(VALAFILES:.vala=.c) \
     libxsaa_socket_la_vala.stamp \
     xsaa-socket.vapi \
-    socket.h
+    xsaa-socket.h
+
+EXTRA_DIST = \
+    xsaa-socket.vapi \
+    xsaa-socket.h
 

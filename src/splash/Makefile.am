@@ -1,11 +1,11 @@
 XSPLASHAA_VAPI_DEPS = \
-    $(top_builddir)/src/log/xsaa-log.vapi \
-    $(top_builddir)/src/xml/xsaa-xml.vapi \
-    $(top_builddir)/src/input/xsaa-input.vapi \
-    $(top_builddir)/src/socket/xsaa-socket.vapi \
-    $(top_builddir)/src/graphics/xsaa-graphics.vapi \
-    $(top_builddir)/src/timeline/xsaa-timeline.vapi \
-    $(top_builddir)/src/engine/xsaa-engine.vapi
+    $(top_srcdir)/src/log/xsaa-log.vapi \
+    $(top_srcdir)/src/xml/xsaa-xml.vapi \
+    $(top_srcdir)/src/input/xsaa-input.vapi \
+    $(top_srcdir)/src/socket/xsaa-socket.vapi \
+    $(top_srcdir)/src/graphics/xsaa-graphics.vapi \
+    $(top_srcdir)/src/timeline/xsaa-timeline.vapi \
+    $(top_srcdir)/src/engine/xsaa-engine.vapi
 
 include $(top_srcdir)/build/vala.am
 

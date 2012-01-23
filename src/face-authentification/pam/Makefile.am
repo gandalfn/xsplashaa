@@ -1,5 +1,5 @@
 XSPLASHAA_VAPI_DEPS = \
-    $(top_builddir)/src/face-authentification/common/xsaa-face-authentification.vapi
+    $(top_srcdir)/src/face-authentification/common/cpp/xsaa-face-authentification.vapi
 
 include $(top_srcdir)/build/vala.am
 

@@ -1,7 +1,7 @@
 XSPLASHAA_VAPI_DEPS = \
-    $(top_builddir)/src/log/xsaa-log.vapi \
-    $(top_builddir)/src/socket/xsaa-socket.vapi \
-    $(top_builddir)/src/graphics/xsaa-graphics.vapi
+    $(top_srcdir)/src/log/xsaa-log.vapi \
+    $(top_srcdir)/src/socket/xsaa-socket.vapi \
+    $(top_srcdir)/src/graphics/xsaa-graphics.vapi
 
 include $(top_srcdir)/build/vala.am
 
@@ -46,4 +46,7 @@ CLEANFILES = \
     $(VALAFILES:.vala=.c) \
     xsplashaa_session_daemon_vala.stamp \
     *.xml
+
+EXTRA_DIST = \
+    $(idbus_DATA)
 

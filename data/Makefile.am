@@ -11,7 +11,6 @@ xsplashaaconf_DATA = \
     xsplashaa.conf
 
 EXTRA_DIST = \
-    Xsession \
     xsplashaa.conf \
     xsplashaa.desktop.in
 

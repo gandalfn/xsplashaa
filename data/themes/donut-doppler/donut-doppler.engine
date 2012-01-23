@@ -1,0 +1,128 @@
+<engine id="aixplorer" background_color="#1B242D">
+    <!--touchscreen table -->
+    <table id="touchscreen" layer="1" y="1050" width="1024" height="768">
+        <notebook id="ts-notebook">
+            <logo id="ts-logo" page_num="0" x_align="0.5"
+                  filename="/usr/share/xsplashaa/donut-doppler/ts-logo.png"/>
+            <table id="ts-question" page_num="1" x_align="0.5">
+                <text id="ts-question-message" row="0" column="0" columns="2" height="500"
+                      font="Liberation Bold 26" fill_color="#89B2DF" alignment="center"/>
+                <button id="ts-question-no-button" row="1" column="0" width="256" height="96" border="12"
+                        right_padding="96" left_padding="96"
+                        show_reflection="true" fill_color="#1B242D" active_color="#526B86" inactive_color="#89B2DF"
+                        text="No" font="Liberation Bold 26" stroke_color="#ECF8FD"/>
+                <button id="ts-question-yes-button" row="1" column="1" width="256" height="96" border="12"
+                        right_padding="96" left_padding="96"
+                        show_reflection="true" fill_color="#1B242D" active_color="#526B86" inactive_color="#89B2DF"
+                        text="Yes" font="Liberation Bold 26" stroke_color="#ECF8FD"/>
+            </table>
+        </notebook>
+    </table>
+    <!--main table -->
+    <table id="main" layer="1" width="1680" height="1050" y_fill="true">
+        <progressbar id="progress-bar" row="1" column="0" left_padding="96" right_padding="96"
+                     height="30" fill_color="#89B2DF" width="600"/>
+        <text id="message" row="2" column="0" y_align="0.0" y_fill="true" alignment="center"
+              font="Liberation Bold 18" fill_color="#7BC4F5"/>
+        <text id="error" row="2" column="0" y_align="0.0" y_fill="true" alignment="center"
+              font="Liberation Bold 18" fill_color="#FF990E"/>
+        <!--content table -->
+        <table id="content" row="0" column="0" y_align="0.5" row_spacing="24" column_spacing="48">
+            <!--left logo -->
+            <logo id="left-logo" row="0" column="0" x_align="0.5"
+                  filename="/usr/share/xsplashaa/donut-doppler/distrib-logo.png"/>
+            <table id="prompt-content" row="0" column="1" y_align="0.5" x_fill="true">
+                <!--top logo -->
+                <logo id="top-logo" row="0" column="0" y_align="0.0"
+                      filename="/usr/share/xsplashaa/donut-doppler/logo.png"/>
+                <notebook id="main-notebook" row="1" column="0" y_fill="true">
+                    <!--check table -->
+                    <table id="checking-table" page_num="0" animation="vertical-slide" x_align="0.5" y_align="0.3"
+                           row_spacing="12" column_spacing="12" homogeneous_row="true">
+                        <table id="loading" row="0" column="0" x_fill="true">
+                            <text id="loading-label" row="0" column="0" x_align="0.0"
+                                  font="Liberation Bold 18" fill_color="#7BC4F5"
+                                  text="Loading..."/>
+                            <throbber id="loading-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
+                        </table>
+                        <table id="checking-filesystem" visibility="1" row="1" column="0" x_fill="true">
+                            <text id="checking-filesystem-label" row="0" column="0" x_align="0.0"
+                                  font="Liberation Bold 18" fill_color="#7BC4F5"
+                                  text="Checking filesystem..."/>
+                            <throbber id="checking-filesystem-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
+                        </table>
+                        <table id="starting" visibility="1" row="2" column="0" x_fill="true">
+                            <text id="starting-label" row="0" column="0" x_align="0.0"
+                                  font="Liberation Bold 18" fill_color="#7BC4F5"
+                                  text="Starting..."/>
+                            <throbber id="starting-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
+                        </table>
+                        <table id="checking-device" visibility="1" row="3" column="0" x_fill="true">
+                            <text id="checking-device-label" row="0" column="0" x_align="0.0"
+                                  font="Liberation Bold 18" fill_color="#7BC4F5"
+                                  text="Checking peripherals..."/>
+                            <throbber id="checking-device-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
+                        </table>
+                        <table id="session" visibility="1" row="4" column="0" x_fill="true">
+                            <text id="launch-sesion-label" row="0" column="0" x_align="0.0"
+                                  font="Liberation Bold 18" fill_color="#7BC4F5"
+                                  text="Launching session..."/>
+                            <throbber id="launch-sesion-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
+                        </table>
+                    </table>
+                    <!--prompt table -->
+                    <table id="prompt-table" page_num="1" animation="vertical-slide" x_align="0.5" y_align="0.0"
+                           row_spacing="12" column_spacing="12">
+                        <notebook id="users-notebook" row="0" column="0" x_align="0.5" y_align="0.5" columns="4"
+                                  top_padding="24" bottom_padding="24">
+                            <users id="users" page_num="0" animation="horizontal-slide"
+                                   y_fill="true" x_align="0.5" y_align="0.0"
+                                   height="250" widget_font="Liberation Bold 18"/>
+                            <table id="prompt-table" page_num="1" animation="horizontal-slide" x_align="0.5" y_align="0.5"
+                                   row_spacing="12" column_spacing="12" homogeneous_rows="true">
+                                <text id="prompt-label" row="0" column="0" x_align="1.0"
+                                      font="Liberation Bold 18" fill_color="#7BC4F5"
+                                      text="Login:"/>
+                                <entry id="prompt" row="0" column="1" columns="2"
+                                       x_align="0.0" x_fill="true" y_fill="true"
+                                       left_padding="12" right_padding="48"
+                                       widget_font="Liberation 16"/>
+                            </table>
+                            <faceauth id="face-auth" page_num="2" animation="horizontal-slide"
+                                      x_align="0.5" y_align="0.0" width="320" height="240"/>
+                        </notebook>
+                        <text id="prompt-message" row="1" column="0" x_align="0.0" y_align="0.5"  columns="3"
+                              top_padding="12" bottom_padding="12"
+                              font="Liberation Bold 18" fill_color="#7BC4F5"/>
+                        <table id="face-authentification-table" row="2" column="0" y_align="0.1" column_spacing="12">
+                            <checkbutton id="face-authentification" row="0" column="0"  y_align="0.5"
+                                         line-width="2.7" stroke_color="#3C4C57" fill_color="#ECF8FD"/>
+                            <text id="face-authentification-label" row="0" column="1"  y_align="0.5"
+                                  font="Liberation Bold 12" fill_color="#7BC4F5"
+                                  text="Face authentification"/>
+                        </table>
+                        <button id="button-restart" row="2" column="2" show_reflection="true"
+                                width="140" height="42" y_align="0.1"
+                                filename_press="/usr/share/xsplashaa/donut-doppler/restart-press.svg"
+                                filename_release="/usr/share/xsplashaa/donut-doppler/restart-release.svg"/>
+                        <button id="button-shutdown" row="2" column="3" show_reflection="true"
+                                width="140" height="42" y_align="0.1"
+                                filename_press="/usr/share/xsplashaa/donut-doppler/shutdown-press.svg"
+                                filename_release="/usr/share/xsplashaa/donut-doppler/shutdown-release.svg"/>
+                    </table>
+                    <!-- shutdown table -->
+                    <table id="shutdown-table" page_num="2" animation="vertical-slide" x_align="0.5" y_align="0.3"
+                           row_spacing="12" column_spacing="12" homogeneous_rows="true" clip="true">
+                        <table id="shutdown" row="0" column="0" x_fill="true">
+                            <text id="shutdown-label" row="0" column="0" x_align="0.0"
+                                  font="Liberation Bold 18" fill_color="#7BC4F5"
+                                  text="shutdown in progress..."/>
+                            <throbber id="shutdown-throbber" row="0" column="1" x_expand="false" x_align="1.0"/>
+                        </table>
+                    </table>
+                </notebook>
+            </table>
+        </table>
+    </table>
+</engine>
+

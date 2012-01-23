@@ -53,3 +53,15 @@ xsplashaaa_set_phase() {
     $XSPLASHAA_CLIENT --phase="$1" --socket $XSPLASHAA_SOCKET
 }
 
+xsplashaa_message() {
+    $XSPLASHAA_CLIENT --message="$1" --socket $XSPLASHAA_SOCKET
+}
+
+xsplashaa_error() {
+    $XSPLASHAA_CLIENT --error="$1" --socket $XSPLASHAA_SOCKET
+}
+
+xsplashaa_fatal_error() {
+    $XSPLASHAA_CLIENT --fatal-error="$1" --socket $XSPLASHAA_SOCKET
+    read m
+}

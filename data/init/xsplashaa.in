@@ -2,8 +2,10 @@
 #
 ### BEGIN INIT INFO
 # Provides:          xsplashaa
-# Required-Start:    $local_fs $remote_fs dbus
-# Required-Stop:     $local_fs $remote_fs
+# Required-Start:    $local_fs $remote_fs dbus hal ssi-devices
+# Required-Stop:
+# Should-Start:      mysql
+# Should-Stop:
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Xorg graphical boot
@@ -28,29 +30,29 @@ DESC="Xorg graphical boot"
 set -e
 
 case "$1" in
-  start)
-	log_action_begin_msg "Start xsplashaa "
-	STATUS=0
-   	if xsplashaa_is_started; then
-	    xsplashaa_jail_mounts
-	    xsplashaa_start
-	fi
-	log_action_end_msg $STATUS
-	;;
-  stop)
-	log_action_begin_msg "Stop xsplashaa "
-	STATUS=0
-    	if xsplashaa_is_started; then
-        	xsplashaa_stop
-	fi
-	log_action_end_msg $STATUS
-	;;
-  *)
-	N=/etc/init.d/$NAME
-	# echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
-	echo "Usage: $N {start|stop}" >&2
-	exit 1
-	;;
+    start)
+        log_action_begin_msg "Start xsplashaa "
+        STATUS=0
+        if xsplashaa_is_started; then
+            xsplashaa_jail_mounts
+            xsplashaa_start
+        fi
+        log_action_end_msg $STATUS
+    ;;
+    stop)
+        log_action_begin_msg "Stop xsplashaa "
+        STATUS=0
+        if xsplashaa_is_started; then
+            xsplashaa_stop
+        fi
+        log_action_end_msg $STATUS
+    ;;
+    *)
+        N=/etc/init.d/$NAME
+        # echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+        echo "Usage: $N {start|stop}" >&2
+        exit 1
+    ;;
 esac
 
 exit 0

@@ -151,6 +151,7 @@ AC_CONFIG_FILES([
     src/engine/aixplorer/Makefile
     src/face-authentification/Makefile
     src/face-authentification/common/Makefile
+    src/face-authentification/common/cpp/Makefile
     src/face-authentification/pam/Makefile
     po/Makefile.in
     data/Makefile
@@ -171,13 +172,14 @@ AC_CONFIG_FILES([
     data/initramfs/modules/Makefile
     data/initramfs/scripts/Makefile
     data/initramfs/scripts/xsplashaa
+    data/initramfs/scripts/functions
     data/pam/Makefile
     data/jail-mount.d/Makefile
     data/themes/Makefile
     data/themes/aixplorer/Makefile
     data/themes/chicken-curie/Makefile
     data/themes/debian/Makefile
-    data/themes/donut-doopler/Makefile
+    data/themes/donut-doppler/Makefile
     data/themes/leaves/Makefile])
 
 AC_OUTPUT

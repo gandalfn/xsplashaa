@@ -1,5 +1,5 @@
 XSPLASHAA_VAPI_DEPS = \
-    $(top_builddir)/src/log/xsaa-log.vapi
+    $(top_srcdir)/src/log/xsaa-log.vapi
 
 include $(top_srcdir)/build/vala.am
 
@@ -46,6 +46,10 @@ CLEANFILES = \
     xsaa-netlink.vapi \
     xsaa-netlink.h \
     test_netlink_vala.stamp
+
+EXTRA_DIST = \
+    xsaa-netlink.vapi \
+    xsaa-netlink.h
 
 .NOTPARALLEL: libxsaa-netlink.la test-netlink
 

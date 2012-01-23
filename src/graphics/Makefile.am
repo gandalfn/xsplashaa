@@ -1,12 +1,12 @@
 XSPLASHAA_VAPI_DEPS = \
-    $(top_builddir)/src/log/xsaa-log.vapi
+    $(top_srcdir)/src/log/xsaa-log.vapi
 
 include $(top_srcdir)/build/vala.am
 
 noinst_LTLIBRARIES = libxsaa-graphics.la
 
 libxsaa_graphics_la_VALAFLAGS = \
-    --header=graphics.h \
+    --header=xsaa-graphics.h \
     --library=xsaa-graphics \
     --vapi=xsaa-graphics.vapi \
     --pkg=gtk+-2.0
@@ -26,5 +26,9 @@ CLEANFILES = \
     $(VALAFILES:.vala=.c) \
     libxsaa_graphics_la_vala.stamp \
     xsaa-graphics.vapi \
-    graphics.h
+    xsaa-graphics.h
+
+EXTRA_DIST = \
+    xsaa-graphics.vapi \
+    xsaa-graphics.h
 

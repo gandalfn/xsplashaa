@@ -1,10 +1,10 @@
 SUBDIRS = . aixplorer
 
 XSPLASHAA_VAPI_DEPS = \
-    $(top_builddir)/src/log/xsaa-log.vapi \
-    $(top_builddir)/src/xml/xsaa-xml.vapi \
-    $(top_builddir)/src/graphics/xsaa-graphics.vapi \
-    $(top_builddir)/src/timeline/xsaa-timeline.vapi
+    $(top_srcdir)/src/log/xsaa-log.vapi \
+    $(top_srcdir)/src/xml/xsaa-xml.vapi \
+    $(top_srcdir)/src/graphics/xsaa-graphics.vapi \
+    $(top_srcdir)/src/timeline/xsaa-timeline.vapi
 
 include $(top_srcdir)/build/vala.am
 
@@ -12,7 +12,7 @@ noinst_LTLIBRARIES = libxsaa-engine.la
 
 libxsaa_engine_la_VALAFLAGS = \
     --thread \
-    --header=engine.h \
+    --header=xsaa-engine.h \
     --library=xsaa-engine \
     --vapi=xsaa-engine.vapi \
     --pkg=gmodule-2.0 \
@@ -62,13 +62,18 @@ test_engine_LDADD = \
     libxsaa-engine.la
 
 VALAFILES = \
-    $(filter %.vala,$(libxsaa_engine_la_SOURCES))
+    $(filter %.vala,$(libxsaa_engine_la_SOURCES)) \
+    $(filter %.vala,$(test_engine_SOURCES))
 
 CLEANFILES = \
     $(VALAFILES:.vala=.c) \
     libxsaa_engine_la_vala.stamp \
     xsaa-engine.vapi \
-    engine.h
+    xsaa-engine.h
+
+EXTRA_DIST = \
+    xsaa-engine.vapi \
+    xsaa-engine.h
 
 .NOTPARALLEL: libxsaa-engine.la test-engine
 

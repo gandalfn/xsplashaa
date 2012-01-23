@@ -12,7 +12,7 @@ xsplashaadoc_DATA = \
     INSTALL \
     NEWS
 
-DISTCHECK_CONFIGURE_FLAGS = --with-init-dir='$${prefix}/lib/init'
+DISTCHECK_CONFIGURE_FLAGS = --with-init-dir='$${prefix}/lib/init' --with-pam-dir='$${prefix}/lib/security' VALAC="/usr/bin/valac-0.12"
 
 EXTRA_DIST = \
     $(xsplashaadoc_DATA) \

@@ -220,7 +220,7 @@ namespace XSAA
     static int
     main (string[] inArgs)
     {
-        XSAA.Log.set_default_logger (new XSAA.Log.Syslog (XSAA.Log.Level.DEBUG, "xsaa-session-daemon"));
+        XSAA.Log.set_default_logger (new XSAA.Log.Syslog (XSAA.Log.Level.INFO, "xsaa-session-daemon"));
 
         Log.debug ("start");
 

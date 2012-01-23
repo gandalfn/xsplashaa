@@ -1,6 +1,6 @@
 XSPLASHAA_VAPI_DEPS = \
-    $(top_builddir)/src/log/xsaa-log.vapi \
-    $(top_builddir)/src/socket/xsaa-socket.vapi
+    $(top_srcdir)/src/log/xsaa-log.vapi \
+    $(top_srcdir)/src/socket/xsaa-socket.vapi
 
 include $(top_srcdir)/build/vala.am
 
