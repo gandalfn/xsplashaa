@@ -69,9 +69,9 @@ namespace XSAA
         }
 
         // Properties
-        protected char*               m_pBegin;
-        protected char*               m_pEnd;
-        protected char*               m_pCurrent;
+        protected char* m_pBegin;
+        protected char* m_pEnd;
+        protected char* m_pCurrent;
 
         protected string                         m_Element    = null;
         protected GLib.HashTable<string, string> m_Attributes = null;

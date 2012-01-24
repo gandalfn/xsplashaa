@@ -92,6 +92,24 @@ namespace XSAA.FaceAuthentification
             }
         }
 
+        public Face face_information {
+            get {
+                return m_FaceDetector.face_information;
+            }
+        }
+
+        public bool face_detected {
+            get {
+                return m_FaceDetector.face_detected;
+            }
+        }
+
+        public Eyes eyes_information {
+            get {
+                return m_EyesDetector.eyes_information;
+            }
+        }
+
         // static methods
         private static OpenCV.IPL.Image
         preprocess (OpenCV.IPL.Image inImg, OpenCV.Point inLeftEye, OpenCV.Point inRightEye)

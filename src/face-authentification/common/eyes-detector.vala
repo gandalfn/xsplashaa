@@ -101,26 +101,29 @@ namespace XSAA.FaceAuthentification
 
             int scale = 1;
 
-            OpenCV.IPL.Image gray = new OpenCV.IPL.Image (OpenCV.Size (inInput.width, inInput.height / 2), 8, 1);
+            OpenCV.IPL.Image gray = new OpenCV.IPL.Image (inInput.get_size (), 8, 1);
             OpenCV.IPL.Image gray_fullimage = new OpenCV.IPL.Image (inFullImage.get_size (), 8, 1);
-            OpenCV.IPL.Image gray_scale = new OpenCV.IPL.Image (OpenCV.Size (inInput.width / scale, inInput.height / (2 * scale)), 8, 1);
 
-            inInput.set_roi (OpenCV.Rectangle (0, inInput.height / 8, inInput.width, inInput.height / 2));
             inInput.convert_color (gray, OpenCV.ColorConvert.BGR2GRAY);
-            inInput.reset_roi ();
-
             inFullImage.convert_color (gray_fullimage, OpenCV.ColorConvert.BGR2GRAY);
-            gray_fullimage.resize (gray_scale, OpenCV.IPL.InterpolationType.LINEAR);
+
+            OpenCV.IPL.Image small_img = new OpenCV.IPL.Image (OpenCV.Size (OpenCV.Math.round (inInput.width / scale), OpenCV.Math.round (inInput.height / scale)), 8, 1);
+
+            // The classifier works on grey scale images,
+            // so the incoming BGR image input is converted to greyscale
+            // and then optionally resized.
+            inInput.convert_color (gray, OpenCV.ColorConvert.BGR2GRAY);
+            gray.resize (small_img, OpenCV.IPL.InterpolationType.LINEAR);
 
             // Perform histogram equalization (increases contrast and dynamic range)
-            gray_scale.equalize_hist (gray_scale);
+            small_img.equalize_hist (small_img);
 
-            unowned OpenCV.Sequence<OpenCV.Rectangle?> nested_objects = m_NestedCascade.detect_objects (gray_scale, m_Storage, 1.4, 2, 0);
+            unowned OpenCV.Sequence<OpenCV.Rectangle?> nested_objects = m_NestedCascade.detect_objects (small_img, m_Storage, 1.1, 2, OpenCV.HaarClassifierCascade.Flags.SCALE_IMAGE);
             int count = nested_objects != null ? nested_objects.total : 0;
             if (count == 0)
             {
                 // Second round of detection using m_NestedCascade2
-                nested_objects = m_NestedCascade2.detect_objects (gray_scale, m_Storage, 1.4, 2, 0);
+                nested_objects = m_NestedCascade2.detect_objects (small_img, m_Storage, 1.1, 2, OpenCV.HaarClassifierCascade.Flags.SCALE_IMAGE);
 
                 count = nested_objects != null ? nested_objects.total : 0;
             }
@@ -130,12 +133,13 @@ namespace XSAA.FaceAuthentification
 
             if (count > 0)
             {
-                for (int j = 0; j < nested_objects.total; ++j)
+                for (int j = 0; j < count; ++j)
                 {
                     OpenCV.Point center = OpenCV.Point (0, 0);
                     unowned OpenCV.Rectangle? nr = nested_objects [j];
+
                     center.x = OpenCV.Math.round ((inLT.x + (nr.x + nr.width * 0.5) * scale));
-                    center.y = OpenCV.Math.round ((inLT.y + (inInput.height) / 8 + (nr.y + nr.height * 0.5) * scale));
+                    center.y = OpenCV.Math.round ((inLT.y + (nr.y + nr.height * 0.5) * scale));
 
                     if ((center.x - 4) > 0 && ((center.x - 4) < (Image.WIDTH - 8)) &&
                         (center.y - 4) > 0 && ((center.y - 4) < (Image.HEIGHT - 8)))

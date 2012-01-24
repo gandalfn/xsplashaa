@@ -754,4 +754,52 @@ namespace XSAA.FaceAuthentification
         centre.rotation_matrix (inAngle, 1.0, translate);
         inImg.warp_affine (inDstImg, translate, OpenCV.INTER_LINEAR + OpenCV.WARP_FILL_OUTLIERS, OpenCV.Scalar.all (0));
     }
+
+    /**
+     * Paints the Spotlight Ellipse Effect
+     *
+     * @param inImage Image to be painted upon
+     * @param inLeftEye left eye cordinates
+     * @param inRightEye right eye cordinates
+     */
+    public void
+    paint_cyclops (OpenCV.IPL.Image inImage, OpenCV.Point inLeftEye, OpenCV.Point inRightEye)
+    {
+        OpenCV.IPL.Image imgDest = new OpenCV.IPL.Image (OpenCV.Size (inImage.width, inImage.height), 8, 3);
+        imgDest.zero ();
+
+        OpenCV.Point p2 = OpenCV.Point (inLeftEye.x, inLeftEye.y);
+        double yvalue = inRightEye.y - inLeftEye.y;
+        double xvalue = inRightEye.x - inLeftEye.x;
+        double width  = GLib.Math.sqrt (GLib.Math.pow (xvalue, 2) + GLib.Math.pow (yvalue, 2));
+        double ratio  = GLib.Math.sqrt (GLib.Math.pow (xvalue, 2) + GLib.Math.pow (yvalue, 2)) / 80.0;
+
+        p2.x += (int)(width / 2.0);
+        p2.y += (int)(35 * ratio);
+
+        double ang= -GLib.Math.atan (yvalue / xvalue) * (180 / GLib.Math.PI);
+        OpenCV.Matrix rotateMatrix = new OpenCV.Matrix (2, 3, OpenCV.Type.FC32_1);
+        OpenCV.Point2D32f centre = OpenCV.Point2D32f (inLeftEye.x, inLeftEye.y);
+        centre.rotation_matrix (ang, 1.0, rotateMatrix);
+
+        p2.x= (int)GLib.Math.floor (p2.x * rotateMatrix [0, 0] +  p2.y * rotateMatrix [0, 1] + rotateMatrix [0, 2]);
+        p2.y= (int)GLib.Math.floor (p2.x * rotateMatrix [1, 0] +  p2.y * rotateMatrix [1, 1] + rotateMatrix [1, 2]);
+
+        imgDest.ellipse (p2, OpenCV.Size ((int)(width / 2) + (int)(55 * ratio), (int)(120 * ratio)), ang, 0, 360, OpenCV.Scalar (255, 255, 255));
+        for (int i = 0; i < inImage.height; ++i)
+        {
+            for (int j = 0; j < inImage.width; ++j)
+            {
+                OpenCV.Scalar s = OpenCV.Scalar.get_2D (imgDest, i, j);
+                if (s.val[0] != 255)
+                {
+                    OpenCV.Scalar s1 = OpenCV.Scalar.get_2D (inImage, i, j);
+                    s1.val[0] = s1.val[0] * 0.45;
+                    s1.val[1] = s1.val[1] * 0.45;
+                    s1.val[2] = s1.val[2] * 0.45;
+                    inImage.set_2d (i, j, s1);
+                }
+            }
+        }
+    }
 }

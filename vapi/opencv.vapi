@@ -169,7 +169,7 @@ namespace OpenCV {
 		[CCode (cname = "cvCircle")]
 		public void circle (OpenCV.Point center, int radius, OpenCV.Scalar color, int thickness = 1, int line_type = 8, int shift = 0);
 		[CCode (cname = "cvEllipse")]
-		public void ellipse (OpenCV.Point center, OpenCV.Size axes, double angle, double start_angle, double end_angle, OpenCV.Scalar color, int thickness = 1);
+		public void ellipse (OpenCV.Point center, OpenCV.Size axes, double angle, double start_angle, double end_angle, OpenCV.Scalar color, int thickness = 1,  int lineType=8, int shift=0);
 		[CCode (cname = "cvEllipseBox")]
 		public void ellipse_box (OpenCV.Box2D box, OpenCV.Scalar color, int thickness = 1, int line_type = 8, int shift = 0);
 		[CCode (cname = "cvFillConvexPoly")]
@@ -564,7 +564,7 @@ namespace OpenCV {
 		public void complete_symmetric (int LtoR);
 		[CCode (cname = "cvIplDepth")]
 		public static int depth (int type);
-		[CCode (cname = "cvGet")]
+		[CCode (cname = "cvmGet")]
 		public double get (int row, int col);
 		[CCode (cname = "cvSet")]
 		public void set (int row, int col, double value);
@@ -811,7 +811,7 @@ namespace OpenCV {
 		public Point to_point (OpenCV.Point2D32f point);
 
 		[CCode (cname = "cv2DRotationMatrix")]
-		public OpenCV.Matrix rotation_matrix (double angle, double scale, OpenCV.Matrix mapMatrix);
+		public unowned OpenCV.Matrix? rotation_matrix (double angle, double scale, OpenCV.Matrix mapMatrix);
 	}
 
 	[CCode (cname = "CvPoint2D32f", has_type_id = false)]
