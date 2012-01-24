@@ -23,7 +23,7 @@ public class Test : Gtk.Window
                                                      XSAA.FaceAuthentification.Image.HEIGHT,
                                                      Cairo.Format.ARGB32.stride_for_width (XSAA.FaceAuthentification.Image.WIDTH));
 
-        m_Timeline = new XSAA.Timeline (20, 20);
+        m_Timeline = new XSAA.Timeline (60, 60);
         m_Timeline.loop = true;
         m_Timeline.new_frame.connect (on_new_frame);
     }
@@ -116,3 +116,4 @@ main (string[] inArgs)
 
     return 0;
 }
+

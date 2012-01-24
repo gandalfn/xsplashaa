@@ -74,3 +74,5 @@ EXTRA_DIST = \
     xsaa-face-authentification.vapi \
     xsaa-face-authentification.h
 
+.NOTPARALLEL: libxsaa-face-authentification.la test-face-authentification
+
