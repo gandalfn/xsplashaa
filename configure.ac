@@ -1,4 +1,4 @@
-AC_INIT([xsplashaa], [0.4.1], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
+AC_INIT([xsplashaa], [0.5.0], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
 AC_CONFIG_SRCDIR(src/splash/main.vala)
 
 AC_CONFIG_AUX_DIR([build])
@@ -32,6 +32,7 @@ VALA_REQUIRED=0.12.0
 SSIGTKEXTRAS_REQUIRED=0.5.0
 GOOCANVAS_REQUIRED=0.15
 OPENCV_REQUIRED=2.1.0
+LOGON_REQUIRED=0.4.70
 
 dnl ****************************************************************************
 dnl Check for vala
@@ -58,6 +59,7 @@ PKG_CHECK_MODULES(XSPLASHAA, [x11
                               gmodule-2.0 >= $GLIB_REQUIRED
                               gtk+-2.0 >= $GTK_REQUIRED
                               goocanvas >= $GOOCANVAS_REQUIRED
+                              logon >= $LOGON_REQUIRED
                               librsvg-2.0
                               dbus-glib-1])
 
@@ -65,12 +67,14 @@ PKG_CHECK_MODULES(XSPLASHAA_SESSION_DAEMON, [glib-2.0 >= $GLIB_REQUIRED,
                                              gobject-2.0 >= $GLIB_REQUIRED
                                              gthread-2.0 >= $GLIB_REQUIRED
                                              gtk+-2.0 >= $GTK_REQUIRED
+                                             logon >= $LOGON_REQUIRED
                                              dbus-glib-1
                                              xau])
 
 PKG_CHECK_MODULES(XSPLASHAA_CLIENT, [glib-2.0 >= $GLIB_REQUIRED,
                                      gthread-2.0 >= $GLIB_REQUIRED
-                                     gobject-2.0 >= $GLIB_REQUIRED])
+                                     gobject-2.0 >= $GLIB_REQUIRED
+                                     logon >= $LOGON_REQUIRED])
 
 PKG_CHECK_MODULES(XSPLASHAA_FACE_AUTHENTIFICATION, [opencv2 >= $OPENCV_REQUIRED])
 
@@ -130,14 +134,17 @@ dnl ****************************************************************************
 idbusdir=${datadir}/xsplashaa/dbus
 faceauthdatadir=${datadir}/xsplashaa/face-authentification
 iconsdir=${datadir}/xsplashaa/icons
+logondir=${datadir}/xsplashaa/logon
 AC_SUBST(idbusdir)
 AC_SUBST(faceauthdatadir)
 AC_SUBST(iconsdir)
+AC_SUBST(logondir)
 
 AC_CONFIG_FILES([
     Makefile
     src/Makefile
     src/log/Makefile
+    src/log/logon/Makefile
     src/socket/Makefile
     src/netlink/Makefile
     src/input/Makefile
@@ -173,6 +180,7 @@ AC_CONFIG_FILES([
     data/initramfs/scripts/Makefile
     data/initramfs/scripts/xsplashaa
     data/initramfs/scripts/functions
+    data/logon/Makefile
     data/pam/Makefile
     data/jail-mount.d/Makefile
     data/themes/Makefile

@@ -220,9 +220,7 @@ namespace XSAA
     static int
     main (string[] inArgs)
     {
-        XSAA.Log.set_default_logger (new XSAA.Log.Syslog (XSAA.Log.Level.INFO, "xsaa-session-daemon"));
-
-        Log.debug ("start");
+        XSAA.Log.set_default_logger (new XSAA.Log.Syslog (XSAA.Log.Level.INFO, "xsplashaa-session-daemon"));
 
         try
         {
@@ -245,6 +243,9 @@ namespace XSAA
                 return -1;
             }
         }
+
+        XSAA.Log.set_default_logger (new XSAA.Log.Logon (XSAA.Log.Level.DEBUG, "xsplashaa-session-daemon", "daemon", "main"));
+        Log.debug ("start");
 
         try
         {

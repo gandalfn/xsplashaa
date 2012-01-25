@@ -1,6 +1,11 @@
+SUBDIRS = logon
+
 include $(top_srcdir)/build/vala.am
 
 noinst_LTLIBRARIES = libxsaa-log.la
+
+libxsaa_log_la_CFLAGS = \
+    -Ilogon
 
 libxsaa_log_la_VALAFLAGS = \
     --thread \
@@ -8,11 +13,16 @@ libxsaa_log_la_VALAFLAGS = \
     --library=xsaa-log \
     --vapi=xsaa-log.vapi \
     --vapidir=${top_srcdir}/vapi \
+    --vapidir=logon \
     --pkg=config \
-    --pkg=os
+    --pkg=os \
+    --pkg=logon
 
 libxsaa_log_la_SOURCES = \
     log.vala
+
+libxsaa_log_la_LIBADD = \
+    logon/liblogon-glue.la
 
 VALAFILES = \
     $(filter %.vala,$(libxsaa_log_la_SOURCES))

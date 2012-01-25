@@ -24,7 +24,7 @@ copy_share_x11 ()
     for f in $(find /usr/share/X11 -type f ! -name "*fonts*")
     do
         d=$(dirname $f)
-        copy_exec_if_exist $f $d 
+        copy_exec_if_exist $f $d
     done
 }
 
@@ -36,7 +36,7 @@ copy_themes ()
     	for f in $(find $theme -type f)
     	do
         	d=$(dirname $f)
-        	copy_exec_if_exist $f $d 
+        	copy_exec_if_exist $f $d
     	done
     done
 }
@@ -66,6 +66,7 @@ mkdir -p ${DESTDIR}/usr/lib/xorg/modules/fonts
 mkdir -p ${DESTDIR}/usr/lib/xorg/modules/extensions
 mkdir -p ${DESTDIR}/usr/lib/xorg/modules/drivers
 mkdir -p ${DESTDIR}/usr/lib/xsplashaa
+mkdir -p ${DESTDIR}/usr/share/xsplashaa/logon
 mkdir -p ${DESTDIR}/usr/share/fonts/truetype/ttf-dejavu
 mkdir -p ${DESTDIR}/usr/share/fonts/X11/misc
 mkdir -p ${DESTDIR}/usr/share/fonts/X11/75dpi
@@ -162,3 +163,5 @@ copy_exec_if_exist /usr/share/mime/treemagic /usr/share/mime
 copy_exec_if_exist /usr/share/mime/aliases /usr/share/mime
 copy_exec_if_exist /usr/share/mime/generic-icons /usr/share/mime
 copy_exec_if_exist /usr/share/mime/mime.cache /usr/share/mime
+copy_exec_if_exist /usr/share/xsplashaa/logon/xsplashaa.conf /usr/share/xsplashaa/logon
+

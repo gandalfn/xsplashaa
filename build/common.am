@@ -9,5 +9,6 @@ AM_CPPFLAGS = \
     -DPACKAGE_ENGINE_DIR=\""$(enginedir)"\" \
     -DPACKAGE_FACEAUTH_DATA_DIR=\""$(faceauthdatadir)"\"\
     -DPACKAGE_ICONS_DIR=\""$(iconsdir)"\" \
+    -DPACKAGE_LOGON_DIR=\""$(logondir)"\" \
     -D_GNU_SOURCE
 

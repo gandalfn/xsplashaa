@@ -434,7 +434,7 @@ namespace XSAA
         public void
         launch(string inCmd) throws SessionError
         {
-            Log.debug ("launch: %s", inCmd);
+            Log.info ("launch: %s", inCmd);
 
             string[] argvp;
 
@@ -465,3 +465,4 @@ namespace XSAA
         }
     }
 }
+

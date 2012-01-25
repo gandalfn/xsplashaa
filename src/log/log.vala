@@ -80,6 +80,7 @@ namespace XSAA.Log
         private Level  m_Level       = Level.WARNING;
         private bool   m_Colorized   = false;
         private bool   m_DisplayHour = true;
+        private bool   m_Formatted   = true;
 
         // accessors
         public Level level {
@@ -97,6 +98,15 @@ namespace XSAA.Log
             }
             construct {
                 m_Domain = value;
+            }
+        }
+
+        public bool formatted {
+            get {
+                return m_Formatted;
+            }
+            set {
+                m_Formatted = value;
             }
         }
 
@@ -182,13 +192,45 @@ namespace XSAA.Log
          * @param inLevel log level
          * @param inMessage log message
          */
-        public void
+        public inline void
         log (Level inLevel, string inMessage)
         {
             if (inLevel <= m_Level)
             {
-                string msg = format (inLevel, inMessage);
-                write (m_Domain, inLevel, msg);
+                if (m_Formatted)
+                {
+                    string msg = format (inLevel, inMessage);
+                    write (m_Domain, inLevel, msg);
+                }
+                else
+                {
+                    write (m_Domain, inLevel, inMessage);
+                }
+            }
+        }
+
+        /**
+         * Write log trace with module and category
+         *
+         * @param inLevel log level
+         * @param inModule module name
+         * @param inCategory category name
+         * @param inMessage log message
+         */
+        public inline void
+        log_mc (Level inLevel, string inModule, string inCategory, string inMessage)
+        {
+            if (inLevel <= m_Level)
+            {
+                if (m_Formatted)
+                {
+                    string msg = format (inLevel, "[%s] [%s] %s".printf (inModule, inCategory, inMessage));
+                    write (m_Domain, inLevel, msg);
+                }
+                else
+                {
+                    write (m_Domain, inLevel, "[%s] [%s] %s".printf (inModule, inCategory, inMessage));
+                }
             }
         }
 
@@ -336,6 +378,100 @@ namespace XSAA.Log
         }
     }
 
+    /**
+     * Logger redirected in logon
+     */
+    public class Logon : Logger
+    {
+        // properties
+        private string m_Module = "module";
+        private string m_Category = "common";
+
+        // accessor
+        public string module {
+            get {
+                return m_Module;
+            }
+            construct set {
+                m_Module = value;
+            }
+        }
+
+        public string category {
+            get {
+                return m_Category;
+            }
+            construct set {
+                m_Category = value;
+            }
+        }
+
+        // static methods
+        static construct
+        {
+            logon.init ();
+        }
+
+        // methods
+        /**
+         * Create a new logger redirected in logon
+         *
+         * @param inDomain log domain
+         * @param inLevel default log level
+         * @param inModule module name
+         * @param inCategory category name
+         */
+        public Logon (Level inLevel, string inDomain, string inModule, string inCategory)
+        {
+            GLib.Object (domain: inDomain, level: inLevel, formatted: false, module: inModule, category: inCategory);
+            logon.LogonEngine.create (global::Config.PACKAGE_LOGON_DIR + "/" + inDomain + ".conf", inDomain, 0, Posix.getpid ());
+        }
+
+        ~Logon ()
+        {
+            logon.release ();
+        }
+
+        public override void
+        write (string inDomain, Level inLevel, string inMessage)
+        {
+            string module, category, msg = inMessage;
+
+            get_module_and_category (ref msg, out module, out category);
+
+            if (module == null)
+                module = m_Module;
+            else if (m_Module != module)
+                m_Module = module;
+
+            if (category == null)
+                category = m_Category;
+            else if (m_Category != category)
+                m_Category = category;
+
+            switch (inLevel)
+            {
+                case Level.ERROR:
+                    logon.Logon.error (module, category, msg);
+                    break;
+                case Level.CRITICAL:
+                    logon.Logon.error (module, category, msg);
+                    break;
+                case Level.WARNING:
+                    logon.Logon.warning (module, category, msg);
+                    break;
+                case Level.INFO:
+                    logon.Logon.notice (module, category, msg);
+                    break;
+                case Level.DEBUG:
+                    logon.Logon.debug (module, category, msg);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
     // static properties
     private static Logger s_Logger = null;
 
@@ -352,6 +488,29 @@ namespace XSAA.Log
             str = str + vala_pos + ": ".length;
         }
         return (string)str;
+    }
+
+    private static void
+    get_module_and_category (ref string inoutMessage, out string outModule, out string outCategory)
+    {
+        outModule = null;
+        outCategory = null;
+
+        try
+        {
+            GLib.Regex re = new GLib.Regex ("""\[(.*)\] \[(.*)\] (.*)""");
+            if (re.match (inoutMessage))
+            {
+                string[] split = re.split (inoutMessage);
+                outModule = split[1];
+                outCategory = split[2];
+                inoutMessage = split[3];
+            }
+        }
+        catch (GLib.Error err)
+        {
+            // do nothing
+        }
     }
 
     private static void
@@ -399,6 +558,15 @@ namespace XSAA.Log
     }
 
     /**
+     * Get default logger object
+     */
+    public static unowned Logger?
+    get_default_logger ()
+    {
+        return s_Logger;
+    }
+
+    /**
      * Set default logger object
      */
     public static void
@@ -423,6 +591,22 @@ namespace XSAA.Log
     }
 
     /**
+     * A convenience function to log a debug message.
+     *
+     * @param inModule module name
+     * @param inCategory category name
+     * @param inMessage log message
+     */
+    [PrintfFormat]
+    public static void
+    debug_mc (string inModule, string inCategory, string inMessage, ...)
+    {
+        va_list args = va_list ();
+        string msg = inMessage.vprintf (args);
+        logger ().log_mc (Level.DEBUG, inModule, inCategory, msg);
+    }
+
+    /**
      * A convenience function to log a info message.
      *
      * @param inMessage log message
@@ -434,6 +618,22 @@ namespace XSAA.Log
         va_list args = va_list ();
         string msg = inMessage.vprintf (args);
         logger ().log (Level.INFO, msg);
+    }
+
+    /**
+     * A convenience function to log a info message.
+     *
+     * @param inModule module name
+     * @param inCategory category name
+     * @param inMessage log message
+     */
+    [PrintfFormat]
+    public static void
+    info_mc (string inModule, string inCategory, string inMessage, ...)
+    {
+        va_list args = va_list ();
+        string msg = inMessage.vprintf (args);
+        logger ().log_mc (Level.INFO, inModule, inCategory, msg);
     }
 
     /**
@@ -451,6 +651,22 @@ namespace XSAA.Log
     }
 
     /**
+     * A convenience function to log a warning message.
+     *
+     * @param inModule module name
+     * @param inCategory category name
+     * @param inMessage log message
+     */
+    [PrintfFormat]
+    public static void
+    warning_mc (string inModule, string inCategory, string inMessage, ...)
+    {
+        va_list args = va_list ();
+        string msg = inMessage.vprintf (args);
+        logger ().log_mc (Level.WARNING, inModule, inCategory, msg);
+    }
+
+    /**
      * A convenience function to log a critical message.
      *
      * @param inMessage log message
@@ -462,6 +678,22 @@ namespace XSAA.Log
         va_list args = va_list ();
         string msg = inMessage.vprintf (args);
         logger ().log (Level.CRITICAL, msg);
+    }
+
+    /**
+     * A convenience function to log a critical message.
+     *
+     * @param inModule module name
+     * @param inCategory category name
+     * @param inMessage log message
+     */
+    [PrintfFormat]
+    public static void
+    critical_mc (string inModule, string inCategory, string inMessage, ...)
+    {
+        va_list args = va_list ();
+        string msg = inMessage.vprintf (args);
+        logger ().log_mc (Level.CRITICAL, inModule, inCategory, msg);
     }
 
     /**
@@ -477,4 +709,21 @@ namespace XSAA.Log
         string msg = inMessage.vprintf (args);
         logger ().log (Level.ERROR, msg);
     }
+
+    /**
+     * A convenience function to log a error message.
+     *
+     * @param inModule module name
+     * @param inCategory category name
+     * @param inMessage log message
+     */
+    [PrintfFormat]
+    public static void
+    error_mc (string inModule, string inCategory, string inMessage, ...)
+    {
+        va_list args = va_list ();
+        string msg = inMessage.vprintf (args);
+        logger ().log_mc (Level.ERROR, inModule, inCategory, msg);
+    }
 }
+
