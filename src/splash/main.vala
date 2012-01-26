@@ -34,6 +34,17 @@ namespace XSAA
         DISABLED
     }
 
+    public enum CheckFlags
+    {
+        NONE        = 0,
+        PERIPHERALS = 1 << 0,
+        TOUCHSCREEN = 1 << 1,
+        PANEL       = 1 << 2,
+        SSIDAB      = 1 << 3,
+
+        ALL         = (1 << 4) - 1
+    }
+
     public class Daemon : GLib.Object
     {
         // properties
@@ -54,7 +65,7 @@ namespace XSAA
         private bool                  m_PendingError = false;
         private GLib.IOChannel        m_Client = null;
 
-        private bool                  m_Check = true;
+        private CheckFlags            m_Check = CheckFlags.ALL;
         private StateCheckPeripherals m_CheckPeripherals = null;
         private int                   m_NumStep = 0;
         private EventBoot.Status      m_CheckPeripheralsStatus = EventBoot.Status.FINISHED;
@@ -189,7 +200,7 @@ namespace XSAA
                     KeyFile config = new KeyFile ();
                     config.load_from_file (Config.PACKAGE_CONFIG_FILE, KeyFileFlags.NONE);
                     m_Enable = config.get_boolean ("general", "enable");
-                    m_Check = config.get_boolean ("general", "check");
+                    m_Check = (CheckFlags)config.get_integer ("general", "check");
                     m_Server = config.get_string ("display", "server");
                     m_Number = config.get_integer ("display", "number");
                     m_Options = config.get_string ("display", "options");
@@ -520,10 +531,10 @@ namespace XSAA
                     Log.warning ("Error on get manager object");
                 }
 
-                if (m_Check && m_CheckPeripherals == null)
+                if ((m_Check & CheckFlags.PERIPHERALS) == CheckFlags.PERIPHERALS && m_CheckPeripherals == null)
                 {
                     m_NumStep = 0;
-                    m_CheckPeripherals = new StateCheckPeripherals (m_Connection, m_Number);
+                    m_CheckPeripherals = new StateCheckPeripherals (m_Connection, m_Check, m_Number);
                     m_CheckPeripherals.step.connect (on_check_peripherals_step);
                     m_CheckPeripherals.finished.connect (on_check_peripherals_finished);
                     m_CheckPeripherals.message.connect (on_check_peripherals_message);

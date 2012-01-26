@@ -35,30 +35,120 @@ namespace XSAA
          * @param inConnection dbus connection
          * @param inNumber display number
          */
-        public StateCheckPeripherals (DBus.Connection inConnection, int inNumber)
+        public StateCheckPeripherals (DBus.Connection inConnection, CheckFlags inCheckFlags, int inNumber)
         {
             m_Peripherals = new Devices (inConnection);
 
             // create check service state
-            add_state (new StateServiceCheck (m_Peripherals));
+            if ((inCheckFlags & CheckFlags.PERIPHERALS) == CheckFlags.PERIPHERALS)
+            {
+                var service_state = new StateServiceCheck (m_Peripherals);
 
-            // create check touchscreen state
-            add_state (new StateCheckTouchscreen (m_Peripherals, inNumber));
+                if ((inCheckFlags & CheckFlags.TOUCHSCREEN) == CheckFlags.TOUCHSCREEN)
+                {
+                    service_state.next_state = typeof (StateCheckTouchscreen);
+                }
+                else if ((inCheckFlags & CheckFlags.PANEL) == CheckFlags.PANEL)
+                {
+                    service_state.next_state = typeof (StateCheckPanel);
+                }
+                else if ((inCheckFlags & CheckFlags.SSIDAB) == CheckFlags.SSIDAB)
+                {
+                    service_state.next_state = typeof (StateCheckSSIDab);
+                }
 
-            // create configure touchscreen state
-            add_state (new StateConfigureTouchscreen (m_Peripherals, inNumber));
+                add_state (service_state);
 
-            // create calibrate touchscreen state
-            add_state (new StateCalibrateTouchscreen (m_Peripherals, inNumber));
+                // create check touchscreen state
+                if ((inCheckFlags & CheckFlags.TOUCHSCREEN) == CheckFlags.TOUCHSCREEN)
+                {
+                    var check_touchscreen_state = new StateCheckTouchscreen (m_Peripherals, inNumber);
 
-            // create check panel state
-            add_state (new StateCheckPanel (m_Peripherals));
+                    check_touchscreen_state.next_state = typeof (StateConfigureTouchscreen);
+                    if ((inCheckFlags & CheckFlags.PANEL) == CheckFlags.PANEL)
+                    {
+                        check_touchscreen_state.error_state = typeof (StateCheckPanel);
+                    }
+                    else if ((inCheckFlags & CheckFlags.SSIDAB) == CheckFlags.SSIDAB)
+                    {
+                        check_touchscreen_state.error_state = typeof (StateCheckSSIDab);
+                    }
 
-            // create check panel firmware state
-            add_state (new StateCheckPanelFirmware (m_Peripherals));
+                    add_state (check_touchscreen_state);
+                }
 
-            // create check ssidab state
-            add_state (new StateCheckSSIDab (m_Peripherals));
+                // create configure touchscreen state
+                if ((inCheckFlags & CheckFlags.TOUCHSCREEN) == CheckFlags.TOUCHSCREEN)
+                {
+                    var configure_touchscreen_state = new StateConfigureTouchscreen (m_Peripherals, inNumber);
+
+                    configure_touchscreen_state.next_state = typeof (StateCalibrateTouchscreen);
+                    if ((inCheckFlags & CheckFlags.PANEL) == CheckFlags.PANEL)
+                    {
+                        configure_touchscreen_state.error_state = typeof (StateCheckPanel);
+                    }
+                    else if ((inCheckFlags & CheckFlags.SSIDAB) == CheckFlags.SSIDAB)
+                    {
+                        configure_touchscreen_state.error_state = typeof (StateCheckSSIDab);
+                    }
+
+                    add_state (configure_touchscreen_state);
+                }
+
+                // create calibrate touchscreen state
+                if ((inCheckFlags & CheckFlags.TOUCHSCREEN) == CheckFlags.TOUCHSCREEN)
+                {
+                    var calibrate_touchscreen_state = new StateCalibrateTouchscreen (m_Peripherals, inNumber);
+
+                    if ((inCheckFlags & CheckFlags.PANEL) == CheckFlags.PANEL)
+                    {
+                        calibrate_touchscreen_state.next_state = typeof (StateCheckPanel);
+                        calibrate_touchscreen_state.error_state = typeof (StateCheckPanel);
+                    }
+                    else if ((inCheckFlags & CheckFlags.SSIDAB) == CheckFlags.SSIDAB)
+                    {
+                        calibrate_touchscreen_state.next_state = typeof (StateCheckSSIDab);
+                        calibrate_touchscreen_state.error_state = typeof (StateCheckSSIDab);
+                    }
+
+                    add_state (calibrate_touchscreen_state);
+                }
+
+                // create check panel state
+                if ((inCheckFlags & CheckFlags.PANEL) == CheckFlags.PANEL)
+                {
+                    var check_panel_state = new StateCheckPanel (m_Peripherals);
+
+                    check_panel_state.next_state = typeof (StateCheckPanelFirmware);
+                    if ((inCheckFlags & CheckFlags.SSIDAB) == CheckFlags.SSIDAB)
+                    {
+                        check_panel_state.error_state = typeof (StateCheckSSIDab);
+                    }
+
+                    add_state (check_panel_state);
+                }
+
+                // create check panel firmware state
+                if ((inCheckFlags & CheckFlags.PANEL) == CheckFlags.PANEL)
+                {
+                    var check_firmware_panel_state = new StateCheckPanelFirmware (m_Peripherals);
+
+                    if ((inCheckFlags & CheckFlags.SSIDAB) == CheckFlags.SSIDAB)
+                    {
+                        check_firmware_panel_state.next_state = typeof (StateCheckSSIDab);
+                        check_firmware_panel_state.error_state = typeof (StateCheckSSIDab);
+                    }
+
+                    add_state (check_firmware_panel_state);
+                }
+
+                // create check ssidab state
+                if ((inCheckFlags & CheckFlags.SSIDAB) == CheckFlags.SSIDAB)
+                {
+                    var check_ssidab_state = new StateCheckSSIDab (m_Peripherals);
+                    add_state (check_ssidab_state);
+                }
+            }
         }
 
         protected override void

@@ -26,24 +26,17 @@ namespace XSAA
      */
     public class StateCheckTouchscreen : StateMachine
     {
+        // constants
+        const int WAIT_TOUCHSCREEN = 500;
+        const int NB_RETRY = 10;
+
         // properties
         private unowned Devices m_Peripherals;
         private int             m_ScreenWidth = 1680;
         private int             m_ScreenHeight = 1050;
         private int             m_Number;
-
-        // accessors
-        public override GLib.Type next_state {
-            get {
-                return typeof (StateConfigureTouchscreen);
-            }
-        }
-
-        public override GLib.Type error_state {
-            get {
-                return typeof (StateCheckPanel);
-            }
-        }
+        private uint            m_IdTimeout;
+        private int             m_NbRetry;
 
         /**
          * Create a new check touchscreen state machine
@@ -133,12 +126,42 @@ namespace XSAA
             }
         }
 
+        private bool
+        on_timeout ()
+        {
+            if (m_IdTimeout != 0)
+            {
+                if (m_Peripherals.touchscreen == null)
+                {
+                    m_NbRetry++;
+                    if (m_NbRetry > NB_RETRY)
+                    {
+                        error ("Unable to find touchscreen device");
+                        m_IdTimeout = 0;
+                    }
+                }
+                else
+                {
+                    check_screen ();
+                    m_IdTimeout = 0;
+                }
+            }
+
+            return m_IdTimeout != 0;
+        }
+
         protected override void
         on_run ()
         {
             if (m_Peripherals.touchscreen == null)
             {
-                error ("Unable to find touchscreen device");
+                if (m_IdTimeout != 0)
+                {
+                    GLib.Source.remove (m_IdTimeout);
+                    m_IdTimeout = 0;
+                }
+                m_NbRetry = 0;
+                m_IdTimeout = GLib.Timeout.add (WAIT_TOUCHSCREEN, on_timeout);
             }
             else
             {

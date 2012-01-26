@@ -53,19 +53,6 @@ namespace XSAA
         private FlashResponse    m_BootFlashResponse = FlashResponse.NONE;
         private FlashResponse    m_FirmwareFlashResponse = FlashResponse.NONE;
 
-        // accessors
-        public override GLib.Type next_state {
-            get {
-                return typeof (StateCheckSSIDab);
-            }
-        }
-
-        public override GLib.Type error_state {
-            get {
-                return typeof (StateCheckSSIDab);
-            }
-        }
-
         /**
          * Create a new check panel firmware state machine
          *

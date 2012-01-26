@@ -30,19 +30,6 @@ namespace XSAA
         private unowned Devices m_Peripherals;
         private int             m_Number;
 
-        // accessors
-        public override GLib.Type next_state {
-            get {
-                return typeof (StateCalibrateTouchscreen);
-            }
-        }
-
-        public override GLib.Type error_state {
-            get {
-                return typeof (StateCheckPanel);
-            }
-        }
-
         /**
          * Create a new configure touchscreen state machine
          *

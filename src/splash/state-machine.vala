@@ -33,6 +33,8 @@ namespace XSAA
         // properties
         private unowned StateMachine? m_Current;
         private StateMachine[]        m_States;
+        private GLib.Type             m_NextState = GLib.Type.INVALID;
+        private GLib.Type             m_ErrorState = GLib.Type.INVALID;
 
         // acessors
         public GLib.Type current {
@@ -41,15 +43,21 @@ namespace XSAA
             }
         }
 
-        public virtual GLib.Type next_state {
+        public GLib.Type next_state {
             get {
-                return GLib.Type.INVALID;
+                return m_NextState;
+            }
+            set {
+                m_NextState = value;
             }
         }
 
-        public virtual GLib.Type error_state {
+        public GLib.Type error_state {
             get {
-                return GLib.Type.INVALID;
+                return m_ErrorState;
+            }
+            set {
+                m_ErrorState = value;
             }
         }
 
@@ -82,6 +90,7 @@ namespace XSAA
                 {
                     if (state.get_type () == m_Current.next_state)
                     {
+                        Log.info ("%s finished, switch to state %s", current.name (), m_Current.next_state.name ());
                         m_Current = state;
                         step ();
                         m_Current.run ();
@@ -95,6 +104,7 @@ namespace XSAA
             else
             {
                 m_Current = null;
+                Log.info ("%s finished", current.name ());
                 finished ();
             }
         }
@@ -108,6 +118,7 @@ namespace XSAA
                 {
                     if (state.get_type () == m_Current.error_state)
                     {
+                        Log.warning ("%s finished with error, switch to state %s", current.name (), m_Current.error_state.name ());
                         m_Current = state;
                         step ();
                         m_Current.run ();
@@ -120,6 +131,7 @@ namespace XSAA
             }
             else
             {
+                Log.warning ("%s finished with error", current.name ());
                 m_Current = null;
                 finished ();
             }

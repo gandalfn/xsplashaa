@@ -34,8 +34,12 @@ namespace SSI.Devices
         }
 
         public signal void message (MessageType inType, string inMessage);
+
+        [DBus (timeout = 10000)]
         public abstract string[] get_module_list () throws DBus.Error;
+        [DBus (timeout = 10000)]
         public abstract string get_module_description (string inName) throws DBus.Error;
+        [DBus (timeout = 10000)]
         public abstract string get_module_dbus_object (string inName) throws DBus.Error;
     }
 }

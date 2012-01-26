@@ -33,19 +33,6 @@ namespace XSAA
         private unowned Devices m_Peripherals;
         private uint            m_IdTimeout;
 
-        // accessors
-        public override GLib.Type next_state {
-            get {
-                return typeof (StateCheckPanelFirmware);
-            }
-        }
-
-        public override GLib.Type error_state {
-            get {
-                return typeof (StateCheckSSIDab);
-            }
-        }
-
         /**
          * Create a new check panel state machine
          *

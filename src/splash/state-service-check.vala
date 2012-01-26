@@ -29,13 +29,6 @@ namespace XSAA
         // properties
         private unowned Devices m_Peripherals;
 
-        // accessors
-        public override GLib.Type next_state {
-            get {
-                return typeof (StateCheckTouchscreen);
-            }
-        }
-
         /**
          * Create a new service check state machine
          *

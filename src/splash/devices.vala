@@ -48,6 +48,7 @@ namespace XSAA
                     try
                     {
                         string path = m_Service.get_module_dbus_object ("Touchscreen");
+                        Log.debug ("touchscreen path %s", path != null ? path : "null");
                         if (path != null && path.length > 0)
                         {
                             SSI.Devices.Module.Touchscreen.DeviceManager device_manager =
@@ -57,6 +58,7 @@ namespace XSAA
                             if (device_manager != null)
                             {
                                 string[] devices = device_manager.get_device_list ();
+                                Log.debug ("touchscreen nb devices %i", devices.length);
                                 if (devices.length > 0)
                                 {
                                     m_Touchscreen = (SSI.Devices.Module.Touchscreen.Device)m_Connection.get_object ("fr.supersonicimagine.Devices",
