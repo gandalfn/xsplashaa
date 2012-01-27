@@ -5,7 +5,7 @@ include $(top_srcdir)/build/vala.am
 noinst_LTLIBRARIES = libxsaa-log.la
 
 libxsaa_log_la_CFLAGS = \
-    -Ilogon
+    -I${top_srcdir}/src/log/logon
 
 libxsaa_log_la_VALAFLAGS = \
     --thread \
@@ -13,7 +13,7 @@ libxsaa_log_la_VALAFLAGS = \
     --library=xsaa-log \
     --vapi=xsaa-log.vapi \
     --vapidir=${top_srcdir}/vapi \
-    --vapidir=logon \
+    --vapidir=${top_srcdir}/src/log/logon \
     --pkg=config \
     --pkg=os \
     --pkg=logon
