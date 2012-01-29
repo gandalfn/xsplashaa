@@ -110,6 +110,12 @@ namespace XSAA.FaceAuthentification
             }
         }
 
+        public bool eyes_detected {
+            get {
+                return m_EyesDetector.eyes_detected;
+            }
+        }
+
         // static methods
         private static OpenCV.IPL.Image
         preprocess (OpenCV.IPL.Image inImg, OpenCV.Point inLeftEye, OpenCV.Point inRightEye)
@@ -188,7 +194,7 @@ namespace XSAA.FaceAuthentification
             m_FaceDetector.run (inInput);
             if (m_FaceDetector.face_detected)
             {
-                if (m_FaceDetector.face_information.width < 120 || m_FaceDetector.face_information.height < 120)
+                if (m_FaceDetector.face_information.width < 60 || m_FaceDetector.face_information.height < 60)
                 {
                     status = Status.TO_FAR;
                 }
@@ -200,7 +206,7 @@ namespace XSAA.FaceAuthentification
                 {
                     OpenCV.IPL.Image clipFaceImage = m_FaceDetector.clip_detected_face (inInput);
 
-                    m_EyesDetector.run (clipFaceImage, inInput, m_FaceDetector.face_information.lt);
+                    m_EyesDetector.run (clipFaceImage, m_FaceDetector.face_information.lt);
                     if (m_EyesDetector.eyes_detected)
                     {
                         OpenCV.IPL.Image gray = new OpenCV.IPL.Image (OpenCV.Size (clipFaceImage.width, clipFaceImage.height / 2), 8, 1);

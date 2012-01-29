@@ -227,10 +227,9 @@ namespace XSAA.FaceAuthentification
      *
      * @param inModel Model Feature
      * @param iTest Test Feature
-     * @result inWeight Diff
      */
     public double
-    lbp_custom_diff (OpenCV.Matrix inModel, OpenCV.Matrix inTest, OpenCV.Matrix inWeight)
+    lbp_diff (OpenCV.Matrix inModel, OpenCV.Matrix inTest)
     {
         double[,] weights = {
             { 1  , 1, 3, 1, 1   },
@@ -238,15 +237,6 @@ namespace XSAA.FaceAuthentification
             { 1  , 2, 2, 2, 1   },
             { 0.3, 1, 1, 1, 0.3 }
         };
-
-        for (int i = 0; i < 5; ++i)
-        {
-            for (int j = 0; j < 4; ++j)
-            {
-                OpenCV.Scalar s1 = OpenCV.Scalar.get_2D (inWeight, j, i);
-                weights[j,i] = s1.val[0];
-            }
-        }
 
         double chiSquare = 0;
         for (int i = 0; i < 5; ++i)
@@ -324,18 +314,18 @@ namespace XSAA.FaceAuthentification
             OpenCV.IPL.Image imaginaryInput  = new OpenCV.IPL.Image (OpenCV.Size (size_of_image_2x, size_of_image_2x), OpenCV.IPL.DEPTH_64F, 1);
             OpenCV.IPL.Image complexInput    = new OpenCV.IPL.Image (OpenCV.Size (size_of_image_2x, size_of_image_2x), OpenCV.IPL.DEPTH_64F, 2);
 
-            OpenCV.Matrix tmp = new OpenCV.Matrix (0, 0, 0);
+            OpenCV.MatrixStruct tmp = OpenCV.MatrixStruct ();
             grayfaces[i].convert_scale (realInput, 1.0, 0.0);
             realInputDouble.zero ();
             imaginaryInput.zero ();
-            realInputDouble.get_subrectangle (tmp, OpenCV.Rectangle (0, 0, inSizeOfImage, inSizeOfImage));
-            realInput.copy (tmp);
+            realInputDouble.get_subrectangle (tmp.to_pointer (), OpenCV.Rectangle (0, 0, inSizeOfImage, inSizeOfImage));
+            realInput.copy (tmp.to_pointer ());
 
             realInputDouble.merge (imaginaryInput, null, null, complexInput);
 
             OpenCV.Matrix dftImage = new OpenCV.Matrix (size_of_image_2x, size_of_image_2x, OpenCV.Type.FC64_2);
-            dftImage.get_subrectangle (tmp, OpenCV.Rectangle (0, 0, size_of_image_2x, size_of_image_2x));
-            complexInput.copy (tmp, null);
+            dftImage.get_subrectangle (tmp.to_pointer (), OpenCV.Rectangle (0, 0, size_of_image_2x, size_of_image_2x));
+            complexInput.copy (tmp.to_pointer (), null);
             dftImage.DFT (dftImage, OpenCV.DXT_FORWARD, 0);
 
             for (int l = 0; l < size_of_image_2x; ++l)
@@ -453,17 +443,16 @@ namespace XSAA.FaceAuthentification
     public void
     shift_dft (OpenCV.Array inSrcArr, OpenCV.Array inDstArr)
     {
-        OpenCV.Matrix tmp = null;
-        OpenCV.Matrix q1stub = new OpenCV.Matrix (0, 0, 0);
-        OpenCV.Matrix q2stub = new OpenCV.Matrix (0, 0, 0);
-        OpenCV.Matrix q3stub = new OpenCV.Matrix (0, 0, 0);
-        OpenCV.Matrix q4stub = new OpenCV.Matrix (0, 0, 0);
-        OpenCV.Matrix d1stub = new OpenCV.Matrix (0, 0, 0);
-        OpenCV.Matrix d2stub = new OpenCV.Matrix (0, 0, 0);
-        OpenCV.Matrix d3stub = new OpenCV.Matrix (0, 0, 0);
-        OpenCV.Matrix d4stub = new OpenCV.Matrix (0, 0, 0);
-        OpenCV.Matrix q1, q2, q3, q4;
-        OpenCV.Matrix d1, d2, d3, d4;
+        OpenCV.MatrixStruct q1stub = OpenCV.MatrixStruct ();
+        OpenCV.MatrixStruct q2stub = OpenCV.MatrixStruct ();
+        OpenCV.MatrixStruct q3stub = OpenCV.MatrixStruct ();
+        OpenCV.MatrixStruct q4stub = OpenCV.MatrixStruct ();
+        OpenCV.MatrixStruct d1stub = OpenCV.MatrixStruct ();
+        OpenCV.MatrixStruct d2stub = OpenCV.MatrixStruct ();
+        OpenCV.MatrixStruct d3stub = OpenCV.MatrixStruct ();
+        OpenCV.MatrixStruct d4stub = OpenCV.MatrixStruct ();
+        unowned OpenCV.Matrix q1, q2, q3, q4;
+        unowned OpenCV.Matrix d1, d2, d3, d4;
 
         OpenCV.Size size = inSrcArr.get_size ();
         OpenCV.Size dst_size = inDstArr.get_size ();
@@ -475,22 +464,17 @@ namespace XSAA.FaceAuthentification
             return;
         }
 
-        if (inSrcArr == inDstArr)
-        {
-            tmp = new OpenCV.Matrix (size.height / 2, size.width / 2, inSrcArr.get_elem_type ());
-        }
-
         cx = size.width / 2;
         cy = size.height / 2;
 
-        q1 = inSrcArr.get_subrectangle (q1stub,  OpenCV.Rectangle (0 ,  0 ,  cx,  cy));
-        q2 = inSrcArr.get_subrectangle (q2stub,  OpenCV.Rectangle (cx,  0 ,  cx,  cy));
-        q3 = inSrcArr.get_subrectangle (q3stub,  OpenCV.Rectangle (cx,  cy,  cx,  cy));
-        q4 = inSrcArr.get_subrectangle (q4stub,  OpenCV.Rectangle (0 ,  cy,  cx,  cy));
-        d1 = inSrcArr.get_subrectangle (d1stub,  OpenCV.Rectangle (0 ,  0 ,  cx,  cy));
-        d2 = inSrcArr.get_subrectangle (d2stub,  OpenCV.Rectangle (cx,  0 ,  cx,  cy));
-        d3 = inSrcArr.get_subrectangle (d3stub,  OpenCV.Rectangle (cx,  cy,  cx,  cy));
-        d4 = inSrcArr.get_subrectangle (d4stub,  OpenCV.Rectangle (0 ,  cy,  cx,  cy));
+        q1 = inSrcArr.get_subrectangle (q1stub.to_pointer (),  OpenCV.Rectangle (0 ,  0 ,  cx,  cy));
+        q2 = inSrcArr.get_subrectangle (q2stub.to_pointer (),  OpenCV.Rectangle (cx,  0 ,  cx,  cy));
+        q3 = inSrcArr.get_subrectangle (q3stub.to_pointer (),  OpenCV.Rectangle (cx,  cy,  cx,  cy));
+        q4 = inSrcArr.get_subrectangle (q4stub.to_pointer (),  OpenCV.Rectangle (0 ,  cy,  cx,  cy));
+        d1 = inSrcArr.get_subrectangle (d1stub.to_pointer (),  OpenCV.Rectangle (0 ,  0 ,  cx,  cy));
+        d2 = inSrcArr.get_subrectangle (d2stub.to_pointer (),  OpenCV.Rectangle (cx,  0 ,  cx,  cy));
+        d3 = inSrcArr.get_subrectangle (d3stub.to_pointer (),  OpenCV.Rectangle (cx,  cy,  cx,  cy));
+        d4 = inSrcArr.get_subrectangle (d4stub.to_pointer (),  OpenCV.Rectangle (0 ,  cy,  cx,  cy));
 
         if (inSrcArr != inDstArr)
         {
@@ -500,19 +484,21 @@ namespace XSAA.FaceAuthentification
                 return;
             }
 
-            q3.copy (d1, null);
-            q4.copy (d2, null);
-            q1.copy (d3, null);
-            q2.copy (d4, null);
+            q3.copy (d1);
+            q4.copy (d2);
+            q1.copy (d3);
+            q2.copy (d4);
         }
         else
         {
-            q3.copy  (tmp, null);
-            q1.copy  (q3,  null);
-            tmp.copy (q1,  null);
-            q4.copy  (tmp, null);
-            q2.copy  (q4,  null);
-            tmp.copy (q2,  null);
+            OpenCV.Matrix tmp = new OpenCV.Matrix (size.height / 2, size.width / 2, inSrcArr.get_elem_type ());
+
+            q3.copy  (tmp);
+            q1.copy  (q3);
+            tmp.copy (q1);
+            q4.copy  (tmp);
+            q2.copy  (q4);
+            tmp.copy (q2);
         }
     }
 
@@ -528,6 +514,7 @@ namespace XSAA.FaceAuthentification
     internal double
     peak_corr_plane_energy (OpenCV.Matrix inMaceFilterVisualize, OpenCV.IPL.Image inImage, int inSizeOfImage)
     {
+        OpenCV.MatrixStruct tmp = OpenCV.MatrixStruct ();
         OpenCV.IPL.Image face = new OpenCV.IPL.Image (OpenCV.Size (inImage.width, inImage.height), 8, 1);
         inImage.convert_color (face, OpenCV.ColorConvert.BGR2GRAY);
 
@@ -542,19 +529,18 @@ namespace XSAA.FaceAuthentification
         OpenCV.IPL.Image imaginaryInput  = new OpenCV.IPL.Image (OpenCV.Size (size_of_image_2x, size_of_image_2x), OpenCV.IPL.DEPTH_64F, 1);
         OpenCV.IPL.Image complexInput    = new OpenCV.IPL.Image (OpenCV.Size (size_of_image_2x, size_of_image_2x), OpenCV.IPL.DEPTH_64F, 2);
 
-        grayImage.convert_scale (realInput, 1.0, 0.0);
-
         imaginaryInput.zero ();
         realInputDouble.zero ();
 
-        OpenCV.Matrix tmp = new OpenCV.Matrix (0, 0, 0);
-        realInputDouble.get_subrectangle (tmp, OpenCV.Rectangle (0, 0, inSizeOfImage, inSizeOfImage));
-        realInput.copy (tmp);
+        grayImage.convert_scale (realInput, 1.0, 0.0);
+
+        realInputDouble.get_subrectangle (tmp.to_pointer (), OpenCV.Rectangle (0, 0, inSizeOfImage, inSizeOfImage));
+        realInput.copy (tmp.to_pointer ());
         realInputDouble.merge (imaginaryInput, null, null, complexInput);
 
         OpenCV.Matrix dftImage = new OpenCV.Matrix (size_of_image_2x, size_of_image_2x, OpenCV.Type.FC64_2);
-        dftImage.get_subrectangle (tmp, OpenCV.Rectangle (0, 0, size_of_image_2x, size_of_image_2x));
-        complexInput.copy (tmp, null);
+        dftImage.get_subrectangle (tmp.to_pointer (), OpenCV.Rectangle (0, 0, size_of_image_2x, size_of_image_2x));
+        complexInput.copy (tmp.to_pointer ());
         dftImage.DFT (dftImage, OpenCV.DXT_FORWARD, 0);
         dftImage.multiply_spectrums (inMaceFilterVisualize, dftImage, OpenCV.DXT_MUL_CONJ);
         dftImage.DFT (dftImage ,OpenCV.DXT_INV_SCALE, 0);
@@ -612,14 +598,14 @@ namespace XSAA.FaceAuthentification
         imaginaryInput.zero ();
         realInputDouble.zero ();
 
-        OpenCV.Matrix tmp = new OpenCV.Matrix (0, 0, 0);
-        realInputDouble.get_subrectangle (tmp, OpenCV.Rectangle (0, 0, inSizeOfImage, inSizeOfImage));
-        realInput.copy (tmp);
+        OpenCV.MatrixStruct tmp = OpenCV.MatrixStruct ();
+        realInputDouble.get_subrectangle (tmp.to_pointer (), OpenCV.Rectangle (0, 0, inSizeOfImage, inSizeOfImage));
+        realInput.copy (tmp.to_pointer ());
         realInputDouble.merge (imaginaryInput, null, null, complexInput);
 
         OpenCV.Matrix dftImage = new OpenCV.Matrix (size_of_image_2x, size_of_image_2x, OpenCV.Type.FC64_2);
-        dftImage.get_subrectangle (tmp, OpenCV.Rectangle (0, 0, size_of_image_2x, size_of_image_2x));
-        complexInput.copy (tmp, null);
+        dftImage.get_subrectangle (tmp.to_pointer (), OpenCV.Rectangle (0, 0, size_of_image_2x, size_of_image_2x));
+        complexInput.copy (tmp.to_pointer (), null);
         dftImage.DFT (dftImage, OpenCV.DXT_FORWARD, 0);
         dftImage.multiply_spectrums (inMaceFilterVisualize, dftImage, OpenCV.DXT_MUL_CONJ);
         dftImage.DFT (dftImage ,OpenCV.DXT_INV_SCALE, 0);
@@ -741,7 +727,7 @@ namespace XSAA.FaceAuthentification
      *
      * @param inAngle Angle at which Point should be turned
      * @param inCentreX Pivot Center X Co-ordinate
-     * @param inCentreY Pivot Center Y Co-ordinate
+     * @param inCentreY Pivot gg Y Co-ordinate
      * @param inImg Source Image
      * @param inDstImg Destination Image
      */

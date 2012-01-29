@@ -244,7 +244,10 @@ namespace XSAA
             }
         }
 
+#if HAVE_LOGON
         XSAA.Log.set_default_logger (new XSAA.Log.Logon (XSAA.Log.Level.DEBUG, "xsplashaa-session-daemon", "daemon", "main"));
+#endif
+
         Log.debug ("start");
 
         try
@@ -279,4 +282,3 @@ namespace XSAA
         return 0;
     }
 }
-

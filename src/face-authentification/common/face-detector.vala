@@ -116,9 +116,9 @@ namespace XSAA.FaceAuthentification
             if (m_Cascade != null)
             {
                 unowned OpenCV.Sequence<OpenCV.Rectangle?> faces =
-                                m_Cascade.detect_objects (small_img, m_Storage, 1.4, 2,
-                                                          OpenCV.HaarClassifierCascade.Flags.DO_CANNY_PRUNING,
-                                                          OpenCV.Size (80 / scale, 80 / scale));
+                                m_Cascade.detect_objects (small_img, m_Storage, 1.1, 2,
+                                                          OpenCV.HaarClassifierCascade.Flags.SCALE_IMAGE,
+                                                          OpenCV.Size (50 / scale, 50 / scale));
                 for (int i = 0; i < (faces != null ? faces.total : 0); ++i)
                 {
                     // Create a new rectangle for the face

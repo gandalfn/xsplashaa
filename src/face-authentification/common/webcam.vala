@@ -95,5 +95,69 @@ namespace XSAA.FaceAuthentification
 
             return frame_copy;
         }
+
+        /**
+         * Query webcam frame cairo surface
+         */
+        public Cairo.Surface?
+        frame_to_cairo_surface (OpenCV.IPL.Image inImage)
+        {
+            Cairo.ImageSurface? surface = null;
+
+            surface = new Cairo.ImageSurface (Cairo.Format.ARGB32,
+                                              Image.WIDTH, Image.HEIGHT);
+            unowned uchar* dst = surface.get_data ();
+            unowned uchar* src = inImage.image_data;
+            int size = Image.WIDTH * Image.HEIGHT;
+
+            for (int n = size; (--n) > 0;)
+            {
+                *(dst + 0) = *(src + 0);
+                *(dst + 1) = *(src + 1);
+                *(dst + 2) = *(src + 2);
+                *(dst + 3) = 0xFF;
+                dst += 4;
+                src += 3;
+           }
+
+            surface.mark_dirty ();
+            surface.flush ();
+
+            return surface;
+        }
+
+        /**
+         * Query webcam frame cairo surface with ellipse
+         */
+        public Cairo.Surface?
+        paint_ellipse (OpenCV.IPL.Image inImage, OpenCV.Point inLeftEye, OpenCV.Point inRightEye)
+        {
+            Cairo.Surface? surface = frame_to_cairo_surface (inImage);
+
+            OpenCV.Point p2 = OpenCV.Point (inLeftEye.x, inLeftEye.y);
+            double yvalue = inRightEye.y - inLeftEye.y;
+            double xvalue = inRightEye.x - inLeftEye.x;
+            double width  = GLib.Math.sqrt (GLib.Math.pow (xvalue, 2) + GLib.Math.pow (yvalue, 2));
+            double ratio  = GLib.Math.sqrt (GLib.Math.pow (xvalue, 2) + GLib.Math.pow (yvalue, 2)) / 80.0;
+
+            p2.x += (int)(width / 2.0);
+            p2.y += (int)(35 * ratio);
+
+            double ang= -GLib.Math.atan (yvalue / xvalue) * (180.0 / GLib.Math.PI);
+
+            Cairo.Context ctx = new Cairo.Context (surface);
+            ctx.translate (inLeftEye.x, inLeftEye.y);
+            ctx.move_to (p2.x, p2.y);
+            ctx.rotate (ang / 360.0);
+            ctx.move_to (-p2.x, -p2.y);
+            double scale_x = ((width / 2.0) + (55.0 * ratio)) / (double)inImage.width;
+            double scale_y = (120.0 * ratio) / (double)inImage.height;
+            ctx.scale (scale_x, scale_y);
+            ctx.arc (p2.x / scale_x, p2.y / scale_y, inImage.width, 0, 2 * GLib.Math.PI);
+            ctx.set_source_rgb (1, 1, 1);
+            ctx.fill ();
+
+            return surface;
+        }
     }
 }

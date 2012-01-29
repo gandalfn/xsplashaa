@@ -33,7 +33,7 @@ namespace XSAA.FaceAuthentification
         public OpenCV.IPL.Image[] faces;
     }
 
-    public class FaceSet
+    public struct FaceSet
     {
         public string[]     name;
         public FaceImages[] face_images;
@@ -149,10 +149,10 @@ namespace XSAA.FaceAuthentification
          *
          * @return returns the all face sets in a setFace structure
          */
-        public FaceSet
+        public FaceSet?
         get_face_set ()
         {
-            FaceSet setFaceStruct = null;
+            FaceSet? setFaceStruct = null;
             try
             {
                 GLib.Dir dir = GLib.Dir.open (faces_directory);
@@ -168,7 +168,7 @@ namespace XSAA.FaceAuthentification
                 }
                 my_list.sort (GLib.strcmp);
 
-                setFaceStruct = new FaceSet ();
+                setFaceStruct = FaceSet ();
                 setFaceStruct.name = new string[my_list.length ()];
                 setFaceStruct.thumbnails = new string[my_list.length ()];
                 setFaceStruct.face_images = new FaceImages[my_list.length ()];
@@ -198,6 +198,7 @@ namespace XSAA.FaceAuthentification
                     mylistImages.sort (GLib.strcmp);
 
                     int imageIndex = 0;
+                    setFaceStruct.face_images[k] = new FaceImages ();
                     setFaceStruct.face_images[k].faces = new OpenCV.IPL.Image [imageK];
                     foreach (string l in mylistImages)
                     {
@@ -313,91 +314,9 @@ namespace XSAA.FaceAuthentification
                 OpenCV.Matrix featureLBPHistMatrix = new OpenCV.Matrix (Nx * Ny * 59, 1, OpenCV.Type.FC64_1);
                 feature_lbp_hist (averageImage, featureLBPHistMatrix);
 
-                OpenCV.IPL.Image weights = new OpenCV.IPL.Image (OpenCV.Size (5 * 4, temp.face_images[i].faces.length), OpenCV.IPL.DEPTH_64F, 1);
-                for (int index = 0; index < temp.face_images[i].faces.length; ++index)
-                {
-                    OpenCV.IPL.Image averageImageFace = new OpenCV.IPL.Image (temp.face_images[i].faces[index].get_size (), OpenCV.IPL.DEPTH_64F, 1);
-                    OpenCV.IPL.Image averageImageFace64 = new OpenCV.IPL.Image (temp.face_images[i].faces[index].get_size (), 8, 1);
-                    temp.face_images[i].faces[index].convert_color (averageImageFace64, OpenCV.ColorConvert.BGR2GRAY);
-                    averageImageFace64.convert_scale (averageImageFace, 1.0, 0.0);
-
-                    OpenCV.Matrix featureLBPHistMatrixFace = new OpenCV.Matrix (Nx * Ny * 59, 1, OpenCV.Type.FC64_1);
-                    feature_lbp_hist (averageImageFace, featureLBPHistMatrixFace);
-
-                    for (int l = 0; l < 5; ++l)
-                    {
-                        for (int j = 0; j < 4; ++j)
-                        {
-                            double chiSquare = 0;
-
-                            for (int k = 0; k < 59; ++k)
-                            {
-                                OpenCV.Scalar s1 = OpenCV.Scalar.get_2D (featureLBPHistMatrixFace, l * 4 * 59 + j * 59 + k, 0);
-                                OpenCV.Scalar s2 = OpenCV.Scalar.get_2D (featureLBPHistMatrix, l * 4 * 59 + j * 59 + k, 0);
-
-                                double hist1 = s1.val[0];
-                                double hist2 = s2.val[0];
-
-                                if ((hist1 + hist2) != 0)
-                                    chiSquare += GLib.Math.pow (hist1 - hist2, 2) / (hist1 + hist2);
-                            }
-                            OpenCV.Scalar s1 = OpenCV.Scalar (chiSquare);
-                            weights.set_2d (index, j * 5 + l, s1);
-                        }
-                    }
-                }
-
-                OpenCV.IPL.Image variance = new OpenCV.IPL.Image (OpenCV.Size (5 * 4, 1), OpenCV.IPL.DEPTH_64F, 1);
-                OpenCV.IPL.Image sum      = new OpenCV.IPL.Image (OpenCV.Size (5 * 4, 1), OpenCV.IPL.DEPTH_64F, 1);
-                OpenCV.IPL.Image sumSq    = new OpenCV.IPL.Image (OpenCV.Size (5 * 4, 1), OpenCV.IPL.DEPTH_64F, 1);
-                OpenCV.IPL.Image meanSq   = new OpenCV.IPL.Image (OpenCV.Size (5 * 4, 1), OpenCV.IPL.DEPTH_64F, 1);
-                variance.zero ();
-                sum.zero ();
-                sumSq.zero ();
-
-                for (int index = 0; index < temp.face_images[i].faces.length; ++index)
-                {
-                    for (int l = 0; l < 5; ++l)
-                    {
-                        for (int j = 0; j < 4; ++j)
-                        {
-                            OpenCV.Scalar s1, s2, s3, s4;
-
-                            s1 = OpenCV.Scalar.get_2D (weights, index, j * 5 + l);
-                            s2 = OpenCV.Scalar.get_2D (sum, 0, j * 5 + l);
-                            s3 = OpenCV.Scalar (s1.val[0] + s2.val[0]);
-                            s4 = OpenCV.Scalar.get_2D (sumSq, 0, j * 5 + l);
-
-                            sum.set_2d (0, j * 5 + l, s3);
-                            s1.val[0] *= s1.val[0];
-                            s1.val[0] += s4.val[0];
-                            sumSq.set_2d (0, j * 5 + l, s1);
-                        }
-                    }
-                }
-
-                sum.convert_scale (sum, 1 / (double)temp.face_images[i].faces.length);
-                sumSq.convert_scale (sumSq, 1 / (double)temp.face_images[i].faces.length);
-                sum.multiply (sum, meanSq);
-                sumSq.subtract (meanSq, variance);
-
-                ((OpenCV.Array)null).divide (variance, variance);
-                OpenCV.Scalar totalVariance = variance.sum ();
-                OpenCV.Matrix finalWeights = new OpenCV.Matrix (4, 5, OpenCV.Type.FC64_1);
-                for (int j = 0; j < 4; ++j)
-                {
-                    for (int l = 0; l < 5; ++l)
-                    {
-                        OpenCV.Scalar s1 = OpenCV.Scalar.get_2D (variance, 0, j * 5 + l);
-                        s1.val[0] = (s1.val[0] * 20) / totalVariance.val[0];
-                        finalWeights.set_2d(j, l, s1);
-                    }
-                }
-
                 string lbpFacePath = "%s/%s_face_lbp.xml".printf (model_directory, temp.name[i]);
                 OpenCV.File.Storage fs = new OpenCV.File.Storage (lbpFacePath, null, OpenCV.File.Mode.WRITE);
                 fs.write ("lbp", featureLBPHistMatrix, OpenCV.File.AttributeList ());
-                fs.write("weights", finalWeights, OpenCV.File.AttributeList ());
 
                 GLib.List<double?> lbpAv = new GLib.List<double?> ();
 
@@ -408,7 +327,7 @@ namespace XSAA.FaceAuthentification
                     temp.face_images[i].faces[index].convert_color (imageFace, OpenCV.ColorConvert.BGR2GRAY);
 
                     feature_lbp_hist (imageFace, featureLBPHistMatrixTest);
-                    lbpAv.append (lbp_custom_diff (featureLBPHistMatrixTest, featureLBPHistMatrix, finalWeights));
+                    lbpAv.append (lbp_diff (featureLBPHistMatrixTest, featureLBPHistMatrix));
                 }
                 lbpAv.sort (cmp_double);
                 int half = (temp.face_images[i].faces.length / 2) - 1;
@@ -559,31 +478,29 @@ namespace XSAA.FaceAuthentification
                     if (file != "." && file != "..")
                     {
                         string lbp = "%s/%s_face_lbp.xml".printf (model_directory, file);
+                        message ("%s", lbp);
                         OpenCV.File.Storage fileStorage = new OpenCV.File.Storage (lbp, null, OpenCV.File.Mode.READ);
                         if (fileStorage == null) continue;
+                        message ("open %s", lbp);
 
-                        unowned OpenCV.Matrix? lbpModel = (OpenCV.Matrix)fileStorage.read_by_name (null, "lbp", null);
-                        unowned OpenCV.Matrix? weights = (OpenCV.Matrix)fileStorage.read_by_name (null, "weights", null);
+                        OpenCV.Matrix lbpModel = fileStorage.read_matrix_by_name (null, "lbp", null);
                         if (lbpModel == null) continue;
-                        if (weights == null) continue;
 
-                        double lbpThresh = fileStorage.read_real_by_name (null, "thresholdLbp", 8000.0);
-                        double val = lbp_custom_diff (lbpModel, featureLBPHistMatrix, weights);
-                        double step = lbpThresh / 8;
+                        message ("next %s", lbp);
 
-                        double thresholdLBP = lbpThresh;
-                        double percentageModifier = ((0.80 - newConfig.percentage) * 100);
-                        int baseIncrease = (int)GLib.Math.floor (GLib.Math.log10 (lbpThresh)) - 2;
-                        while (baseIncrease > 0)
-                        {
-                            percentageModifier *= 10;
-                            baseIncrease--;
-                        }
-                        thresholdLBP += percentageModifier * 1.2;
+                        double lbpThresh = fileStorage.read_real_by_name (null, "thresholdLbp", 8000);
+                        message ("lbpThresh %e", lbpThresh);
+                        double val = lbp_diff (lbpModel, featureLBPHistMatrix);
+                        double step = lbpThresh / 8.0;
 
+                        message ("percent %f", newConfig.percentage);
+                        double thresholdLBP = lbpThresh - ((0.80 - newConfig.percentage) * 1000.0);
+
+                        message ("%e %e %e",val,(thresholdLBP+step),step);
                         if (val < (thresholdLBP + step))
                         {
                             string facePath = "%s/%s_face_mace.xml".printf (model_directory, file);
+                            message ("%s", facePath);
                             fileStorage = new OpenCV.File.Storage (facePath, null, OpenCV.File.Mode.READ);
                             if (fileStorage == null) continue;
                             unowned OpenCV.Matrix? maceFilterUser = (OpenCV.Matrix)fileStorage.read_by_name (null, "maceFilter", null);
@@ -591,6 +508,7 @@ namespace XSAA.FaceAuthentification
                             int valu = peak_to_side_lobe_ratio (maceFilterUser, face, FACE_MACE_SIZE);
 
                             string eyePath = "%s/%s_eye_mace.xml".printf (model_directory, file);
+                            message ("%s", eyePath);
                             fileStorage = new OpenCV.File.Storage (eyePath, null, OpenCV.File.Mode.READ);
                             if (fileStorage == null) continue;
                             maceFilterUser = (OpenCV.Matrix)fileStorage.read_by_name (null, "maceFilter", null);
@@ -598,6 +516,7 @@ namespace XSAA.FaceAuthentification
                             valu += peak_to_side_lobe_ratio (maceFilterUser, eye, EYE_MACE_SIZE);
 
                             string insideFacePath = "%s/%s_inside_face_mace.xml".printf (model_directory, file);
+                            message ("%s", insideFacePath);
                             fileStorage = new OpenCV.File.Storage (insideFacePath, null, OpenCV.File.Mode.READ);
                             if (fileStorage == null) continue;
                             maceFilterUser = (OpenCV.Matrix)fileStorage.read_by_name (null, "maceFilter", null);
@@ -638,4 +557,3 @@ namespace XSAA.FaceAuthentification
         }
     }
 }
-

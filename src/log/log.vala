@@ -378,6 +378,7 @@ namespace XSAA.Log
         }
     }
 
+#if HAVE_LOGON
     /**
      * Logger redirected in logon
      */
@@ -471,6 +472,7 @@ namespace XSAA.Log
             }
         }
     }
+#endif
 
     // static properties
     private static Logger s_Logger = null;
@@ -726,4 +728,3 @@ namespace XSAA.Log
         logger ().log_mc (Level.ERROR, inModule, inCategory, msg);
     }
 }
-

@@ -84,7 +84,7 @@ namespace XSAA.FaceAuthentification
             double diff = 0;
             for (int i = 0; i < inSize; ++i)
             {
-                if ((inPx * i + inPy) >= 0 && (inPx * i + inPy) < inSize)
+                if ((int)GLib.Math.floor (inPx * i + inPy) >= 0 && (int)GLib.Math.floor (inPx * i + inPy) < inSize)
                 {
                     int k = (int)GLib.Math.floor (inPx * i + inPy);
                     double decimal = inPx * i + inPy - k;

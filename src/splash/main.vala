@@ -498,10 +498,12 @@ namespace XSAA
         {
             Log.debug ("dbus ready");
 
+#if HAVE_LOGON
             if (!(Log.get_default_logger () is XSAA.Log.Logon))
             {
                 Log.set_default_logger (new XSAA.Log.Logon (XSAA.Log.Level.DEBUG, "xsplashaa", "splash", "main"));
             }
+#endif
 
             m_Device = m_Display.get_device ();
             if (m_Device == null)
@@ -1032,4 +1034,3 @@ namespace XSAA
         return 0;
      }
 }
-

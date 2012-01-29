@@ -36,15 +36,17 @@ namespace OpenCV {
 		[CCode (cname = "cvGetImage")]
 		public OpenCV.IPL.Image get_image (OpenCV.IPL.Image header);
 		[CCode (cname = "cvGetMat")]
-		public OpenCV.Matrix get_matrix (OpenCV.Matrix header, int[]? coi = null, int allowND = 0);
+		public OpenCV.Matrix get_matrix (OpenCV.Matrix header, [CCode (array_length = false)]int[]? coi = null, int allowND = 0);
 		[CCode (cname = "cvGetRow")]
 		public OpenCV.Matrix get_row (OpenCV.Matrix submat, int row);
 		[CCode (cname = "cvGetRows")]
 		public OpenCV.Matrix get_rows (OpenCV.Matrix submat, int start_row, int end_Row, int delta_row = 1);
 		[CCode (cname = "cvGetSubRect")]
-		public OpenCV.Matrix get_subrectangle (OpenCV.Matrix submat, OpenCV.Rectangle rect);
+		public unowned OpenCV.Matrix get_subrectangle (OpenCV.Matrix submat, OpenCV.Rectangle rect);
 		[CCode (cname = "cvGetSize")]
 		public OpenCV.Size get_size ();
+		[CCode (cname = "cvGetRawData")]
+		public void get_raw_data (out uchar* data, out int step, out OpenCV.Size roiSize);
 
 		[CCode (cname = "cvAdd")]
 		public void add (OpenCV.Array src2, OpenCV.Array dst, OpenCV.Array? mask = null);
@@ -183,7 +185,12 @@ namespace OpenCV {
 
 		[CCode (cname = "cvSet2D")]
 		public void set_2d (int inIdx0, int inIdx1, Scalar val);
-		
+		[CCode (cname = "cvSet")]
+		public void set_all (OpenCV.Scalar scalar, OpenCV.Array? mask = null);
+
+		[CCode (cname = "cvMixChannels")]
+		public static void mix_channels (OpenCV.Array[] src, OpenCV.Array[] dst, [CCode (array_length = false)]int[] fromTo, int pair);
+
 		[CCode (cname = "cvSaveImage", instance_pos = 1.1)]
 		public int save_image (string filename, [CCode (array_length = false)]int[]? params = null);
 		[CCode (cname = "cvWarpAffine")]
@@ -436,7 +443,7 @@ namespace OpenCV {
 		[CCode (cname = "CV_USRTYPE1")]
 		USR1,
 
-		[CCode (cname = "CV_CV_8UC1")]
+		[CCode (cname = "CV_8UC1")]
 		UC8_1,
 		[CCode (cname = "CV_8UC2")]
 		UC8_2,
@@ -549,6 +556,12 @@ namespace OpenCV {
 		public void* data;
 	}
 
+	[CCode (cname = "CvMat")]
+	public struct MatrixStruct {
+		[CCode (cname = "(CvMat*)")]
+		public unowned Matrix? to_pointer ();
+	}
+
 	[Compact, CCode (cname = "CvMat", has_type_id = false, free_function = "cvReleaseMat", free_function_address_of = true, copy_function = "cvCloneMat")]
 	public class Matrix : OpenCV.Array {
 		[CCode (cname = "cvCreateMat")]
@@ -566,8 +579,10 @@ namespace OpenCV {
 		public static int depth (int type);
 		[CCode (cname = "cvmGet")]
 		public double get (int row, int col);
-		[CCode (cname = "cvSet")]
+		[CCode (cname = "cvmSet")]
 		public void set (int row, int col, double value);
+		[CCode (cname = "cvmCopy")]
+		public void copy (OpenCV.Matrix dst);
 		[CCode (cname = "cvSolveCubic")]
 		public int solve_cubic (OpenCV.Matrix roots);
 		[CCode (cname = "cvSolvePoly")]
@@ -680,30 +695,33 @@ namespace OpenCV {
 		public class Storage {
 			[CCode (cname = "cvOpenFileStorage")]
 			public Storage (string filename, Memory.Storage? memstorage, int flags, string? encoding = null);
-			
+
 			[CCode (cname = "cvReadByName")]
 			public void* read_by_name (Node? map, string name, AttributeList? attr);
-			
+
+			[CCode (cname = "cvReadByName")]
+			public OpenCV.Matrix? read_matrix_by_name (Node? map, string name, AttributeList? attr);
+
 			[CCode (cname = "cvReadRealByName")]
 			public double read_real_by_name (Node? map, string name, double default = 0.0);
-			
+
 			[CCode (cname = "cvReadIntByName")]
 			public int read_int_by_name (Node? map, string name, int default = 0);
 
 			[CCode (cname = "cvWriteReal")]
 			public void write_real (string name, double value);
-			
+
 			[CCode (cname = "cvWriteInt")]
 			public void write_int (string name, int value);
-			
+
 			[CCode (cname = "cvWrite")]
 			public void write (string name, void* value, AttributeList attr);
 		}
-		
+
 		[Compact, CCode (cname = "CvFileNode")]
 		public class Node {
 		}
-		
+
 		[SimpleType, CCode (cname = "CvAttrList")]
 		public struct AttributeList {
 			[CCode (cname = "cvAttrList")]
@@ -715,7 +733,7 @@ namespace OpenCV {
 			READ,
 			WRITE
 		}
-		
+
 	}
 
 	namespace Memory {
@@ -765,7 +783,7 @@ namespace OpenCV {
 		[CCode (cname = "cvFree")]
 		public static void free (void* ptr);
 	}
-	
+
 	[SimpleType, CCode (cname = "CvPixelPosition8u", has_type_id = false)]
 	public struct PixelPosition8u {
 		public uchar*  currline;
@@ -1165,7 +1183,7 @@ namespace OpenCV {
 			public Image (OpenCV.Size size, int depth, int channels);
 			[CCode (cname = "cvLoadImage", cheader_filename = "highgui.h")]
 			public Image.load (string filename, OpenCV.IPL.Image.LoadType type = OpenCV.IPL.Image.LoadType.COLOR);
-			
+
 			[CCode (cname = "cvCloneImage")]
 			public Image clone ();
 			[CCode (cname = "cvInitImageHeader")]
@@ -1209,8 +1227,8 @@ namespace OpenCV {
 			public void* image_id;
 			// [CCode (cname = "tileInfo")]
 			// public TileInfo tile_info;
-			[CCode (cname = "imageData", array_length_name = "imageSize")]
-			public uint8[] image_data;
+			[CCode (cname = "imageData", array_length = false)]
+			public unowned uint8[] image_data;
 			[CCode (cname = "widthStep")]
 			public int width_step;
 			[CCode (cname = "BorderMode")]
@@ -1268,7 +1286,7 @@ namespace OpenCV {
 			AREA,
 			CUBIC
 		}
-			
+
 		[CCode (cname = "int", has_type_id = false, cprefix = "IPL_ORIGIN_")]
 		public enum Origin {
 			TL,
@@ -1290,7 +1308,7 @@ namespace OpenCV {
 		}
 
 		[CCode (cname = "IPL_DEPTH_8U")]
-		public const int DEPTH_8U;	
+		public const int DEPTH_8U;
 		[CCode (cname = "IPL_DEPTH_64F")]
 		public const int DEPTH_64F;
 	}

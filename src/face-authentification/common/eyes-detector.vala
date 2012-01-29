@@ -86,7 +86,7 @@ namespace XSAA.FaceAuthentification
          * @param inLT ?
          */
         public void
-        run (OpenCV.IPL.Image? inInput, OpenCV.IPL.Image inFullImage, OpenCV.Point inLT)
+        run (OpenCV.IPL.Image? inInput, OpenCV.Point inLT)
         {
             m_BothEyesDetected = false;
 
@@ -102,12 +102,11 @@ namespace XSAA.FaceAuthentification
             int scale = 1;
 
             OpenCV.IPL.Image gray = new OpenCV.IPL.Image (inInput.get_size (), 8, 1);
-            OpenCV.IPL.Image gray_fullimage = new OpenCV.IPL.Image (inFullImage.get_size (), 8, 1);
 
             inInput.convert_color (gray, OpenCV.ColorConvert.BGR2GRAY);
-            inFullImage.convert_color (gray_fullimage, OpenCV.ColorConvert.BGR2GRAY);
 
-            OpenCV.IPL.Image small_img = new OpenCV.IPL.Image (OpenCV.Size (OpenCV.Math.round (inInput.width / scale), OpenCV.Math.round (inInput.height / scale)), 8, 1);
+            OpenCV.IPL.Image small_img = new OpenCV.IPL.Image (OpenCV.Size (OpenCV.Math.round (inInput.width / scale),
+                                                               OpenCV.Math.round (inInput.height / scale)), 8, 1);
 
             // The classifier works on grey scale images,
             // so the incoming BGR image input is converted to greyscale
@@ -118,12 +117,15 @@ namespace XSAA.FaceAuthentification
             // Perform histogram equalization (increases contrast and dynamic range)
             small_img.equalize_hist (small_img);
 
-            unowned OpenCV.Sequence<OpenCV.Rectangle?> nested_objects = m_NestedCascade.detect_objects (small_img, m_Storage, 1.1, 2, OpenCV.HaarClassifierCascade.Flags.SCALE_IMAGE);
+            unowned OpenCV.Sequence<OpenCV.Rectangle?>
+                    nested_objects = m_NestedCascade.detect_objects (small_img, m_Storage, 1.1, 2,
+                                                                     OpenCV.HaarClassifierCascade.Flags.SCALE_IMAGE);
             int count = nested_objects != null ? nested_objects.total : 0;
             if (count == 0)
             {
                 // Second round of detection using m_NestedCascade2
-                nested_objects = m_NestedCascade2.detect_objects (small_img, m_Storage, 1.1, 2, OpenCV.HaarClassifierCascade.Flags.SCALE_IMAGE);
+                nested_objects = m_NestedCascade2.detect_objects (small_img, m_Storage, 1.1, 2,
+                                                                  OpenCV.HaarClassifierCascade.Flags.SCALE_IMAGE);
 
                 count = nested_objects != null ? nested_objects.total : 0;
             }
@@ -144,26 +146,17 @@ namespace XSAA.FaceAuthentification
                     if ((center.x - 4) > 0 && ((center.x - 4) < (Image.WIDTH - 8)) &&
                         (center.y - 4) > 0 && ((center.y - 4) < (Image.HEIGHT - 8)))
                     {
-                        gray_fullimage.set_roi (OpenCV.Rectangle (center.x - 4, center.y - 4, 8, 8));
-
-                        OpenCV.IPL.Image eyeDetect = new OpenCV.IPL.Image (OpenCV.Size (8, 8), 8, 1);
-                        gray_fullimage.resize (eyeDetect, OpenCV.IPL.InterpolationType.LINEAR);
-                        gray_fullimage.reset_roi ();
-
-                        double xCordinate = (center.x - 4 + center_of_mass (eyeDetect, false));
-                        double yCordinate = (center.y - 4 + center_of_mass (eyeDetect, true));
-
                         if (center.x < OpenCV.Math.round (inLT.x + inInput.width * 0.5))
                         {
-                            m_Eyes.le.x = (int)xCordinate;
-                            m_Eyes.le.y = (int)yCordinate;
+                            m_Eyes.le.x = (int)center.x;
+                            m_Eyes.le.y = (int)center.y;
 
                             leftT = true;
                         }
                         else
                         {
-                            m_Eyes.re.x = (int)xCordinate;
-                            m_Eyes.re.y = (int)yCordinate;
+                            m_Eyes.re.x = (int)center.x;
+                            m_Eyes.re.y = (int)center.y;
 
                             rightT = true;
                         }

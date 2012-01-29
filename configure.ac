@@ -52,6 +52,9 @@ IT_PROG_INTLTOOL([0.35.0])
 dnl ****************************************************************************
 dnl Check for packages
 dnl ****************************************************************************
+PKG_CHECK_MODULES(XSPLASHAA_LOGON, [logon >= $LOGON_REQUIRED], [have_logon=yes], [have_logon=no])
+AM_CONDITIONAL([HAVE_LOGON], test "x$have_logon" = "xyes")
+
 PKG_CHECK_MODULES(XSPLASHAA, [x11
                               glib-2.0 >= $GLIB_REQUIRED
                               gthread-2.0 >= $GLIB_REQUIRED
@@ -59,22 +62,32 @@ PKG_CHECK_MODULES(XSPLASHAA, [x11
                               gmodule-2.0 >= $GLIB_REQUIRED
                               gtk+-2.0 >= $GTK_REQUIRED
                               goocanvas >= $GOOCANVAS_REQUIRED
-                              logon >= $LOGON_REQUIRED
                               librsvg-2.0
                               dbus-glib-1])
+if test "x$have_logon" = "xyes"; then
+    XSPLASHAA_CFLAGS="$XSPLASHAA_CFLAGS $XSPLASHAA_LOGON_CFLAGS"
+    XSPLASHAA_LIBS="$XSPLASHAA_LIBS $XSPLASHAA_LOGON_LIBS"
+fi
 
 PKG_CHECK_MODULES(XSPLASHAA_SESSION_DAEMON, [glib-2.0 >= $GLIB_REQUIRED,
                                              gobject-2.0 >= $GLIB_REQUIRED
                                              gthread-2.0 >= $GLIB_REQUIRED
                                              gtk+-2.0 >= $GTK_REQUIRED
-                                             logon >= $LOGON_REQUIRED
                                              dbus-glib-1
                                              xau])
+if test "x$have_logon" = "xyes"; then
+    XSPLASHAA_SESSION_DAEMON_CFLAGS="$XSPLASHAA_SESSION_DAEMON_CFLAGS $XSPLASHAA_LOGON_CFLAGS"
+    XSPLASHAA_SESSION_DAEMON_LIBS="$XSPLASHAA_SESSION_DAEMON_LIBS $XSPLASHAA_LOGON_LIBS"
+fi
 
 PKG_CHECK_MODULES(XSPLASHAA_CLIENT, [glib-2.0 >= $GLIB_REQUIRED,
                                      gthread-2.0 >= $GLIB_REQUIRED
-                                     gobject-2.0 >= $GLIB_REQUIRED
-                                     logon >= $LOGON_REQUIRED])
+                                     gobject-2.0 >= $GLIB_REQUIRED])
+
+if test "x$have_logon" = "xyes"; then
+    XSPLASHAA_CLIENT_CFLAGS="$XSPLASHAA_CLIENT_CFLAGS $XSPLASHAA_LOGON_CFLAGS"
+    XSPLASHAA_CLIENT_LIBS="$XSPLASHAA_CLIENT_LIBS $XSPLASHAA_LOGON_LIBS"
+fi
 
 PKG_CHECK_MODULES(XSPLASHAA_FACE_AUTHENTIFICATION, [opencv2 >= $OPENCV_REQUIRED])
 

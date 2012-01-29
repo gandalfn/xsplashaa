@@ -24,6 +24,11 @@ xsplashaa_session_daemon_VALAFLAGS = \
     --pkg=x11 \
     --pkg=X-comp
 
+if HAVE_LOGON
+xsplashaa_session_daemon_VALAFLAGS += \
+    -D HAVE_LOGON
+endif
+
 xsplashaa_session_daemon_CFLAGS = \
     $(XSPLASHAA_SESSION_DAEMON_CFLAGS)
 

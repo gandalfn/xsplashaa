@@ -42,6 +42,11 @@ xsplashaa_VALAFLAGS = \
     --pkg=x11 \
     --pkg=X-comp
 
+if HAVE_LOGON
+xsplashaa_VALAFLAGS += \
+    -D HAVE_LOGON
+endif
+
 xsplashaa_LDADD = \
     $(XSPLASHAA_LIBS) \
     $(XSPLASHAA_LIBS_DEPS)

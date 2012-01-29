@@ -1,4 +1,6 @@
+if HAVE_LOGON
 SUBDIRS = logon
+endif
 
 include $(top_srcdir)/build/vala.am
 
@@ -13,16 +15,23 @@ libxsaa_log_la_VALAFLAGS = \
     --library=xsaa-log \
     --vapi=xsaa-log.vapi \
     --vapidir=${top_srcdir}/vapi \
-    --vapidir=${top_srcdir}/src/log/logon \
     --pkg=config \
-    --pkg=os \
+    --pkg=os
+
+if HAVE_LOGON
+libxsaa_log_la_VALAFLAGS += \
+    -D HAVE_LOGON \
+    --vapidir=${top_srcdir}/src/log/logon \
     --pkg=logon
+endif
 
 libxsaa_log_la_SOURCES = \
     log.vala
 
+if HAVE_LOGON
 libxsaa_log_la_LIBADD = \
     logon/liblogon-glue.la
+endif
 
 VALAFILES = \
     $(filter %.vala,$(libxsaa_log_la_SOURCES))
