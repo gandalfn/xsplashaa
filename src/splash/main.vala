@@ -302,6 +302,10 @@ namespace XSAA
             {
                 m_Splash.message ("Checking panel firmware...");
             }
+            else if (m_CheckPeripherals.current == typeof (StateConfigurePanel))
+            {
+                m_Splash.message ("Configure panel...");
+            }
             else if (m_CheckPeripherals.current == typeof (StateCheckSSIDab))
             {
                 m_Splash.message ("Checking DABs...");
@@ -1034,3 +1038,4 @@ namespace XSAA
         return 0;
      }
 }
+

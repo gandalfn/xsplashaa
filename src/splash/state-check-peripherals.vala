@@ -133,13 +133,28 @@ namespace XSAA
                 {
                     var check_firmware_panel_state = new StateCheckPanelFirmware (m_Peripherals);
 
+                    check_firmware_panel_state.next_state = typeof (StateConfigurePanel);
+
                     if ((inCheckFlags & CheckFlags.SSIDAB) == CheckFlags.SSIDAB)
                     {
-                        check_firmware_panel_state.next_state = typeof (StateCheckSSIDab);
                         check_firmware_panel_state.error_state = typeof (StateCheckSSIDab);
                     }
 
                     add_state (check_firmware_panel_state);
+                }
+
+                // create configure panel state
+                if ((inCheckFlags & CheckFlags.PANEL) == CheckFlags.PANEL)
+                {
+                    var configure_panel_state = new StateConfigurePanel (m_Peripherals, inNumber);
+
+                    if ((inCheckFlags & CheckFlags.SSIDAB) == CheckFlags.SSIDAB)
+                    {
+                        configure_panel_state.next_state = typeof (StateCheckSSIDab);
+                        configure_panel_state.error_state = typeof (StateCheckSSIDab);
+                    }
+
+                    add_state (configure_panel_state);
                 }
 
                 // create check ssidab state

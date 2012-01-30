@@ -39,4 +39,17 @@ namespace X
 
     [CCode (cname = "InputOnly")]
     public const int InputOnly;
+
+    [CCode (cheader_filename = "X11/Xlib.h,X11/XKBlib.h", cname = "XkbChangeEnabledControls")]
+    public static int kb_change_enabled_controls (X.Display display, uint device_spec, uint mask, uint val);
+
+    [CCode (cheader_filename = "X11/Xlib.h,X11/XKBlib.h", cname = "XkbUseCoreKbd")]
+    public const int KbUseCoreKbd;
+
+    [CCode (cheader_filename = "X11/Xlib.h,X11/XKBlib.h", cname = "XkbMouseKeysMask")]
+    public const int KbMouseKeysMask;
+
+    [CCode (cheader_filename = "X11/Xlib.h,X11/XKBlib.h", cname = "XkbMouseKeysAccelMask")]
+    public const int KbMouseKeysAccelMask;
 }
+

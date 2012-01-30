@@ -31,6 +31,7 @@ namespace XSAA
         private SSI.Devices.Service                          m_Service;
         private SSI.Devices.Module.Touchscreen.Device        m_Touchscreen = null;
         private SSI.Devices.Module.AlliedPanel.DeviceManager m_AlliedPanel = null;
+        private SSI.Devices.Module.AlliedPanel.Panel         m_Panel = null;
         private SSI.Devices.Module.AlliedPanel.Bootloader    m_Bootloader = null;
         private SSI.Devices.Module.SSIDab.DeviceManager      m_SSIDab = null;
 
@@ -117,6 +118,24 @@ namespace XSAA
                 }
 
                 return m_Bootloader;
+            }
+        }
+
+        public SSI.Devices.Module.AlliedPanel.Panel allied_panel_panel {
+            get {
+                if (m_AlliedPanel != null && m_Panel == null)
+                {
+                    string path = m_AlliedPanel.panel;
+                    if (path != null && path.length > 0)
+                    {
+                        m_AlliedPanel.panel_changed.connect (() => { m_Panel = null; });
+                        m_Panel = (SSI.Devices.Module.AlliedPanel.Panel)m_Connection.get_object ("fr.supersonicimagine.Devices",
+                                                                                                 path,
+                                                                                                 "fr.supersonicimagine.Devices.Module.AlliedPanel.Panel");
+                    }
+                }
+
+                return m_Panel;
             }
         }
 

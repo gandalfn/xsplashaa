@@ -1,4 +1,4 @@
-AC_INIT([xsplashaa], [0.5.0], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
+AC_INIT([xsplashaa], [0.5.1], [nicolas.bruguier@supersonicimagine.fr], [xsplashaa])
 AC_CONFIG_SRCDIR(src/splash/main.vala)
 
 AC_CONFIG_AUX_DIR([build])

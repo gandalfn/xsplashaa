@@ -572,6 +572,11 @@ namespace XSAA.Aixplorer
                     main.changed (true);
                     event_notify (new EventSystem.monitor ((uint)main.width, (uint)main.height, (uint)touchscreen.width, (uint)touchscreen.height));
 
+                    if (get_toplevel () != null && get_toplevel ().window != null)
+                    {
+                        get_toplevel ().window.resize ((int)main.width, (int)(main.height + touchscreen.height));
+                    }
+
                     unowned Notebook ts_notebook = (Notebook)find ("ts-notebook");
                     unowned Text question_message = (Text)find ("ts-question-message");
                     unowned Button no_button = (Button)find ("ts-question-no-button");

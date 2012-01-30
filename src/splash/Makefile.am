@@ -27,6 +27,7 @@ xsplashaa_SOURCES = \
     state-calibrate-touchscreen.vala \
     state-check-panel.vala \
     state-check-panel-firmware.vala \
+    state-configure-panel.vala \
     state-check-ssidab.vala \
     display.vala \
     devices.vala \
@@ -36,6 +37,7 @@ xsplashaa_SOURCES = \
 xsplashaa_VALAFLAGS = \
     --thread \
     --pkg=source \
+    --pkg=gdk-x11-2.0 \
     --pkg=gtk+-2.0 \
     --pkg=dbus-glib-1 \
     --pkg=pam \

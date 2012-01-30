@@ -27,7 +27,7 @@ namespace XSAA
     public abstract class StateMachine : GLib.Object
     {
         // constants
-        const int DELAY = 300;
+        const int DELAY = 100;
         const int ERROR_DELAY = 20;
 
         // properties
