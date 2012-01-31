@@ -57,6 +57,7 @@ namespace XSAA
             inBus.name_owner_changed.connect (on_client_lost);
 
             m_Users = new Users (m_Connection);
+            m_Users.register_dbus_user ();
         }
 
         private void
@@ -282,3 +283,4 @@ namespace XSAA
         return 0;
     }
 }
+

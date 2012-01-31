@@ -184,7 +184,7 @@ namespace XSAA
 
             if (face_pixbuf != null)
             {
-                m_FaceIconShmKey = GLib.Quark.from_string (login);
+                m_FaceIconShmKey = GLib.Quark.from_string (login) | 0x1000;
                 m_FaceIconShmId = Os.shmget(m_FaceIconShmKey, ICON_SIZE * ICON_SIZE *  4, Os.IPC_CREAT | 0666);
                 m_FaceIconPixels = (uchar[])Os.shmat(face_icon_shm_id, null, 0);
 
@@ -216,10 +216,10 @@ namespace XSAA
         internal int
         compare (User inOther)
         {
-            if (m_Frequency > inOther.m_Frequency)
+            if (m_Frequency < inOther.m_Frequency)
                 return -1;
 
-            if (m_Frequency < inOther.m_Frequency)
+            if (m_Frequency > inOther.m_Frequency)
                 return 1;
 
             return (int)(uid - inOther.uid);
@@ -431,7 +431,6 @@ namespace XSAA
 
             int pos = get_nearest_user (user);
 
-            int num = m_Size;
             m_Size++;
             grow ();
 
@@ -442,10 +441,6 @@ namespace XSAA
             }
 
             m_pContent[pos].val = user;
-
-            DBus.ObjectPath path = new DBus.ObjectPath ("/fr/supersonicimagine/XSAA/Manager/User/" + num.to_string());
-
-            m_Connection.register_object(path, user);
         }
 
         public unowned User?
@@ -464,6 +459,18 @@ namespace XSAA
         iterator ()
         {
             return new Iterator (this);
+        }
+
+        internal void
+        register_dbus_user ()
+        {
+            int num = 0;
+            foreach (unowned User user in this)
+            {
+                DBus.ObjectPath path = new DBus.ObjectPath ("/fr/supersonicimagine/XSAA/Manager/User/" + num.to_string());
+                m_Connection.register_object(path, user);
+                num++;
+            }
         }
     }
 }
