@@ -24,6 +24,7 @@ public interface XSAA.User : DBus.Object
 {
     public abstract string login          { owned get; }
     public abstract string real_name      { owned get; }
-    public abstract uint frequency        { get; }
+    public abstract uint frequency        { get; set; }
     public abstract int face_icon_shm_id  { get; }
 }
+

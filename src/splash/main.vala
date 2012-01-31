@@ -418,6 +418,30 @@ namespace XSAA
             if (m_Session != null) m_Splash.hide ();
         }
 
+        private void
+        inc_user_frequency (string inUserName)
+        {
+            try
+            {
+                int nb_user = m_Manager.get_nb_users ();
+                for (int cpt = 0; cpt < nb_user; ++cpt)
+                {
+                    XSAA.User user = (XSAA.User)m_Connection.get_object ("fr.supersonicimagine.XSAA.Manager",
+                                                                         "/fr/supersonicimagine/XSAA/Manager/User/%i".printf (cpt),
+                                                                         "fr.supersonicimagine.XSAA.Manager.User");
+
+                    if (user != null && user.login == inUserName)
+                    {
+                        user.frequency += 1;
+                    }
+                }
+            }
+            catch (DBus.Error err)
+            {
+                Log.warning ("error on get nb users: %s", err.message);
+            }
+        }
+
         private bool
         open_session (string inUserName, bool inFaceAuthentication, bool inAutologin)
         {
@@ -438,6 +462,7 @@ namespace XSAA
                                                                            "fr.supersonicimagine.XSAA.Manager.Session");
                         if (m_Session != null)
                         {
+                            inc_user_frequency (inUserName);
                             m_Session.died.connect (on_session_ended);
                             m_Session.exited.connect (on_session_ended);
                             m_Session.info.connect (on_session_info);

@@ -232,7 +232,7 @@ namespace XSAA
                 Os.exit(1);
             }
 
-            m_Pam.add_env ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin");
+            m_Pam.add_env ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bin:/usr/games");
             m_Pam.add_env ("XAUTHORITY", m_XauthFile);
             m_Pam.add_env ("XDG_SESSION_COOKIE", m_Cookie);
             m_Pam.add_env ("DISPLAY", m_DisplayNum);

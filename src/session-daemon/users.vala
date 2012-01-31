@@ -33,12 +33,14 @@ namespace XSAA
         private Os.key_t        m_FaceIconShmKey;
         private int             m_FaceIconShmId = -1;
         private unowned uchar[] m_FaceIconPixels;
-        public uint             m_Frequency;
+        private GLib.KeyFile    m_Config;
+        private uint            m_Frequency = 0;
 
         public Os.uid_t         uid;
         public Os.gid_t         gid;
         public string           home_dir;
         public string           shell;
+
 
         // accessors
         public string login {
@@ -56,6 +58,28 @@ namespace XSAA
         public uint frequency {
             get {
                 return (int)m_Frequency;
+            }
+            set {
+                m_Frequency = value;
+                m_Config.set_integer ("User", "frequency", (int)m_Frequency);
+                string path_config = home_dir + "/.config/xsplashaa";
+
+                if (!GLib.FileUtils.test (path_config, GLib.FileTest.EXISTS))
+                {
+                    GLib.DirUtils.create_with_parents (path_config, 0755);
+                    Posix.chown (path_config, uid, gid);
+                }
+
+                string filename = path_config + "/xsplashaa.conf";
+                try
+                {
+                    GLib.FileUtils.set_contents (filename, m_Config.to_data ());
+                    Posix.chown (filename, uid, gid);
+                }
+                catch (GLib.Error err)
+                {
+                    Log.warning ("error on write %s: %s", filename, err.message);
+                }
             }
         }
 
@@ -99,7 +123,7 @@ namespace XSAA
 
             create_face_icon_shm ();
 
-            m_Frequency = 0;
+            load_config ();
         }
 
         ~User ()
@@ -107,6 +131,36 @@ namespace XSAA
             Log.debug ("Destroy %s", login);
             Os.shmdt (m_FaceIconPixels);
             Os.shmctl (m_FaceIconShmId, Os.IPC_RMID, null);
+        }
+
+        private void
+        load_config()
+        {
+            string path_config = home_dir + "/.config/xsplashaa";
+
+            if (!GLib.FileUtils.test (path_config, GLib.FileTest.EXISTS))
+            {
+                GLib.DirUtils.create_with_parents (path_config, 0755);
+                Posix.chown (path_config, uid, gid);
+            }
+
+            string filename = path_config + "/xsplashaa.conf";
+
+            m_Config = new GLib.KeyFile ();
+
+            if (FileUtils.test(filename, FileTest.EXISTS))
+            {
+                Log.debug ("load config %s", filename);
+                try
+                {
+                    m_Config.load_from_file(filename, KeyFileFlags.NONE);
+                    m_Frequency = m_Config.get_integer ("User", "frequency");
+                }
+                catch (GLib.Error err)
+                {
+                    GLib.warning ("error on read %s: %s", filename, err.message);
+                }
+            }
         }
 
         private void
