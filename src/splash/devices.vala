@@ -29,6 +29,7 @@ namespace XSAA
         // properties
         private unowned DBus.Connection                      m_Connection;
         private SSI.Devices.Service                          m_Service;
+        private SSI.Devices.Module.Touchscreen.DeviceManager m_TouchscreenManager = null;
         private SSI.Devices.Module.Touchscreen.Device        m_Touchscreen = null;
         private SSI.Devices.Module.AlliedPanel.DeviceManager m_AlliedPanel = null;
         private SSI.Devices.Module.AlliedPanel.Panel         m_Panel = null;
@@ -52,13 +53,15 @@ namespace XSAA
                         Log.debug ("touchscreen path %s", path != null ? path : "null");
                         if (path != null && path.length > 0)
                         {
-                            SSI.Devices.Module.Touchscreen.DeviceManager device_manager =
-                                        (SSI.Devices.Module.Touchscreen.DeviceManager)m_Connection.get_object ("fr.supersonicimagine.Devices",
-                                                                                                               "/fr/supersonicimagine/Devices/Module/Touchscreen/DeviceManager",
-                                                                                                               "fr.supersonicimagine.Devices.Module.Touchscreen.DeviceManager");
-                            if (device_manager != null)
+                            if (m_TouchscreenManager == null)
                             {
-                                string[] devices = device_manager.get_device_list ();
+                                m_TouchscreenManager = (SSI.Devices.Module.Touchscreen.DeviceManager)m_Connection.get_object ("fr.supersonicimagine.Devices",
+                                                                                                                              "/fr/supersonicimagine/Devices/Module/Touchscreen/DeviceManager",
+                                                                                                                              "fr.supersonicimagine.Devices.Module.Touchscreen.DeviceManager");
+                            }
+                            if (m_TouchscreenManager != null)
+                            {
+                                string[] devices = m_TouchscreenManager.get_device_list ();
                                 Log.debug ("touchscreen nb devices %i", devices.length);
                                 if (devices.length > 0)
                                 {
@@ -175,6 +178,136 @@ namespace XSAA
             m_Service = (SSI.Devices.Service)inConnection.get_object ("fr.supersonicimagine.Devices",
                                                                       "/fr/supersonicimagine/Devices/Service",
                                                                       "fr.supersonicimagine.Devices.Service");
+        }
+
+        private bool
+        configure_select_button (int inNumber)
+        {
+            bool ret = false;
+
+            var panel = allied_panel_panel;
+
+            // panel not found
+            if (panel == null)
+            {
+                Log.warning ("Unable to find Allied Panel device");
+            }
+            else
+            {
+                unowned Gdk.Display? display = Gdk.Display.open (":" + inNumber.to_string ());
+                if (!panel.support_mouse_select || !panel.mouse_select_active)
+                {
+                    Log.info ("Configure select button has mouse key");
+                    X.kb_change_enabled_controls (Gdk.x11_display_get_xdisplay (display), X.KbUseCoreKbd,
+                                                  X.KbMouseKeysMask | X.KbMouseKeysAccelMask, X.KbMouseKeysMask | X.KbMouseKeysAccelMask);
+                }
+                else
+                {
+                    Log.info ("Configure select button has real mouse button");
+                    X.kb_change_enabled_controls (Gdk.x11_display_get_xdisplay (display), X.KbUseCoreKbd,
+                                                  X.KbMouseKeysMask | X.KbMouseKeysAccelMask, 0);
+                }
+                ret = true;
+            }
+
+            return ret;
+        }
+
+        private bool
+        configure_virtual_pointer (int inNumber)
+        {
+            bool ret = false;
+
+            // Open display for touchscreen
+            try
+            {
+                var ts = touchscreen;
+
+                if (ts != null && ts.open_display (":" + inNumber.to_string ()) == inNumber)
+                {
+                    // Create virtual pointer for display
+                    if (!ts.create_virtual_pointer (":" + inNumber.to_string ()))
+                    {
+                        Log.warning ("Error on configure touchscreen for display %i !!", inNumber);
+                    }
+                    else
+                    {
+                        Log.info ("Touchscreen configured for %i", inNumber);
+                        ret = true;
+                    }
+                }
+                else
+                {
+                    Log.error ("Error on configure touchscreen for display %i !!", inNumber);
+                }
+            }
+            catch (GLib.Error err)
+            {
+                Log.error ("Error on configure touchscreen for display %i: %s", inNumber, err.message);
+            }
+
+            return ret;
+        }
+
+        /**
+         * Configure panel and keep configuration elsewhere it is deconnected and reconnected
+         *
+         * @param inNumber display number
+         *
+         * @return ``true`` on success
+         */
+        public bool
+        setup_panel (int inNumber)
+        {
+            bool ret = configure_select_button (inNumber);
+
+            if (ret)
+            {
+                m_AlliedPanel.panel_changed.connect (() => {
+                    Log.info ("Panel has changed");
+                    m_Panel = null;
+                    m_Bootloader = null;
+                    configure_select_button (inNumber);
+                });
+                m_AlliedPanel.bootloader_changed.connect (() => {
+                    Log.info ("Bootloader has changed");
+                    m_Panel = null;
+                    m_Bootloader = null;
+                    configure_select_button (inNumber);
+                });
+            }
+
+            return ret;
+        }
+
+        /**
+         * Configure touchscreen and keep configuration elsewhere it is deconnected and reconnected
+         *
+         * @param inNumber display number
+         *
+         * @return ``true`` on success
+         */
+        public bool
+        setup_touchscreen (int inNumber)
+        {
+            bool ret = configure_virtual_pointer (inNumber);
+
+            if (ret)
+            {
+                m_TouchscreenManager.touchscreen_added.connect (() => {
+                    Log.info ("Touchscreen has been added");
+                    GLib.Timeout.add_seconds (1, () => {
+                        configure_virtual_pointer (inNumber);
+                        return false;
+                    });
+                });
+                m_TouchscreenManager.touchscreen_removed.connect (() => {
+                    Log.info ("Touchscreen has been removed");
+                    m_Touchscreen = null;
+                });
+            }
+
+            return ret;
         }
     }
 }

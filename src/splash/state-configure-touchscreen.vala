@@ -45,27 +45,12 @@ namespace XSAA
         protected override void
         on_run ()
         {
-            try
+            // Open display for touchscreen
+            if (m_Peripherals.setup_touchscreen (m_Number))
             {
-                // Open display for touchscreen
-                if (m_Peripherals.touchscreen.open_display (":" + m_Number.to_string ()) == m_Number)
-                {
-                    // Create virtual pointer for display
-                    if (!m_Peripherals.touchscreen.create_virtual_pointer (":" + m_Number.to_string ()))
-                    {
-                        error ("Error on configure touchscreen for display !!");
-                    }
-                    else
-                    {
-                        base.on_run ();
-                    }
-                }
-                else
-                {
-                    error ("Error on configure touchscreen for display !!");
-                }
+                base.on_run ();
             }
-            catch (GLib.Error err)
+            else
             {
                 error ("Error on configure touchscreen for display !!");
             }

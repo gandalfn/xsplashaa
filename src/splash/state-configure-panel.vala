@@ -44,41 +44,21 @@ namespace XSAA
         protected override void
         on_run ()
         {
-            try
+            if (m_Peripherals.allied_panel == null)
             {
-                if (m_Peripherals.allied_panel == null)
+                error ("Unable to find Allied Panel device");
+            }
+            else
+            {
+                // configure panel
+                if (!m_Peripherals.setup_panel (m_Number))
                 {
                     error ("Unable to find Allied Panel device");
                 }
                 else
                 {
-                    var panel = m_Peripherals.allied_panel_panel;
-
-                    // panel not found
-                    if (panel == null)
-                    {
-                        error ("Unable to find Allied Panel device");
-                    }
-                    else
-                    {
-                        unowned Gdk.Display? display = Gdk.Display.open (":" + m_Number.to_string ());
-                        if (!panel.support_mouse_select || !panel.mouse_select_active)
-                        {
-                            X.kb_change_enabled_controls (Gdk.x11_display_get_xdisplay (display), X.KbUseCoreKbd,
-                                                          X.KbMouseKeysMask | X.KbMouseKeysAccelMask, X.KbMouseKeysMask | X.KbMouseKeysAccelMask);
-                        }
-                        else
-                        {
-                            X.kb_change_enabled_controls (Gdk.x11_display_get_xdisplay (display), X.KbUseCoreKbd,
-                                                          X.KbMouseKeysMask | X.KbMouseKeysAccelMask, 0);
-                        }
-                        base.on_run ();
-                    }
+                    base.on_run ();
                 }
-            }
-            catch (GLib.Error err)
-            {
-                error ("Unable to find Allied Panel device");
             }
         }
     }

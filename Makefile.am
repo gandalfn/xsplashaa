@@ -23,7 +23,9 @@ EXTRA_DIST = \
     vapi/source.vapi \
     vapi/pam.vapi \
     vapi/posix-comp.vapi \
-    vapi/X-comp.vapi
+    vapi/X-comp.vapi \
+    vapi/opencv.vapi \
+    vapi/os.vapi
 
 DISTCLEANFILES = \
     intltool-extract \
