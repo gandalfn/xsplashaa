@@ -16,7 +16,7 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Author:
- * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
+ *  Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
 namespace XSAA
@@ -27,7 +27,7 @@ namespace XSAA
     public class StateCheckTouchscreen : StateMachine
     {
         // constants
-        const int WAIT_TOUCHSCREEN = 500;
+        const int WAIT_TOUCHSCREEN = 1;
         const int NB_RETRY = 10;
 
         // properties
@@ -78,9 +78,11 @@ namespace XSAA
 
         }
 
-        private void
+        private bool
         check_screen ()
         {
+            bool ret = false;
+
             message ("Check touchscreen display");
             unowned Gdk.Display? display = Gdk.Display.open (":" + m_Number.to_string ());
             if (display != null)
@@ -104,26 +106,18 @@ namespace XSAA
                             {
                                 base.on_run ();
                             }
+
+                            ret = true;
                         }
-                        else
-                        {
-                            error ("Error on check touchscreen screen");
-                        }
-                    }
-                    else
-                    {
-                        error ("Error on check touchscreen screen");
                     }
                 }
                 catch (GLib.Error err)
                 {
-                    error ("Error on check touchscreen screen");
+                    Log.warning ("Error on check touchscreen screen: %s", err.message);
                 }
             }
-            else
-            {
-                error ("Error on check touchscreen screen");
-            }
+
+            return true;
         }
 
         private bool
@@ -140,9 +134,17 @@ namespace XSAA
                         m_IdTimeout = 0;
                     }
                 }
+                else if (!check_screen ())
+                {
+                    m_NbRetry++;
+                    if (m_NbRetry > NB_RETRY)
+                    {
+                        error ("Error on check touchscreen screen");
+                        m_IdTimeout = 0;
+                    }
+                }
                 else
                 {
-                    check_screen ();
                     m_IdTimeout = 0;
                 }
             }
@@ -153,20 +155,13 @@ namespace XSAA
         protected override void
         on_run ()
         {
-            if (m_Peripherals.touchscreen == null)
+            if (m_IdTimeout != 0)
             {
-                if (m_IdTimeout != 0)
-                {
-                    GLib.Source.remove (m_IdTimeout);
-                    m_IdTimeout = 0;
-                }
-                m_NbRetry = 0;
-                m_IdTimeout = GLib.Timeout.add (WAIT_TOUCHSCREEN, on_timeout);
+                GLib.Source.remove (m_IdTimeout);
+                m_IdTimeout = 0;
             }
-            else
-            {
-                check_screen ();
-            }
+            m_NbRetry = 0;
+            m_IdTimeout = GLib.Timeout.add_seconds (WAIT_TOUCHSCREEN, on_timeout);
         }
     }
 }

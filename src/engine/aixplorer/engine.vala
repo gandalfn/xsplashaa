@@ -243,7 +243,6 @@ namespace XSAA.Aixplorer
             unowned Button? button_shutdown = (Button?)find ("button-shutdown");
             unowned ProgressBar progress = (ProgressBar)find ("progress-bar");
 
-
             if (prompt == null || prompt_label == null || notebook == null ||
                 users_notebook == null || users == null || message == null ||
                 face_authentification == null || progress == null)
@@ -261,7 +260,7 @@ namespace XSAA.Aixplorer
                     prompt.grab_focus ();
                     prompt.entry_visibility = true;
                     face_authentification.stop ();
-                    face_authentification_table.visibility = Goo.CanvasItemVisibility.VISIBLE;
+                    face_authentification_table.visibility = Goo.CanvasItemVisibility.INVISIBLE;
                     button_restart.visibility = Goo.CanvasItemVisibility.VISIBLE;
                     button_shutdown.visibility = Goo.CanvasItemVisibility.VISIBLE;
                     users_notebook.current_page = 0;
@@ -639,14 +638,15 @@ namespace XSAA.Aixplorer
             {
                 users.selected.connect ((s) => {
                     Log.debug ("prompt: %s", s);
-                    if (s != null)
+                    unowned Notebook users_notebook = (Notebook)find ("users-notebook");
+
+                    if (s != null && users_notebook.current_page == 0)
                     {
                         message.text = "";
                         event_notify (new EventPrompt.edited (s, face_authentification.active));
                     }
                     else
                     {
-                        unowned Notebook users_notebook = (Notebook)find ("users-notebook");
                         if (users_notebook != null)
                         {
                             users_notebook.current_page = 1;

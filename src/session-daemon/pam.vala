@@ -49,7 +49,7 @@ namespace XSAA
                     string pass = pam.passwd ();
                     if (pass != null)
                     {
-                        outResp[i].resp = Memory.dup(pass, (uint)pass.length);
+                        outResp[i].resp = Memory.dup(pass, (uint)pass.length + 1);
                         outResp[i].resp_retcode = Pam.SUCCESS;
                     }
                     else
@@ -103,7 +103,7 @@ namespace XSAA
             m_Conv.conv = on_pam_conversation;
             m_Conv.appdata_ptr = this;
 
-            if (Pam.start(inService, inUsername, m_Conv, out m_PamHandle) != Pam.SUCCESS)
+            if (Pam.start(inService, m_User, m_Conv, out m_PamHandle) != Pam.SUCCESS)
             {
                 throw new PamError.START("Error on pam start");
             }
