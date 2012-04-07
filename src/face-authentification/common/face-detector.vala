@@ -56,8 +56,6 @@ namespace XSAA.FaceAuthentification
             }
         }
 
-        // signals
-
         // methods
         /**
          * Create a new face detector object

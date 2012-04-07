@@ -173,10 +173,17 @@ public class Test : Gtk.Window
 
             XSAA.FaceAuthentification.VerifyStatus status = 0;
             if (m_Detector.status == XSAA.FaceAuthentification.Detector.Status.TRACKING)
-                status = m_Verifier.verify_face (image);
+            {
+                OpenCV.IPL.Image? im = m_Detector.clip_face (image);
+                if (im != null)
+                {
+                    m_Webcam.frame_to_cairo_surface (im).write_to_png ("out.png");
+                    status = m_Verifier.verify_face (im);
+                }
+            }
 
             Pango.Layout layout = Pango.cairo_create_layout (ctx);
-           string msg = "Detector status = %i\nMatches = %i %%\nVerifier status = %i".printf (m_Detector.status,
+            string msg = "Detector status = %i\nMatches = %i %%\nVerifier status = %i".printf (m_Detector.status,
                                                                                                (int)(m_Average * 100.0),
                                                                                                status);
             layout.set_text (msg, (int)msg.length);

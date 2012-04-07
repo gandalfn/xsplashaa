@@ -274,7 +274,7 @@ namespace OpenCV {
 	}
 
 
-	[SimpleType, CCode (cname = "CvBox2D", has_type_id = false)]
+	[SimpleType, CCode (cname = "CvBox2D", has_type_id = false, has_destroy_function = false)]
 	public struct Box2D {
 		public OpenCV.Point2D32f center;
 		public OpenCV.Size2D32f size;
@@ -397,7 +397,7 @@ namespace OpenCV {
 		C
 	}
 
-	[CCode (cname = "CvLineIterator", has_type_id = false)]
+	[CCode (cname = "CvLineIterator", has_type_id = false, has_destroy_function = false)]
 	public struct LineIterator {
 		[CCode (cname = "cvInitLineIterator")]
 		public LineIterator (OpenCV.Array image, OpenCV.Point pt1, OpenCV.Point pt2, int connectivity = 8, int left_to_right = 0);
@@ -507,7 +507,7 @@ namespace OpenCV {
 		FC64_4
 	}
 
-	[CCode (cname = "CvFont", has_type_id = false, destroy_function = "", has_copy_function = false)]
+	[CCode (cname = "CvFont", has_type_id = false, has_destroy_function = false, has_copy_function = false)]
 	public struct Font {
 		[CCode (cname = "cvInitFont")]
 		public Font (OpenCV.FontFace font_face, double hscale, double vscale, double shear = 0.0, int thickness = 1, int line_type = 8);
@@ -550,13 +550,13 @@ namespace OpenCV {
 		}
 	}
 
-	[SimpleType, CCode (cname = "CvInput")]
+	[SimpleType, CCode (cname = "CvInput", has_destroy_function = false)]
 	public struct Input {
 		public OpenCV.Callback @callback;
 		public void* data;
 	}
 
-	[CCode (cname = "CvMat")]
+	[CCode (cname = "CvMat", has_destroy_function = false)]
 	public struct MatrixStruct {
 		[CCode (cname = "(CvMat*)")]
 		public unowned Matrix? to_pointer ();
@@ -594,7 +594,7 @@ namespace OpenCV {
 		public int cols;
 		public OpenCV.Matrix.Data data;
 
-		[CCode (cname = "union { uchar* ptr; short* s; int* i; float* fl; double* db; }", has_type_id = false)]
+		[CCode (cname = "union { uchar* ptr; short* s; int* i; float* fl; double* db; }", has_type_id = false, has_destroy_function = false)]
 		public struct Data {
 			public void* ptr;
 			public short* s;
@@ -643,14 +643,14 @@ namespace OpenCV {
 			// TODO: s/32/OpenCV.MAX_DIM/ when b.g.o. #624507 is resolved
 			public int size[32];
 
-			[CCode (cname = "CvSparseNode", has_type_id = false)]
+			[CCode (cname = "CvSparseNode", has_type_id = false, has_destroy_function = false)]
 			public struct Node {
 				[CCode (cname = "hashval")]
 				public uint hash_value;
 				public Node* next;
 			}
 
-			[CCode (cname = "CvSparseMatIterator", has_type_id = false)]
+			[CCode (cname = "CvSparseMatIterator", has_type_id = false, has_destroy_function = false)]
 			public struct Iterator {
 				[CCode (cname = "mat")]
 				public OpenCV.Matrix.Sparse matrix;
@@ -722,7 +722,7 @@ namespace OpenCV {
 		public class Node {
 		}
 
-		[SimpleType, CCode (cname = "CvAttrList")]
+		[SimpleType, CCode (cname = "CvAttrList", has_destroy_function = false)]
 		public struct AttributeList {
 			[CCode (cname = "cvAttrList")]
 			public AttributeList ([CCode (array_length = false, array_null_terminated = false)]string[]? attr = null, AttributeList? next = null);
@@ -737,7 +737,7 @@ namespace OpenCV {
 	}
 
 	namespace Memory {
-		[Compact, CCode (cname = "CvMemBlock")]
+		[Compact, CCode (cname = "CvMemBlock", has_destroy_function = false)]
 		public struct Block {
 			public OpenCV.Memory.Block? prev;
 			public OpenCV.Memory.Block? next;
@@ -771,7 +771,7 @@ namespace OpenCV {
 			public int block_size;
 			public int free_space;
 
-			[CCode (cname = "CvMemStoragePos")]
+			[CCode (cname = "CvMemStoragePos", has_destroy_function = false)]
 			public struct Position {
 				public OpenCV.Memory.Block top;
 				public int free_space;
@@ -784,7 +784,7 @@ namespace OpenCV {
 		public static void free (void* ptr);
 	}
 
-	[SimpleType, CCode (cname = "CvPixelPosition8u", has_type_id = false)]
+	[SimpleType, CCode (cname = "CvPixelPosition8u", has_type_id = false, has_copy_function = false, has_destroy_function = false)]
 	public struct PixelPosition8u {
 		public uchar*  currline;
     		public uchar*  topline;
@@ -801,7 +801,7 @@ namespace OpenCV {
 		public uchar* move_to (int x, int y, int flag);
 	}
 
-	[SimpleType, CCode (cname = "CvPoint", has_type_id = false)]
+	[SimpleType, CCode (cname = "CvPoint", has_type_id = false, has_destroy_function = false)]
 	public struct Point {
 		[CCode (cname = "cvPoint")]
 		public Point (int x, int y);
@@ -815,7 +815,7 @@ namespace OpenCV {
 		public int y;
 	}
 
-	[SimpleType, CCode (cname = "CvPoint2D32f", has_type_id = false)]
+	[SimpleType, CCode (cname = "CvPoint2D32f", has_type_id = false, has_destroy_function = false)]
 	public struct Point2D32f {
 		public float x;
 		public float y;
@@ -832,7 +832,7 @@ namespace OpenCV {
 		public unowned OpenCV.Matrix? rotation_matrix (double angle, double scale, OpenCV.Matrix mapMatrix);
 	}
 
-	[CCode (cname = "CvPoint2D32f", has_type_id = false)]
+	[CCode (cname = "CvPoint2D32f", has_type_id = false, has_destroy_function = false)]
 	public struct Point2D64f {
 		[CCode (cname = "cvPoint2D64f")]
 		public Point2D64f (double x, double y);
@@ -841,7 +841,7 @@ namespace OpenCV {
 		public double y;
 	}
 
-	[CCode (cname = "CvPoint3D32f", has_type_id = false)]
+	[CCode (cname = "CvPoint3D32f", has_type_id = false, has_destroy_function = false)]
 	public struct Point3D32f {
 		[CCode (cname = "cvPoint3D32f")]
 		public Point3D32f (float x, float y, float z);
@@ -851,7 +851,7 @@ namespace OpenCV {
 		public float z;
 	}
 
-	[CCode (cname = "CvPoint3D64f")]
+	[CCode (cname = "CvPoint3D64f", has_destroy_function = false)]
 	public struct Point3D64f {
 		[CCode (cname = "cvPoint3D64f")]
 		public Point3D64f (double x, double y, double z);
@@ -861,7 +861,7 @@ namespace OpenCV {
 		public double z;
 	}
 
-	[SimpleType, CCode (cname = "CvRect", has_type_id = false, destroy_function = "")]
+	[SimpleType, CCode (cname = "CvRect", has_type_id = false, has_destroy_function = false)]
 	public struct Rectangle {
 		[CCode (cname = "cvRect")]
 		public Rectangle (int x, int y, int width, int height);
@@ -874,7 +874,7 @@ namespace OpenCV {
 		public int height;
 	}
 
-	[SimpleType, CCode (cname = "CvScalar", has_type_id = false, destroy_function = "")]
+	[SimpleType, CCode (cname = "CvScalar", has_type_id = false, has_destroy_function = false)]
 	public struct Scalar {
 		[CCode (cname = "cvScalar")]
 		public Scalar (double val0, double val1 = 0.0, double val2 = 0.0, double val3 = 0.0);
@@ -928,7 +928,7 @@ namespace OpenCV {
 		public int total;
 	}
 
-	[SimpleType, CCode (cname = "CvSize", has_type_id = false)]
+	[SimpleType, CCode (cname = "CvSize", has_type_id = false, has_destroy_function = false)]
 	public struct Size {
 		public int width;
 		public int height;
@@ -945,7 +945,7 @@ namespace OpenCV {
 		public float height;
 	}
 
-	[SimpleType, CCode (cname = "CvSlice")]
+	[SimpleType, CCode (cname = "CvSlice", has_destroy_function = false)]
 	public struct Slice {
 		public int start_index;
 		public int end_index;
@@ -959,7 +959,7 @@ namespace OpenCV {
 		public const OpenCV.Slice WHOLE_ARRAY;
 	}
 
-	[SimpleType, CCode (cname = "CvTermCriteria", has_type_id = false)]
+	[SimpleType, CCode (cname = "CvTermCriteria", has_type_id = false, has_destroy_function = false)]
 	public struct TermCriteria {
 		public OpenCV.Type type;
 		public int max_iter;
@@ -1250,7 +1250,7 @@ namespace OpenCV {
 			}
 		}
 
-		[SimpleType, CCode (cname = "IplROI", has_type_id = false)]
+		[SimpleType, CCode (cname = "IplROI", has_type_id = false, has_destroy_function = false)]
 		public struct ROI {
 			public int coi;
 			[CCode (cname = "xOffset")]
@@ -1264,7 +1264,7 @@ namespace OpenCV {
 			public OpenCV.Rectangle to_rectangle ();
 		}
 
-		[CCode (cname = "IplConvKernel", has_type_id = false)]
+		[CCode (cname = "IplConvKernel", has_type_id = false, has_destroy_function = false)]
 		public struct ConvKernel {
 			[CCode (cname = "nCols")]
 			public int n_cols;
@@ -1293,7 +1293,7 @@ namespace OpenCV {
 			BL
 		}
 
-		[CCode (cname = "IplConvKernelFP", has_type_id = false)]
+		[CCode (cname = "IplConvKernelFP", has_type_id = false, has_destroy_function = false)]
 		public struct ConvKernelFP {
 			[CCode (cname = "nCols")]
 			public int nCols;

@@ -4,23 +4,25 @@
     <!--touchscreen table -->
     <table id="touchscreen" layer="1" width="1024" height="768" visibility="0"/>
     <!--main table -->
-    <table id="main" layer="1" width="1366" height="768">
+    <table id="main" layer="1" width="1366" height="768" y_fill="true">
         <progressbar id="progress-bar" row="1" column="0" left_padding="96" right_padding="96"
                      height="30" fill_color="#66FF00" width="600"/>
-        <text id="message" row="2" column="0" y_align="0.0" y_fill="true"
+        <text id="message" row="2" column="0" y_align="0.0" y_fill="true" alignment="center"
               font="Liberation Bold 18" fill_color="#000000"/>
+        <text id="error" row="2" column="0" y_align="0.0" y_fill="true" alignment="center"
+              font="Liberation Bold 18" fill_color="#FF0000"/>
         <!--content table -->
-        <table id="content" row="0" column="0" row_spacing="24" column_spacing="48" >
+        <table id="content" row="0" column="0" y_align="0.5" row_spacing="24" column_spacing="48">
             <!--left logo -->
-            <logo id="left-logo" row="0" column="0" width="250" height="250"
+            <logo id="left-logo" row="0" column="0"  x_align="0.5" width="300" height="300"
                   filename="/usr/share/xsplashaa/leaves/logo.png"/>
-            <table id="prompt-content" row="0" column="1">
+            <table id="prompt-content" row="0" column="1" y_align="0.5" x_fill="true">
                 <!--top logo -->
-                <logo id="top-logo" row="0" column="0"
+                <logo id="top-logo" row="0" column="0" y_align="0.0" width="600" height="144"
                       filename="/usr/share/xsplashaa/leaves/distrib-logo.png"/>
-                <notebook id="main-notebook" row="1" column="0">
+                <notebook id="main-notebook" row="1" column="0" y_fill="true">
                     <!--check table -->
-                    <table id="checking-table" page_num="0" animation="vertical-slide"
+                    <table id="checking-table" page_num="0" animation="vertical-slide" x_align="0.5" y_align="0.3"
                            row_spacing="12" column_spacing="12" homogeneous_row="true">
                         <table id="loading" row="0" column="0" x_fill="true">
                             <text id="loading-label" row="0" column="0" x_align="0.0"
@@ -54,13 +56,14 @@
                         </table>
                     </table>
                     <!--prompt table -->
-                    <table id="prompt-table" page_num="1" animation="vertical-slide"
+                    <table id="prompt-table" page_num="1" animation="vertical-slide" x_align="0.5" y_align="0.0"
                            row_spacing="12" column_spacing="12">
-                        <notebook id="users-notebook" row="0" column="0" columns="3">
+                        <notebook id="users-notebook" row="0" column="0" x_align="0.5" y_align="0.5" columns="4"
+                                  top_padding="24" bottom_padding="24">
                             <users id="users" page_num="0" animation="horizontal-slide"
-                                   x_fill="true" height="200" width="400"
-                                   widget_font="Liberation Bold 18"/>
-                            <table id="prompt-table" page_num="1" animation="horizontal-slide"
+                                   y_fill="true" x_align="0.5" y_align="0.0"
+                                   height="250" widget_font="Liberation Bold 18"/>
+                            <table id="prompt-table" page_num="1" animation="horizontal-slide" x_align="0.5" y_align="0.5"
                                    row_spacing="12" column_spacing="12" homogeneous_rows="true">
                                 <text id="prompt-label" row="0" column="0" x_align="1.0"
                                       font="Liberation Bold 18" fill_color="#DCE7EC"
@@ -71,15 +74,15 @@
                                        widget_font="Liberation 16"/>
                             </table>
                             <faceauth id="face-auth" page_num="2" animation="horizontal-slide"
-                                      width="320" height="240"/>
+                                      x_align="0.5" y_align="0.0" width="320" height="240"/>
                         </notebook>
-                        <text id="prompt-message" row="1" column="0" x_align="0.0" columns="3"
+                        <text id="prompt-message" row="1" column="0" x_align="0.0" y_align="0.5"  columns="3"
                               top_padding="12" bottom_padding="12"
                               font="Liberation Bold 18" fill_color="#ACCD8A"/>
                         <table id="face-authentification-table" row="2" column="0" y_align="0.1" column_spacing="12">
-                            <checkbutton id="face-authentification" row="0" column="0"
+                            <checkbutton id="face-authentification" row="0" column="0"  y_align="0.5"
                                          line-width="2.7" stroke_color="#ACCD8A"/>
-                            <text id="face-authentification-label" row="0" column="1"
+                            <text id="face-authentification-label" row="0" column="1"  y_align="0.5"
                                   font="Liberation Bold 12" fill_color="#DCE7EC"
                                   text="Face authentification"/>
                         </table>
@@ -93,7 +96,7 @@
                                 filename_release="/usr/share/xsplashaa/leaves/shutdown-release.svg"/>
                     </table>
                     <!-- shutdown table -->
-                    <table id="shutdown-table" page_num="2" animation="vertical-slide"
+                    <table id="shutdown-table" page_num="2" animation="vertical-slide" x_align="0.5" y_align="0.3"
                            row_spacing="12" column_spacing="12" homogeneous_rows="true" clip="true">
                         <table id="shutdown" row="0" column="0" x_fill="true">
                             <text id="shutdown-label" row="0" column="0" x_align="0.0"
@@ -107,4 +110,3 @@
         </table>
     </table>
 </engine>
-

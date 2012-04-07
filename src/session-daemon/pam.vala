@@ -16,7 +16,7 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Author:
- * 	Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
+ *  Nicolas Bruguier <nicolas.bruguier@supersonicimagine.fr>
  */
 
 namespace XSAA

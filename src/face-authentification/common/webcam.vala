@@ -105,10 +105,10 @@ namespace XSAA.FaceAuthentification
             Cairo.ImageSurface? surface = null;
 
             surface = new Cairo.ImageSurface (Cairo.Format.ARGB32,
-                                              Image.WIDTH, Image.HEIGHT);
+                                              inImage.width, inImage.height);
             unowned uchar* dst = surface.get_data ();
             unowned uchar* src = inImage.image_data;
-            int size = Image.WIDTH * Image.HEIGHT;
+            int size = inImage.width * inImage.height;
 
             for (int n = size; (--n) > 0;)
             {
